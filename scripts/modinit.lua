@@ -9,19 +9,19 @@ local function initStrings(modApi)
 	local scriptPath = modApi:getScriptPath()
 
 	-- local MOD_STRINGS = include( scriptPath .. "/strings" )
-	-- modApi:addStrings( dataPath, "UITWEAKS2", MOD_STRINGS)
+	-- modApi:addStrings( dataPath, "QEDCTRL", MOD_STRINGS)
 end
 
 local function init(modApi)
 	local scriptPath = modApi:getScriptPath()
 	-- Store script path for cross-file includes
-	-- rawset(_G,"SCRIPT_PATHS",rawget(_G,"SCRIPT_PATHS") or {})
-	-- SCRIPT_PATHS.uitweaks2 = scriptPath
-
-	local dataPath = modApi:getDataPath()
-	-- KLEIResourceMgr.MountPackage(dataPath .. "/images.kwad", "data")
+	rawset(_G,"SCRIPT_PATHS",rawget(_G,"SCRIPT_PATHS") or {})
+	SCRIPT_PATHS.qedctrl = scriptPath
 
 	-- client overrides
+	include(scriptPath.."/mui_button")
+	include(scriptPath.."/mui_padctrl")
+	include(scriptPath.."/mui_screen")
 
 	-- sim overrides
 end
@@ -35,6 +35,8 @@ end
 
 local function load(modApi, options, params)
 	local scriptPath = modApi:getScriptPath()
+
+	modApi:modifyUIElements(include(scriptPath.."/screen_modifications"))
 end
 
 return {

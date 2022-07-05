@@ -3,6 +3,6 @@
 # Copy this as makeconfig.mk and edit that file for the paths on your system.
 
 KWAD_BUILDER=~/kwad-builder/bin/linux/builder
-INSTALL_PATH=$(REPLACEME)/steamapps/common/InvisibleInc/mods/uitweaks2
+INSTALL_PATH=$(REPLACEME)/steamapps/common/InvisibleInc/mods/controller
 # Uncomment the following line if you maintain separate "all mods" and "active mods" folders
 # INSTALL_PATH2=
