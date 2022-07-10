@@ -15,6 +15,7 @@ local oldOnActivate = mui_screen.onActivate
 function mui_screen:onActivate( ... )
 	self._padctrl:onActivate( self )
 	oldOnActivate( self, ... )
+	self._padctrl:afterActivate()
 end
 
 local oldOnDeactivate = mui_screen.onDeactivate
