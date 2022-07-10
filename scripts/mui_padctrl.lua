@@ -1,26 +1,31 @@
 local array = include("modules/array")
 local mui_defs = include("mui/mui_defs")
 
-local mui_padctrl = class()
-
 -- Widgets can specify ctrlindex = { column, row } to be placed in the controller-accessible grid.
 -- Column is densely specified (c=2 is inserted into the second column)
 -- Row can be an arbitrary number that will be sorted within that column
 
-function mui_padctrl:init()
+-- ==========
+-- mui_screen
+-- ==========
+
+local screenctrl = class()
+
+function screenctrl:init()
 	-- _widgetGrid[column][row]
 	self._widgetGrid = {}
 	self._focusWidget = nil
+	self._handlers = {}
 end
 
-function mui_padctrl:onActivate(screen)
+function screenctrl:onActivate(screen)
 	simlog("LOG_QEDCTRL", "padctrl:onActivate %s", tostring(screen._filename))
 	self._screen = screen
 	self._focusWidget = nil
 	screen:addEventHandler( self, mui_defs.EVENT_KeyDown )
 end
 
-function mui_padctrl:onDeactivate()
+function screenctrl:onDeactivate()
 	simlog("LOG_QEDCTRL", "padctrl:onDeactivate %s", tostring(self._screen._filename))
 	self._screen:removeEventHandler( self )
 	self._screen, self._focusWidget = nil
@@ -37,7 +42,7 @@ local function insertSorted(t, widget)
 	table.insert(t, widget)
 end
 
-function mui_padctrl:addWidget( widget )
+function screenctrl:addWidget( widget )
 	c,r = widget:getControllerIndex()[1], widget:getControllerIndex()[2]
 	simlog("LOG_QEDCTRL", "padctrl:addWidget %s %s %s,%s", self._screen._filename, widget._def.name or "?ui?", tostring(c), tostring(r))
 	local c = widget:getControllerIndex()[1]
@@ -45,14 +50,14 @@ function mui_padctrl:addWidget( widget )
 	insertSorted(self._widgetGrid[c], widget)
 end
 
-function mui_padctrl:removeWidget( widget )
+function screenctrl:removeWidget( widget )
 	local c = widget:getControllerIndex()[1]
 	if self._widgetGrid[c] then
 		array.removeElement(self._widgetGrid[c], widget)
 	end
 end
 
-function mui_padctrl:hasWidgets()
+function screenctrl:hasWidgets()
 	return self._widgetGrid[1] and self._widgetGrid[1][1]
 end
 
@@ -96,7 +101,7 @@ local function prevVisibleWidget( widgetLine, idx )
 	end
 end
 
-function mui_padctrl:handleEvent( ev )
+function screenctrl:handleEvent( ev )
 	-- simlog("LOG_QEDCTRL", "padctrl:handleEvent %s %s %s", self._screen._filename, tostring(ev.eventType), tostring(ev.key))
 	if ev.eventType == mui_defs.EVENT_KeyDown and self:hasWidgets() and isPadCtrlKey( ev.key ) then
 		if not self._focusWidget then
@@ -133,4 +138,6 @@ function mui_padctrl:handleEvent( ev )
 	end
 end
 
-return mui_padctrl
+return {
+	screenctrl = screenctrl,
+}

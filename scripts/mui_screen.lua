@@ -8,7 +8,7 @@ function mui_screen:init( ... )
 	oldInit( self, ... )
 
 	-- simlog("LOG_QEDCTRL", "screen:init %s", self._filename )
-	self._padctrl = mui_padctrl()
+	self._padctrl = mui_padctrl.screenctrl()
 end
 
 local oldOnActivate = mui_screen.onActivate
