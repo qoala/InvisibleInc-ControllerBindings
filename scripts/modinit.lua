@@ -19,6 +19,8 @@ local function init(modApi)
 	SCRIPT_PATHS.qedctrl = scriptPath
 
 	-- client overrides
+	include(scriptPath.."/input-manager")
+
 	include(scriptPath.."/mui_button")
 	include(scriptPath.."/mui_padctrl")
 	include(scriptPath.."/mui_screen")
