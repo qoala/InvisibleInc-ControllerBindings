@@ -22,23 +22,3 @@ function mui_screen:onDeactivate( ... )
 	oldOnDeactivate( self, ... )
 	self._padctrl:onDeactivate()
 end
-
-local oldRegisterProp = mui_screen.registerProp
-function mui_screen:registerProp( prop, widget, ... )
-	oldRegisterProp( self, prop, widget, ... )
-
-	if widget.getControllerIndex and widget:getControllerIndex() then
-		self._padctrl:addWidget( widget )
-	end
-end
-
-local oldUnregisterProp = mui_screen.unregisterProp
-function mui_screen:unregisterProp( prop, ... )
-	assert( self._propToWidget[ prop ], prop:getDebugName() )
-	local widget = self._propToWidget[ prop ]
-	if widget.getControllerIndex and widget:getControllerIndex() then
-		self._padctrl:removeWidget( widget )
-	end
-
-	oldUnregisterProp( self, prop, ... )
-end

@@ -29,6 +29,7 @@ function screenctrl:onDeactivate()
 	simlog("LOG_QEDCTRL", "padctrl:onDeactivate %s", tostring(self._screen._filename))
 	self._screen:removeEventHandler( self )
 	self._screen, self._focusWidget = nil
+	self._widgetGrid = {}
 end
 
 local function insertSorted(t, widget)
@@ -130,9 +131,10 @@ function screenctrl:handleEvent( ev )
 					setFocus(self._screen, nextWidget)
 				end
 				return true
-			elseif ev.key == mui_defs.K_PERIOD then
+			elseif ev.key == mui_defs.K_PERIOD and self._focusWidget.dispatchEvent then
 				simlog("LOG_QEDCTRL", "padctrl:focus %s %s CLICK", self._screen._filename, self._focusWidget._def.name or "?ui?")
 				self._focusWidget:dispatchEvent({eventType = mui_defs.EVENT_ButtonClick, widget=self._focusWidget, ie = {}})
+				return true
 			end
 		end
 	end
