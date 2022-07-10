@@ -3,7 +3,7 @@ local mui_defs = include("mui/mui_defs")
 
 local mui_padctrl = class()
 
--- Widgets can specify tabindex = { column, row } to be placed in the controller-accessible grid.
+-- Widgets can specify ctrlindex = { column, row } to be placed in the controller-accessible grid.
 -- Column is densely specified (c=2 is inserted into the second column)
 -- Row can be an arbitrary number that will be sorted within that column
 
@@ -27,9 +27,9 @@ function mui_padctrl:onDeactivate()
 end
 
 local function insertSorted(t, widget)
-	local r = widget:getTabindex()[2]
+	local r = widget:getControllerIndex()[2]
 	for i, v in ipairs(t) do
-		if v:getTabindex()[2] > r then
+		if v:getControllerIndex()[2] > r then
 			table.insert(t, i, widget)
 			return
 		end
@@ -38,15 +38,15 @@ local function insertSorted(t, widget)
 end
 
 function mui_padctrl:addWidget( widget )
-	c,r = widget:getTabindex()[1], widget:getTabindex()[2]
+	c,r = widget:getControllerIndex()[1], widget:getControllerIndex()[2]
 	simlog("LOG_QEDCTRL", "padctrl:addWidget %s %s %s,%s", self._screen._filename, widget._def.name or "?ui?", tostring(c), tostring(r))
-	local c = widget:getTabindex()[1]
+	local c = widget:getControllerIndex()[1]
 	self._widgetGrid[c] = self._widgetGrid[c] or {}
 	insertSorted(self._widgetGrid[c], widget)
 end
 
 function mui_padctrl:removeWidget( widget )
-	local c = widget:getTabindex()[1]
+	local c = widget:getControllerIndex()[1]
 	if self._widgetGrid[c] then
 		array.removeElement(self._widgetGrid[c], widget)
 	end
@@ -68,7 +68,7 @@ local function isPadCtrlKey( key )
 end
 
 local function setFocus( screen, focusWidget )
-	c,r = focusWidget:getTabindex()[1], focusWidget:getTabindex()[2]
+	c,r = focusWidget:getControllerIndex()[1], focusWidget:getControllerIndex()[2]
 	simlog("LOG_QEDCTRL", "padctrl:focus %s %s %s,%s", screen._filename, focusWidget._def.name or "?ui?", tostring(c), tostring(r) )
 	screen:dispatchEvent({eventType = mui_defs.EVENT_FocusChanged, newFocus = focusWidget, oldFocus = screen._focusWidget })
 	screen._focusWidget = focusWidget
@@ -87,7 +87,7 @@ function mui_padctrl:handleEvent( ev )
 			setFocus(self._screen, self._focusWidget)
 			return true
 		else
-			local widgetLine = self._widgetGrid[self._focusWidget:getTabindex()[1]]
+			local widgetLine = self._widgetGrid[self._focusWidget:getControllerIndex()[1]]
 			local idx = array.find(widgetLine, self._focusWidget)
 			if ev.key == mui_defs.K_UPARROW and idx > 1 then
 				self._focusWidget = widgetLine[idx - 1]
