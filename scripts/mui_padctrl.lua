@@ -74,11 +74,34 @@ local function setFocus( screen, focusWidget )
 	screen._focusWidget = focusWidget
 end
 
+local function nextVisibleWidget( widgetLine, idx )
+	local i = idx + 1
+	local size = #widgetLine
+	while i <= size do
+		local widget = widgetLine[i]
+		if widget:isVisible() then
+			return widget
+		end
+		i = i + 1
+	end
+end
+
+local function prevVisibleWidget( widgetLine, idx )
+	local i = idx - 1
+	while i >= 1 do
+		local widget = widgetLine[i]
+		if widget:isVisible() then
+			return widget
+		end
+		i = i - 1
+	end
+end
+
 function mui_padctrl:handleEvent( ev )
 	-- simlog("LOG_QEDCTRL", "padctrl:handleEvent %s %s %s", self._screen._filename, tostring(ev.eventType), tostring(ev.key))
 	if ev.eventType == mui_defs.EVENT_KeyDown and self:hasWidgets() and isPadCtrlKey( ev.key ) then
 		if not self._focusWidget then
-			self._focusWidget = self._widgetGrid[1][1]
+			self._focusWidget = nextVisibleWidget(self._widgetGrid[1], 0)
 			inputmgr.setMouseEnabled(false)
 			setFocus(self._screen, self._focusWidget)
 			return true
@@ -90,12 +113,18 @@ function mui_padctrl:handleEvent( ev )
 			local widgetLine = self._widgetGrid[self._focusWidget:getControllerIndex()[1]]
 			local idx = array.find(widgetLine, self._focusWidget)
 			if ev.key == mui_defs.K_UPARROW and idx > 1 then
-				self._focusWidget = widgetLine[idx - 1]
-				setFocus(self._screen, self._focusWidget)
+				local prevWidget = prevVisibleWidget(widgetLine, idx)
+				if prevWidget then
+					self._focusWidget = prevWidget
+					setFocus(self._screen, prevWidget)
+				end
 				return true
 			elseif ev.key == mui_defs.K_DOWNARROW and idx < #widgetLine then
-				self._focusWidget = widgetLine[idx + 1]
-				setFocus(self._screen, self._focusWidget)
+				local nextWidget = nextVisibleWidget(widgetLine, idx)
+				if nextWidget then
+					self._focusWidget = nextWidget
+					setFocus(self._screen, nextWidget)
+				end
 				return true
 			elseif ev.key == mui_defs.K_PERIOD then
 				simlog("LOG_QEDCTRL", "padctrl:focus %s %s CLICK", self._screen._filename, self._focusWidget._def.name or "?ui?")
