@@ -1,3 +1,5 @@
+local mui_defs = include("mui/mui_defs")
+local mui_util = include("mui/mui_util")
 local mui_button = include("mui/widgets/mui_button")
 
 local oldInit = mui_button.init
@@ -12,4 +14,28 @@ end
 
 function mui_button:getControllerIndex()
 	return self._ctrlindex
+end
+
+local function isCancelBtn( self )
+	-- "Cancel" is an alternate binding for all hard-coded ESC bindings and most "pause" bindings.
+	return self._hotkey == mui_defs.K_ESCAPE or (
+	  self._hotkey == "pause" and not self._def.name ~= "menuBtn"
+	)
+end
+
+local oldHandleEvent = mui_button.handleEvent
+function mui_button:handleEvent( ev, ... )
+	if isCancelBtn(self) and ev.eventType == mui_defs.EVENT_KeyDown and self:isVisible() then
+		local cancelBinding = mui_defs.K_COMMA
+		if mui_util.isBinding(ev, cancelBinding) then
+			self:dispatchEvent( {
+                eventType = mui_defs.EVENT_ButtonHotkey,
+                widget = self,
+                disabled = (self._buttonState == mui_button.BUTTON_Disabled),
+                ie = ev } )
+			return true
+		end
+	end
+
+	return oldHandleEvent(self, ev, ...)
 end

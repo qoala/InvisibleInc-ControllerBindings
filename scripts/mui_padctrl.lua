@@ -62,7 +62,6 @@ local function isPadCtrlKey( key )
 		key == mui_defs.K_UPARROW or
 		key == mui_defs.K_RIGHTARROW or
 		key == mui_defs.K_DOWNARROW or
-		key == mui_defs.K_COMMA or
 		key == mui_defs.K_PERIOD
 	)
 end
