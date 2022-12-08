@@ -17,23 +17,27 @@ local function insertSorted(t, widget)
 	table.insert(t, widget)
 end
 
-local function nextVisibleWidget( widgetLine, idx )
+local function isAvailableWidget( widget )
+	return widget:isVisible() and (not widget.isDisabled or not widget:isDisabled())
+end
+
+local function nextActiveWidget( widgetLine, idx )
 	local i = idx + 1
 	local size = #widgetLine
 	while i <= size do
 		local widget = widgetLine[i]
-		if widget:isVisible() then
+		if isAvailableWidget(widget) then
 			return widget
 		end
 		i = i + 1
 	end
 end
 
-local function prevVisibleWidget( widgetLine, idx )
+local function prevActiveWidget( widgetLine, idx )
 	local i = idx - 1
 	while i >= 1 do
 		local widget = widgetLine[i]
-		if widget:isVisible() then
+		if isAvailableWidget(widget) then
 			return widget
 		end
 		i = i - 1
@@ -63,7 +67,7 @@ end
 
 function screenctrl:afterActivate()
 	if not inputmgr.isMouseEnabled() and self:hasWidgets() then
-		self:setFocus(self._focusWidget or nextVisibleWidget(self._widgetGrid[1], 0))
+		self:setFocus(self._focusWidget or nextActiveWidget(self._widgetGrid[1], 0))
 	end
 end
 
@@ -116,7 +120,7 @@ function screenctrl:handleEvent( ev )
 	if ev.eventType == mui_defs.EVENT_KeyDown and self:hasWidgets() and isPadCtrlKey( ev.key ) then
 		if not self._focusWidget then
 			inputmgr.setMouseEnabled(false)
-			self:setFocus(nextVisibleWidget(self._widgetGrid[1], 0))
+			self:setFocus(nextActiveWidget(self._widgetGrid[1], 0))
 			return true
 		elseif inputmgr.isMouseEnabled() then
 			inputmgr.setMouseEnabled(false)
@@ -126,13 +130,13 @@ function screenctrl:handleEvent( ev )
 			local widgetLine = self._widgetGrid[self._focusWidget:getControllerIndex()[1]]
 			local idx = array.find(widgetLine, self._focusWidget)
 			if ev.key == mui_defs.K_UPARROW and idx > 1 then
-				local prevWidget = prevVisibleWidget(widgetLine, idx)
+				local prevWidget = prevActiveWidget(widgetLine, idx)
 				if prevWidget then
 					self:setFocus(prevWidget)
 				end
 				return true
 			elseif ev.key == mui_defs.K_DOWNARROW and idx < #widgetLine then
-				local nextWidget = nextVisibleWidget(widgetLine, idx)
+				local nextWidget = nextActiveWidget(widgetLine, idx)
 				if nextWidget then
 					self:setFocus(nextWidget)
 				end

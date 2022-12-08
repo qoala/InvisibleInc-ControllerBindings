@@ -20,6 +20,11 @@ function mui_button:getControllerIndex()
 	return self._ctrlindex
 end
 
+function mui_button:isDisabled()
+	return self._buttonState == mui_button.BUTTON_Disabled
+end
+
+
 local oldOnActivate = mui_button.onActivate
 function mui_button:onActivate( screen, ... )
 	oldOnActivate(self, screen, ...)
