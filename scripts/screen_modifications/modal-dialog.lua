@@ -1,4 +1,5 @@
 local modifications = {
+	-- widgets,2 : panel
 	{
 		"modal-dialog.lua",
 		{ "widgets", 2, "children", 5 }, -- okBtn

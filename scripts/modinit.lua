@@ -40,6 +40,8 @@ local function load(modApi, options, params)
 
 	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/main-menu"))
 	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/modal-dialog"))
+	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/modal-dialog-large"))
+	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/pause-dialog"))
 end
 
 return {
