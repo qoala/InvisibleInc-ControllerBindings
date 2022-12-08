@@ -47,15 +47,16 @@ end
 local screenctrl = class()
 
 function screenctrl:init()
+	self._screen = nil
 	-- _widgetGrid[column][row]
-	self._widgetGrid = {}
+	self._widgetGrid = nil
 	self._focusWidget = nil
-	self._handlers = {}
 end
 
 function screenctrl:onActivate(screen)
 	simlog("LOG_QEDCTRL", "padctrl:onActivate %s", tostring(screen._filename))
 	self._screen = screen
+	self._widgetGrid = {}
 	self._focusWidget = nil
 	screen:addEventHandler( self, mui_defs.EVENT_KeyDown )
 end
@@ -70,7 +71,7 @@ function screenctrl:onDeactivate()
 	simlog("LOG_QEDCTRL", "padctrl:onDeactivate %s", tostring(self._screen._filename))
 	self._screen:removeEventHandler( self )
 	self._screen, self._focusWidget = nil
-	self._widgetGrid = {}
+	self._widgetGrid = nil
 end
 
 function screenctrl:addWidget( widget )
