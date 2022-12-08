@@ -27,6 +27,11 @@ end
 
 local oldOnDeactivate = mui_screen.onDeactivate
 function mui_screen:onDeactivate( ... )
+	-- Don't leave widgets focused if this screen is reused.
+	if self._focusWidget then
+		self:dispatchEvent({eventType = mui_defs.EVENT_FocusChanged, newFocus = nil, oldFocus = self._focusWidget })
+	end
+
 	oldOnDeactivate( self, ... )
 	self._padctrl:onDeactivate()
 end
