@@ -25,6 +25,8 @@ local function init(modApi)
 	include(scriptPath.."/mui_padctrl")
 	include(scriptPath.."/mui_screen")
 
+	include(scriptPath.."/hud")
+
 	-- sim overrides
 end
 
@@ -38,6 +40,8 @@ end
 local function unload( modApi )
 	local scriptPath = modApi:getScriptPath()
 
+	modApi:addNewUIScreen("qedctrl-end-turn-dialog.lua", scriptPath.."/screens/qedctrl-end-turn-dialog")
+	modApi:insertUIElements(include(scriptPath.."/screen_inserts/hud"))
 	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/main-menu"))
 	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/modal-dialog"))
 	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/modal-dialog-large"))
