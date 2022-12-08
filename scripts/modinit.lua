@@ -35,7 +35,7 @@ local function earlyLoad(modApi, options, params)
 	earlyUnload(modApi)
 end
 
-local function load(modApi, options, params)
+local function unload( modApi )
 	local scriptPath = modApi:getScriptPath()
 
 	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/main-menu"))
@@ -44,11 +44,16 @@ local function load(modApi, options, params)
 	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/pause-dialog"))
 end
 
+local function load(modApi, options, params)
+	unload( modApi )
+end
+
 return {
 	earlyInit = earlyInit,
 	earlyLoad = earlyLoad,
 	earlyUnload = earlyUnload,
 	load = load,
+	unload = unload,
 	init = init,
 	initStrings = initStrings,
 }
