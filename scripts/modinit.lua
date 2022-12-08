@@ -38,7 +38,8 @@ end
 local function load(modApi, options, params)
 	local scriptPath = modApi:getScriptPath()
 
-	modApi:modifyUIElements(include(scriptPath.."/screen_modifications"))
+	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/main-menu"))
+	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/modal-dialog"))
 end
 
 return {
