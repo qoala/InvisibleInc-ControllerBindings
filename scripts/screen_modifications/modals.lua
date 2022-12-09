@@ -1,8 +1,8 @@
 -- Modal dialogs with a simple layout of buttons.
 
-local IDX1 = { ctrlindex = {1,1} }
-local IDX2 = { ctrlindex = {1,2} }
-local IDX3 = { ctrlindex = {1,3} }
+local IDX1 = { ctrlCoord = {1} }
+local IDX2 = { ctrlCoord = {2} }
+local IDX3 = { ctrlCoord = {3} }
 
 -- Skins add an extra layer of indirection on the modification.
 -- Many dialogs use screen_button, though some use their own skin with the same btn child.
@@ -54,16 +54,16 @@ local modifications = {
 
 	-- TODO: Grid layout.
 	modifyDialog("modal-execterminals.lua", 5, -- location1
-		skinButton({ ctrlindex = {1,1} })
+		skinButton({ ctrlCoord = {1} })
 	),
 	modifyDialog("modal-execterminals.lua", 6, -- location2
-		skinButton({ ctrlindex = {1,2} })
+		skinButton({ ctrlCoord = {2} })
 	),
 	modifyDialog("modal-execterminals.lua", 7, -- location3
-		skinButton({ ctrlindex = {1,3} })
+		skinButton({ ctrlCoord = {3} })
 	),
 	modifyDialog("modal-execterminals.lua", 8, -- location4
-		skinButton({ ctrlindex = {1,4} })
+		skinButton({ ctrlCoord = {4} })
 	),
 
 	-- TODO: installSocketBtn left of installAugmentBtn, both above cancelBtn.

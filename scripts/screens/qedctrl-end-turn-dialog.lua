@@ -182,7 +182,7 @@ widgets =
 				hpx = true,
 				sx = 1,
 				sy = 1,
-				ctrlindex = {1,1},
+				ctrlCoord = {1},
 				tooltip =
 				{
 					str = [[STR_413948372]],
@@ -267,7 +267,7 @@ widgets =
 				hpx = true,
 				sx = 1,
 				sy = 1,
-				ctrlindex = {1,2},
+				ctrlCoord = {2},
 				tooltip =
 				{
 					str = [[STR_610854735]],
@@ -355,7 +355,7 @@ widgets =
 				hpx = true,
 				sx = 1,
 				sy = 1,
-				ctrlindex = {1,3},
+				ctrlCoord = {3},
 				ctor = [[button]],
 				clickSound = [[SpySociety/HUD/menu/click]],
 				hoverSound = [[SpySociety/HUD/menu/rollover]],

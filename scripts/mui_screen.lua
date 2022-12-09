@@ -1,7 +1,7 @@
+local util = include( "modules/util" )
 local mui_defs = include("mui/mui_defs")
 local mui_screen = include("mui/mui_screen")
 local mui_util = include("mui/mui_util")
-local util = include( "client_util" )
 
 local mui_padctrl = include(SCRIPT_PATHS.qedctrl.."/mui_padctrl")
 
@@ -10,7 +10,7 @@ function mui_screen:init( ... )
 	oldInit( self, ... )
 
 	-- simlog("LOG_QEDCTRL", "screen:init %s", self._filename )
-	self._padctrl = mui_padctrl.screenctrl()
+	self._qedctrl = mui_padctrl.screenctrl()
 
 	-- Hide the sinksInput flag from the vanilla handleInputEvent.
 	self._qedctrl_sinksInput = self._props.sinksInput
@@ -20,9 +20,9 @@ end
 
 local oldOnActivate = mui_screen.onActivate
 function mui_screen:onActivate( ... )
-	self._padctrl:onActivate( self )
+	self._qedctrl:onActivate( self )
 	oldOnActivate( self, ... )
-	self._padctrl:afterActivate()
+	self._qedctrl:afterActivate()
 end
 
 local oldOnDeactivate = mui_screen.onDeactivate
@@ -33,7 +33,7 @@ function mui_screen:onDeactivate( ... )
 	end
 
 	oldOnDeactivate( self, ... )
-	self._padctrl:onDeactivate()
+	self._qedctrl:onDeactivate()
 end
 
 local oldHandleInputEvent = mui_screen.handleInputEvent

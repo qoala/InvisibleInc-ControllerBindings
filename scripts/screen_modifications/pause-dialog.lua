@@ -1,18 +1,18 @@
-local function assignCtrlIndex(childIndex, ctrlindex)
+local function assignCtrl(childIndex, coord)
 	return {
 		"pause_dialog_screen.lua",
 		{ "widgets", 2, "children", childIndex },
-		{ ctrlindex = ctrlindex },
+		{ ctrlCoord = coord },
 	}
 end
 
 local modifications = {
-	assignCtrlIndex(7,  {1,1}), -- resumeBtn
-	assignCtrlIndex(5,  {1,2}), -- optionsBtn
-	assignCtrlIndex(10, {1,3}), -- helpBtn
-	assignCtrlIndex(4,  {1,4}), -- quitBtn
-	assignCtrlIndex(9,  {1,5}), -- abortBtn
-	assignCtrlIndex(8,  {1,6}), -- retireBtn
+	assignCtrl(7,  {1}), -- resumeBtn
+	assignCtrl(5,  {2}), -- optionsBtn
+	assignCtrl(10, {3}), -- helpBtn
+	assignCtrl(4,  {4}), -- quitBtn
+	assignCtrl(9,  {5}), -- abortBtn
+	assignCtrl(8,  {6}), -- retireBtn
 }
 
 return modifications

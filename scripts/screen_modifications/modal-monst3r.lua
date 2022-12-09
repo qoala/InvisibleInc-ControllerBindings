@@ -3,7 +3,7 @@ local modifications = {
 	{
 		"modal-monst3r.lua",
 		{ "widgets", 2, "children", 9 }, -- closeBtn
-		{ ctrlindex = {1,1} },
+		{ ctrlCoord = {1} },
 	},
 	-- TODO: inventory & shop item.
 }

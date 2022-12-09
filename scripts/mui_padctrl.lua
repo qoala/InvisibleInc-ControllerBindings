@@ -1,15 +1,16 @@
 local array = include("modules/array")
+local util = require( "modules/util" )
 local mui_defs = include("mui/mui_defs")
 
--- Widgets can specify ctrlindex = { column, row } to be placed in the controller-accessible grid.
--- Column is densely specified (c=2 is inserted into the second column)
--- Row can be an arbitrary number that will be sorted within that column
+-- Widgets can specify {ctrlCoord = { index }} to be placed in the controller-accessible grid.
+-- Index can be an arbitrary number that will be sorted within that group.
+-- Widgets can specify {ctrlGroup = groupID} to be placed in a specific group's grid within the screen (default 1).
 
 
 local function insertSorted(t, widget)
-	local r = widget:getControllerIndex()[2]
-	for i, v in ipairs(t) do
-		if v:getControllerIndex()[2] > r then
+	local idx = widget:getControllerCoord()[1]
+	for i, other in ipairs(t) do
+		if other:getControllerCoord()[1] > idx then
 			table.insert(t, i, widget)
 			return
 		end
@@ -79,17 +80,19 @@ function screenctrl:onDeactivate()
 end
 
 function screenctrl:addWidget( widget )
-	c,r = widget:getControllerIndex()[1], widget:getControllerIndex()[2]
-	simlog("LOG_QEDCTRL", "padctrl:addWidget %s %s %s,%s", self._screen._filename, widget._def.name or "?ui?", tostring(c), tostring(r))
-	local c = widget:getControllerIndex()[1]
-	self._widgetGrid[c] = self._widgetGrid[c] or {}
-	insertSorted(self._widgetGrid[c], widget)
+	local group = widget:getControllerGroup()
+	local coord = widget:getControllerCoord()
+	simlog("LOG_QEDCTRL", "padctrl:addWidget %s/%s %s g=%s", self._screen._filename, widget._def.name or "?ui?", util.tostringl(coord), tostring(group))
+
+	local idx = coord[1]
+	self._widgetGrid[group] = self._widgetGrid[group] or {}
+	insertSorted(self._widgetGrid[group], widget)
 end
 
 function screenctrl:removeWidget( widget )
-	local c = widget:getControllerIndex()[1]
-	if self._widgetGrid[c] then
-		array.removeElement(self._widgetGrid[c], widget)
+	local group = widget:getControllerGroup()
+	if self._widgetGrid[group] then
+		array.removeElement(self._widgetGrid[group], widget)
 	end
 end
 
@@ -99,8 +102,11 @@ end
 
 function screenctrl:setFocus( focusWidget )
 	self._focusWidget = focusWidget
-	c,r = focusWidget:getControllerIndex()[1], focusWidget:getControllerIndex()[2]
-	simlog("LOG_QEDCTRL", "padctrl:focus %s %s %s,%s", self._screen._filename, focusWidget._def.name or "?ui?", tostring(c), tostring(r) )
+	if focusWidget then
+		simlog("LOG_QEDCTRL", "padctrl:focus %s/%s %s g=%s", self._screen._filename, focusWidget._def.name or "?ui?", util.tostringl(focusWidget:getControllerCoord()), tostring(focusWidget:getControllerGroup()))
+	else
+		simlog("LOG_QEDCTRL", "padctrl:focus %s/nil", self._screen._filename)
+	end
 	self._screen:dispatchEvent({eventType = mui_defs.EVENT_FocusChanged, newFocus = focusWidget, oldFocus = self._screen._focusWidget })
 	self._screen._focusWidget = focusWidget
 end
@@ -117,36 +123,41 @@ end
 
 function screenctrl:handleEvent( ev )
 	-- simlog("LOG_QEDCTRL", "padctrl:handleEvent %s %s %s", self._screen._filename, tostring(ev.eventType), tostring(ev.key))
-	if ev.eventType == mui_defs.EVENT_KeyDown and self:hasWidgets() and isPadCtrlKey( ev.key ) then
-		if not self._focusWidget then
-			inputmgr.setMouseEnabled(false)
-			self:setFocus(nextActiveWidget(self._widgetGrid[1], 0))
-			return true
-		elseif inputmgr.isMouseEnabled() then
-			inputmgr.setMouseEnabled(false)
-			self:setFocus(self._focusWidget)
-			return true
-		else
-			local widgetLine = self._widgetGrid[self._focusWidget:getControllerIndex()[1]]
-			local idx = array.find(widgetLine, self._focusWidget)
-			if ev.key == mui_defs.K_UPARROW and idx > 1 then
-				local prevWidget = prevActiveWidget(widgetLine, idx)
-				if prevWidget then
-					self:setFocus(prevWidget)
-				end
-				return true
-			elseif ev.key == mui_defs.K_DOWNARROW and idx < #widgetLine then
-				local nextWidget = nextActiveWidget(widgetLine, idx)
-				if nextWidget then
-					self:setFocus(nextWidget)
-				end
-				return true
-			elseif ev.key == mui_defs.K_PERIOD and self._focusWidget.dispatchEvent then
-				simlog("LOG_QEDCTRL", "padctrl:focus %s %s CLICK", self._screen._filename, self._focusWidget._def.name or "?ui?")
-				self._focusWidget:dispatchEvent({eventType = mui_defs.EVENT_ButtonClick, widget=self._focusWidget, ie = {}})
-				return true
-			end
+	if not (ev.eventType == mui_defs.EVENT_KeyDown and self:hasWidgets() and isPadCtrlKey( ev.key )) then
+		return
+	end
+
+	if not self._focusWidget then
+		-- Focus the default widget.
+		inputmgr.setMouseEnabled(false)
+		self:setFocus(nextActiveWidget(self._widgetGrid[1], 0))
+		return true
+	elseif inputmgr.isMouseEnabled() then
+		-- Refocus the most recent controller focus.
+		inputmgr.setMouseEnabled(false)
+		self:setFocus(self._focusWidget)
+		return true
+	elseif ev.key == mui_defs.K_PERIOD and self._focusWidget.handleControllerClick then
+		simlog("LOG_QEDCTRL", "padctrl:focus %s %s CLICK", self._screen._filename, self._focusWidget._def.name or "?ui?")
+		return self._focusWidget:handleControllerClick()
+	end
+
+	-- Navigation key pressed.
+	local group = self._focusWidget:getControllerGroup()
+	local widgetLine = self._widgetGrid[group]
+	local idx = array.find(widgetLine, self._focusWidget)
+	if ev.key == mui_defs.K_UPARROW and idx > 1 then
+		local prevWidget = prevActiveWidget(widgetLine, idx)
+		if prevWidget then
+			self:setFocus(prevWidget)
 		end
+		return true
+	elseif ev.key == mui_defs.K_DOWNARROW and idx < #widgetLine then
+		local nextWidget = nextActiveWidget(widgetLine, idx)
+		if nextWidget then
+			self:setFocus(nextWidget)
+		end
+		return true
 	end
 end
 
