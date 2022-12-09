@@ -1,29 +1,17 @@
+local function assignCtrlIndex(widgetIndex, ctrlindex)
+	return {
+		"main-menu.lua",
+		{ "widgets", widgetIndex },
+		{ ctrlindex = ctrlindex },
+	}
+end
+
 local modifications = {
-	{
-		"main-menu.lua",
-		{ "widgets", 9 }, -- playBtn
-		{ ctrlindex = {1,1} },
-	},
-	{
-		"main-menu.lua",
-		{ "widgets", 13 }, -- optionsBtn
-		{ ctrlindex = {1,2} },
-	},
-	{
-		"main-menu.lua",
-		{ "widgets", 12 }, -- creditsBtn
-		{ ctrlindex = {1,3} },
-	},
-	{
-		"main-menu.lua",
-		{ "widgets", 11 }, -- exitBtn
-		{ ctrlindex = {1,4} },
-	},
-	{
-		"main-menu.lua",
-		{ "widgets", 10 }, -- signUpBtn
-		{ ctrlindex = {1,5} },
-	},
+	assignCtrlIndex(9,  {1,1}), -- playBtn
+	assignCtrlIndex(13, {1,2}), -- optionsBtn
+	assignCtrlIndex(12, {1,3}), -- creditsBtn
+	assignCtrlIndex(11, {1,4}), -- exitBtn
+	assignCtrlIndex(10, {1,5}), -- signUpBtn
 }
 
 return modifications
