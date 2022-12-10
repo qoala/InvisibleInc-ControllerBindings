@@ -31,15 +31,15 @@ local mui_util = include("mui/mui_util")
 --     Array of groups to try as default. The first group that succeeds will be focused.
 
 
-local function isAvailableWidget( widget )
-	return widget:isVisible() and (not widget.isDisabled or not widget:isDisabled())
-end
-
 local function matchSameCoord(coord)
 	return function(w)
 		local wc = w:getControllerCoord()
 		return wc[1] == coord[1]
 	end
+end
+
+local function debugWidgetName( widget )
+	return widget._name or (widget._def and widget._def.name) or "?ui?"
 end
 
 -- ===
@@ -70,19 +70,19 @@ function widget_group:_onNavigateToGroup(toGroup)
 	end
 end
 
-function widget_group:onNavigateUp()
+function widget_group:onControllerUp()
 	return self:_onNavigateToGroup(self._def.upToGroup)
 end
 
-function widget_group:onNavigateDown()
+function widget_group:onControllerDown()
 	return self:_onNavigateToGroup(self._def.downToGroup)
 end
 
-function widget_group:onNavigateLeft()
+function widget_group:onControllerLeft()
 	return self:_onNavigateToGroup(self._def.leftToGroup)
 end
 
-function widget_group:onNavigateRight()
+function widget_group:onControllerRight()
 	return self:_onNavigateToGroup(self._def.rightToGroup)
 end
 
@@ -121,14 +121,14 @@ function list_group:defaultWidget()
 
 	if self._def.defaultCoord then
 		local widget = array.findIf(self._widgets, matchSameCoord(self._def.defaultCoord))
-		if widget and isAvailableWidget(widget) then
+		if widget and widget:canControllerFocus() then
 			return widget
 		end
 	end
 	if self._def.defaultCoordChain then
 		for _,default in ipairs(self._def.defaultCoordChain) do
 			local widget = array.findIf(self._widgets, matchSameCoord(default))
-			if widget and isAvailableWidget(widget) then
+			if widget and widget:canControllerFocus() then
 				return widget
 			end
 		end
@@ -140,7 +140,7 @@ function list_group:_prevActiveWidget( idx )
 	local i = idx - 1
 	while i >= 1 do
 		local widget = self._widgets[i]
-		if isAvailableWidget(widget) then
+		if widget:canControllerFocus() then
 			return widget
 		end
 		i = i - 1
@@ -162,7 +162,7 @@ function list_group:_nextActiveWidget( idx )
 	local size = #self._widgets
 	while i <= size do
 		local widget = self._widgets[i]
-		if isAvailableWidget(widget) then
+		if widget:canControllerFocus() then
 			return widget
 		end
 		i = i + 1
@@ -180,31 +180,31 @@ function list_group:onNavigateNext()
 end
 
 local hlist_group = class(list_group)
-function hlist_group:onNavigateLeft()
+function hlist_group:onControllerLeft()
 	if self:onNavigatePrev() then
 		return true
 	end
-	return widget_group.onNavigateLeft(self)
+	return widget_group.onControllerLeft(self)
 end
-function hlist_group:onNavigateRight()
+function hlist_group:onControllerRight()
 	if self:onNavigateNext() then
 		return true
 	end
-	return widget_group.onNavigateRight(self)
+	return widget_group.onControllerRight(self)
 end
 
 local vlist_group = class(list_group)
-function vlist_group:onNavigateUp()
+function vlist_group:onControllerUp()
 	if self:onNavigatePrev() then
 		return true
 	end
-	return widget_group.onNavigateUp(self)
+	return widget_group.onControllerUp(self)
 end
-function vlist_group:onNavigateDown()
+function vlist_group:onControllerDown()
 	if self:onNavigateNext() then
 		return true
 	end
-	return widget_group.onNavigateDown(self)
+	return widget_group.onControllerDown(self)
 end
 
 
@@ -276,7 +276,7 @@ end
 function screenctrl:addWidget( widget )
 	local group = widget:getControllerGroup()
 	local coord = widget:getControllerCoord()
-	simlog("LOG_QEDCTRL", "padctrl:addWidget %s/%s %s g=%s", self._screen._filename, widget._def.name or "?ui?", util.tostringl(coord), tostring(group))
+	simlog("LOG_QEDCTRL", "padctrl:addWidget %s/%s %s g=%s", self._screen._filename, debugWidgetName(widget), util.tostringl(coord), tostring(group))
 
 	self._groups[group] = self._groups[group] or vlist_group(self)
 	self._groups[group]:addWidget(widget)
@@ -290,7 +290,7 @@ function screenctrl:removeWidget( widget )
 end
 
 function screenctrl:enterGroup( group, ... )
-	if self._groups[group] then
+	if self._groups and self._groups[group] then
 		return self._groups[group]:onEnter(...)
 	end
 end
@@ -301,28 +301,46 @@ function screenctrl:hasWidgets()
 end
 
 function screenctrl:setFocus( focusWidget )
+	if focusWidget.onControllerFocus then
+		return focusWidget:onControllerFocus()
+	end
+
 	self._focusWidget = focusWidget
 	if focusWidget then
-		simlog("LOG_QEDCTRL", "padctrl:focus %s/%s %s g=%s", self._screen._filename, focusWidget._def.name or "?ui?", util.tostringl(focusWidget:getControllerCoord()), tostring(focusWidget:getControllerGroup()))
+		simlog("LOG_QEDCTRL", "padctrl:focus %s/%s %s/%s", self._screen._filename, debugWidgetName(focusWidget), tostring(focusWidget:getControllerGroup()), util.tostringl(focusWidget:getControllerCoord()))
 	else
 		simlog("LOG_QEDCTRL", "padctrl:focus %s/nil", self._screen._filename)
 	end
 	self._screen:dispatchEvent({eventType = mui_defs.EVENT_FocusChanged, newFocus = focusWidget, oldFocus = self._screen._focusWidget })
 	self._screen._focusWidget = focusWidget
+	return true
+end
+
+function screenctrl:setProxyFocus( proxyWidget, focusWidget, proxyIndex )
+	if not focusWidget then
+		return self:setFocus(proxyWidget)
+	end
+	-- TODO: Support nested onControllerFocus.
+
+	self._focusWidget = proxyWidget
+	simlog("LOG_QEDCTRL", "padctrl:focus %s/%s/%s %s/%s g=%s", self._screen._filename, debugWidgetName(proxyWidget), debugWidgetName(focusWidget), util.tostringl(focusWidget:getControllerCoord()), tostring(proxyIndex), tostring(focusWidget:getControllerGroup()))
+	self._screen:dispatchEvent({eventType = mui_defs.EVENT_FocusChanged, newFocus = focusWidget, oldFocus = self._screen._focusWidget })
+	self._screen._focusWidget = focusWidget
+	return true
 end
 
 local NAV_KEY = {
-	[mui_defs.K_UPARROW] = [[onNavigateUp]],
-	[mui_defs.K_DOWNARROW] = [[onNavigateDown]],
-	[mui_defs.K_LEFTARROW] = [[onNavigateLeft]],
-	[mui_defs.K_RIGHTARROW] = [[onNavigateRight]],
+	[mui_defs.K_UPARROW] = [[onControllerUp]],
+	[mui_defs.K_DOWNARROW] = [[onControllerDown]],
+	[mui_defs.K_LEFTARROW] = [[onControllerLeft]],
+	[mui_defs.K_RIGHTARROW] = [[onControllerRight]],
 }
 
 local function maybeAutoClick(self, widget)
 	-- Confirm button can click immediately if there's only one widget in the screen.
-	if widget and widget:getControllerDef().autoConfirm and widget.handleControllerClick then
-		simlog("LOG_QEDCTRL", "padctrl:click %s %s AUTO", self._screen._filename, widget._def.name or "?ui?")
-		return widget:handleControllerClick()
+	if widget and widget:getControllerDef().autoConfirm and widget.onControllerConfirm then
+		simlog("LOG_QEDCTRL", "padctrl:click %s %s AUTO", self._screen._filename, debugWidgetName(widget))
+		return widget:onControllerConfirm()
 	end
 	return true
 end
@@ -356,9 +374,9 @@ function screenctrl:handleEvent( ev )
 		end
 		return true
 	elseif isConfirmBinding then
-		if self._focusWidget.handleControllerClick then
-			simlog("LOG_QEDCTRL", "padctrl:click %s %s", self._screen._filename, self._focusWidget._def.name or "?ui?")
-			return self._focusWidget:handleControllerClick()
+		if self._focusWidget.onControllerConfirm then
+			simlog("LOG_QEDCTRL", "padctrl:click %s %s", self._screen._filename, debugWidgetName(self._focusWidget))
+			return self._focusWidget:onControllerConfirm()
 		end
 		return true
 	end
@@ -377,6 +395,73 @@ function screenctrl:handleEvent( ev )
 	return true
 end
 
+-- ==============
+-- widget helpers
+-- ==============
+
+widget = {}
+
+function widget.init(self, def)
+	if def.ctrlProperties then
+		assert(type(def.ctrlProperties) == "table", def.name)
+		assert(type(def.ctrlProperties.coord) == "table", def.name)
+		self._qedctrl = nil
+		self._qedctrl_def = def.ctrlProperties
+		self._qedctrl_coord = def.ctrlProperties.coord
+		self._qedctrl_group = def.ctrlProperties.group or 1
+		return true
+	end
+end
+
+function widget.defineCtrlMethods(cls, appends)
+	function cls:setControllerCoord(pos, group)
+		if self._qedctrl then
+			simlog("[QEDCTRL] Cannot set controller coord on active widget.")
+			return
+		end
+		self._qedctrl_coord = pos
+		self._qedctrl_group = group or 1
+		self._qedctrl_def = self._qedctrl_def or {}
+	end
+	function cls:getControllerCoord()
+		return self._qedctrl_coord
+	end
+	function cls:getControllerGroup()
+		return self._qedctrl_group
+	end
+	function cls:getControllerDef()
+		return self._qedctrl_def
+	end
+
+	local oldOnActivate = cls.onActivate
+	function cls:onActivate( screen, ... )
+		oldOnActivate(self, screen, ...)
+		if self._qedctrl_coord then
+			self._qedctrl = screen._qedctrl
+			screen._qedctrl:addWidget(self)
+
+			if appends and appends.onActivate then
+				appends.onActivate(self, screen, ...)
+			end
+		end
+	end
+
+	local oldOnDeactivate = cls.onDeactivate
+	function cls:onDeactivate( screen, ... )
+		if self._qedctrl then
+			if appends and appends.onDeactivate then
+				appends.onDeactivate(self, screen, ...)
+			end
+
+			self._qedctrl:removeWidget(self)
+		end
+		self._qedctrl = nil
+		oldOnDeactivate(self, screen, ...)
+	end
+end
+
+
 return {
 	screenctrl = screenctrl,
+	widget = widget,
 }

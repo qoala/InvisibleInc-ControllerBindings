@@ -18,17 +18,16 @@ local function init(modApi)
 	rawset(_G,"SCRIPT_PATHS",rawget(_G,"SCRIPT_PATHS") or {})
 	SCRIPT_PATHS.qedctrl = scriptPath
 
-	-- client overrides
 	include(scriptPath.."/input-manager")
 
 	include(scriptPath.."/mui_button")
 	include(scriptPath.."/mui_group")
+	include(scriptPath.."/mui_listbox")
 	include(scriptPath.."/mui_padctrl")
 	include(scriptPath.."/mui_screen")
 
 	include(scriptPath.."/hud")
-
-	-- sim overrides
+	include(scriptPath.."/saveslots-dialog")
 end
 
 local function earlyUnload(modApi)
@@ -46,11 +45,10 @@ local function unload( modApi )
 
 	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/main-menu"))
 	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/modal-monst3r"))
+	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/modal-saveslots"))
 	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/modals"))
 	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/pause-dialog"))
 	-- TODO: modal-logs: listbox, nonlinear button arrangement.
-	-- TODO: modal-saveslots: listbox
-	-- TODO: modal-saveslots: ok/delete/cancel buttons that appear as an upper layer within the same screen.
 	-- TODO: modal-tutorials: buttons for internal pages all start visible, but all but the first are occluded.
 end
 
