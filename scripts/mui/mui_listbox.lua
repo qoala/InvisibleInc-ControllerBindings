@@ -1,8 +1,9 @@
 local util = include("modules/util")
 local mui_defs = include("mui/mui_defs")
+
 local mui_listbox = include("mui/widgets/mui_listbox")
 
-local padctrl_widget = include(SCRIPT_PATHS.qedctrl.."/mui_padctrl").widget
+local padctrl_widget = include(SCRIPT_PATHS.qedctrl.."/mui/mui_padctrl").widget
 
 local ITEM_Inactive = 1
 local ITEM_Active = 2

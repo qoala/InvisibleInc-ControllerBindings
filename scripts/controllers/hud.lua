@@ -1,8 +1,9 @@
-local hud = include( "hud/hud" )
 local mui_defs = include("mui/mui_defs")
 local util = include( "client_util" )
 
-local end_turn_dialog = include(SCRIPT_PATHS.qedctrl.."/end_turn_dialog")
+local hud = include( "hud/hud" )
+
+local end_turn_dialog = include(SCRIPT_PATHS.qedctrl.."/controllers/end_turn_dialog")
 
 --
 

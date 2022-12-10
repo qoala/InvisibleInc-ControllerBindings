@@ -1,7 +1,8 @@
 local mui_defs = include("mui/mui_defs")
+
 local mui_button = include("mui/widgets/mui_button")
 
-local padctrl_widget = include(SCRIPT_PATHS.qedctrl.."/mui_padctrl").widget
+local padctrl_widget = include(SCRIPT_PATHS.qedctrl.."/mui/mui_padctrl").widget
 
 
 local oldInit = mui_button.init

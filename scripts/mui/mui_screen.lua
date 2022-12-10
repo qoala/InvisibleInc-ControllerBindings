@@ -1,9 +1,10 @@
 local util = include( "modules/util" )
 local mui_defs = include("mui/mui_defs")
-local mui_screen = include("mui/mui_screen")
 local mui_util = include("mui/mui_util")
 
-local mui_padctrl = include(SCRIPT_PATHS.qedctrl.."/mui_padctrl")
+local mui_screen = include("mui/mui_screen")
+
+local mui_padctrl = include(SCRIPT_PATHS.qedctrl.."/mui/mui_padctrl")
 
 local oldInit = mui_screen.init
 function mui_screen:init( ... )

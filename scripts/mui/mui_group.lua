@@ -9,8 +9,9 @@ local util = require( "modules/util" )
 local mui_binder = require("mui/mui_binder")
 local mui_defs = require( "mui/mui_defs" )
 local mui_container = require( "mui/widgets/mui_container" )
-local mui_group = require( "mui/widgets/mui_group" )
 local mui_widget = require( "mui/widgets/mui_widget" )
+
+local mui_group = require( "mui/widgets/mui_group" )
 
 
 -- Overwrite mui_group:init

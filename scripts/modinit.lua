@@ -20,14 +20,13 @@ local function init(modApi)
 
 	include(scriptPath.."/input-manager")
 
-	include(scriptPath.."/mui_button")
-	include(scriptPath.."/mui_group")
-	include(scriptPath.."/mui_listbox")
-	include(scriptPath.."/mui_padctrl")
-	include(scriptPath.."/mui_screen")
+	include(scriptPath.."/mui/mui_button")
+	include(scriptPath.."/mui/mui_group")
+	include(scriptPath.."/mui/mui_listbox")
+	include(scriptPath.."/mui/mui_screen")
 
-	include(scriptPath.."/hud")
-	include(scriptPath.."/saveslots-dialog")
+	include(scriptPath.."/controllers/hud")
+	include(scriptPath.."/controllers/saveslots-dialog")
 end
 
 local function earlyUnload(modApi)
