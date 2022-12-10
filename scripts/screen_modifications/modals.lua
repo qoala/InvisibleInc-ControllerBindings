@@ -1,5 +1,7 @@
 -- Modal dialogs with a simple layout of buttons.
 
+local HLIST = 2
+
 local IDX1 = { ctrlCoord = {1} }
 local IDX2 = { ctrlCoord = {2} }
 local IDX3 = { ctrlCoord = {3} }
@@ -13,6 +15,10 @@ end
 -- Most dialogs have widgets[2] as the main dialog panel, with all buttons among its children.
 local function modifyDialog(filename, childIndex, modification)
 	return { filename, { "widgets", 2, "children", childIndex }, modification }
+end
+
+local function setLayout(filename, layoutGroups)
+	return { filename, { "properties" }, { ctrlLayout = { groups = layoutGroups } } }
 end
 
 -- Many dialogs have a single screen_button (named okBtn, at child index 3).
@@ -76,8 +82,9 @@ local modifications = {
 	modifyDialog("modal-install-augment.lua", 5, IDX2), -- leaveInInventoryBtn
 
 	-- TODO: horizontal, cancelBtn left of okBtn
-	modifyDialog("modal-rewind.lua", 3, skinButton(IDX1)), -- okBtn
-	modifyDialog("modal-rewind.lua", 7, skinButton(IDX2)), -- cancelBtn
+	setLayout("modal-rewind.lua", {{ shape = HLIST, defaultCoords = {{2}} }}),
+	modifyDialog("modal-rewind.lua", 7, skinButton(IDX1)), -- cancelBtn
+	modifyDialog("modal-rewind.lua", 3, skinButton(IDX2)), -- okBtn
 
 	-- TODO: listbox 9 @ IDX1
 	modifyDialog("modal-select-dlc.lua", 6, IDX2), -- okBtn
