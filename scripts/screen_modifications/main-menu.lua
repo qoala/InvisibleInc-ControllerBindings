@@ -1,17 +1,17 @@
-local function assignCtrl(widgetIndex, coord)
+local function assignCoord(widgetIndex, coord)
 	return {
 		"main-menu.lua",
 		{ "widgets", widgetIndex },
-		{ ctrlCoord = coord },
+		{ ctrlProperties = { coord = coord } },
 	}
 end
 
 local modifications = {
-	assignCtrl(9,  {1}), -- playBtn
-	assignCtrl(13, {2}), -- optionsBtn
-	assignCtrl(12, {3}), -- creditsBtn
-	assignCtrl(11, {4}), -- exitBtn
-	assignCtrl(10, {5}), -- signUpBtn
+	assignCoord(9,  {1}), -- playBtn
+	assignCoord(13, {2}), -- optionsBtn
+	assignCoord(12, {3}), -- creditsBtn
+	assignCoord(11, {4}), -- exitBtn
+	assignCoord(10, {5}), -- signUpBtn
 }
 
 return modifications

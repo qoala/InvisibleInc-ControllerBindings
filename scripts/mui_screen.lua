@@ -20,7 +20,7 @@ end
 
 local oldOnActivate = mui_screen.onActivate
 function mui_screen:onActivate( ... )
-	self._qedctrl:onActivate( self, self._props.ctrlLayout )
+	self._qedctrl:onActivate( self, self._props.ctrlProperties )
 	oldOnActivate( self, ... )
 	self._qedctrl:afterActivate()
 end

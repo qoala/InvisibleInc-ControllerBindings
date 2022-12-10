@@ -1,67 +1,212 @@
 local array = include("modules/array")
 local util = require( "modules/util" )
 local mui_defs = include("mui/mui_defs")
+local mui_util = include("mui/mui_util")
 
--- Widgets can specify the following fields in their def to be placed in the controller-accessible grid:
--- * ctrlCoord = { index }:
+-- Widgets can specify { ctrlProperties = {...} } to be placed in the screens control layout:
+-- * coord = { index }:
 --     Index position of this widget. Widgets will be sorted within their group, so this need not be densely packed.
--- * ctrlGroup = groupID (default 1):
+-- * group = groupID (default 1):
 --     Allows placing widgets in independent grids for better logical arrangement.
+-- * autoConfirm = true:
+--     If true and this is the default widget, pressing the confirm key will automatically trigger this widget from non-controller mode.
+--     Usually used if this is the only possible interaction on the screen.
 
--- Screens can specify details of their controller-accessible grids in { properties = { ctrlLayout = {} } }.
---
+-- Screens can specify { properties = { ctrlProperties = {...} } }:
 -- * groups = { group1Def, group2Def, ... }:
 --     Specify properties of a widget group.
---   * shape = shapeID (default VLIST=1):
---       Shape values (below) define how coordinates for this group's widgets are interpreted.
---   * defaultCoords = { {index}, {fallbackIndex}, ... }:
---       Specify the default widget when first entering this group. The first available index (accounting for hidden/disabled elements) will be focused.
+--   * shape = 'VLIST'|'HLIST' (default VLIST):
+--       Shape values define how coordinates for this group's widgets are interpreted.
+--   * defaultCoord = {index} (default first available widget):
+--       Specify the default widget when first entering this group.
+--   * defaultCoordChain = { {index}, {fallbackIndex}, ... }:
+--       Array of widget indices to try as a default. The first available widget (accounting for hidden/disabled elements) will be focused.
+--   * leftToGroup = { groupID } / rightTo = / upTo = / downTo =:
+--       If control can't move any further in the specified direction within this group, move to the specified group.
 --   * forceController = true:
 --       If true, input will be forced to controller mode immediately on screen activation.
+-- * defaultGroup = groupID (default 1):
+--     The group that will be initially focused on this screen.
+-- * defaultGroupChain = { groupID, fallback, ... }:
+--     Array of groups to try as default. The first group that succeeds will be focused.
 
--- Group shape values
-local VLIST = 1 -- Vertical list, starting from the top.
-local HLIST = 2 -- Horizontal list, starting from the left.
-
-
-
-local function insertSorted(t, widget)
-	local idx = widget:getControllerCoord()[1]
-	for i, other in ipairs(t) do
-		if other:getControllerCoord()[1] > idx then
-			table.insert(t, i, widget)
-			return
-		end
-	end
-	table.insert(t, widget)
-end
 
 local function isAvailableWidget( widget )
 	return widget:isVisible() and (not widget.isDisabled or not widget:isDisabled())
 end
 
-local function nextActiveWidget( widgetLine, idx )
-	local i = idx + 1
-	local size = #widgetLine
-	while i <= size do
-		local widget = widgetLine[i]
-		if isAvailableWidget(widget) then
-			return widget
-		end
-		i = i + 1
+local function matchSameCoord(coord)
+	return function(w)
+		local wc = w:getControllerCoord()
+		return wc[1] == coord[1]
 	end
 end
 
-local function prevActiveWidget( widgetLine, idx )
+-- ===
+
+local widget_group = class()
+function widget_group:init( ctrl, def )
+	self._ctrl = ctrl
+	self._def = def or {}
+end
+
+-- function widget_group:addWidget( widget )
+-- function widget_group:removeWidget( widget )
+-- function widget_group:hasWidgets()
+-- function widget_group:defaultWidget()
+
+function widget_group:onEnter(options)
+	options = options or {}
+	local widget = self:defaultWidget()
+	if widget or options.force then
+		self._ctrl:setFocus(widget)
+		return widget and true
+	end
+end
+
+function widget_group:_onNavigateToGroup(toGroup)
+	if toGroup then
+		return self._ctrl:enterGroup(unpack(toGroup))
+	end
+end
+
+function widget_group:onNavigateUp()
+	return self:_onNavigateToGroup(self._def.upToGroup)
+end
+
+function widget_group:onNavigateDown()
+	return self:_onNavigateToGroup(self._def.downToGroup)
+end
+
+function widget_group:onNavigateLeft()
+	return self:_onNavigateToGroup(self._def.leftToGroup)
+end
+
+function widget_group:onNavigateRight()
+	return self:_onNavigateToGroup(self._def.rightToGroup)
+end
+
+-- ===
+
+local list_group = class(widget_group)
+
+function list_group:init( ctrl, def )
+	widget_group.init(self, ctrl, def)
+	self._widgets = {}
+end
+
+function list_group:addWidget( widget )
+	-- Insert into a sorted list.
+	local coord = widget:getControllerCoord()[1]
+	for i, other in ipairs(self._widgets) do
+		if other:getControllerCoord()[1] > coord then
+			table.insert(self._widgets, i, widget)
+			return
+		end
+	end
+	table.insert(self._widgets, widget)
+end
+function list_group:removeWidget( widget )
+	array.removeElement(self._widgets, widget)
+end
+
+function list_group:hasWidgets()
+	return self._widgets[1] and true
+end
+
+function list_group:defaultWidget()
+	if not self:hasWidgets() then
+		return
+	end
+
+	if self._def.defaultCoord then
+		local widget = array.findIf(self._widgets, matchSameCoord(self._def.defaultCoord))
+		if widget and isAvailableWidget(widget) then
+			return widget
+		end
+	end
+	if self._def.defaultCoordChain then
+		for _,default in ipairs(self._def.defaultCoordChain) do
+			local widget = array.findIf(self._widgets, matchSameCoord(default))
+			if widget and isAvailableWidget(widget) then
+				return widget
+			end
+		end
+	end
+	return self:_nextActiveWidget(0)
+end
+
+function list_group:_prevActiveWidget( idx )
 	local i = idx - 1
 	while i >= 1 do
-		local widget = widgetLine[i]
+		local widget = self._widgets[i]
 		if isAvailableWidget(widget) then
 			return widget
 		end
 		i = i - 1
 	end
 end
+function list_group:onNavigatePrev()
+	local idx = array.find(self._widgets, self._ctrl._focusWidget)
+	if idx > 1 then
+		local prevWidget = self:_prevActiveWidget(idx)
+		if prevWidget then
+			self._ctrl:setFocus(prevWidget)
+			return true
+		end
+	end
+end
+
+function list_group:_nextActiveWidget( idx )
+	local i = idx + 1
+	local size = #self._widgets
+	while i <= size do
+		local widget = self._widgets[i]
+		if isAvailableWidget(widget) then
+			return widget
+		end
+		i = i + 1
+	end
+end
+function list_group:onNavigateNext()
+	local idx = array.find(self._widgets, self._ctrl._focusWidget)
+	if idx < #self._widgets then
+		local nextWidget = self:_nextActiveWidget(idx)
+		if nextWidget then
+			self._ctrl:setFocus(nextWidget)
+			return true
+		end
+	end
+end
+
+local hlist_group = class(list_group)
+function hlist_group:onNavigateLeft()
+	if self:onNavigatePrev() then
+		return true
+	end
+	return widget_group.onNavigateLeft(self)
+end
+function hlist_group:onNavigateRight()
+	if self:onNavigateNext() then
+		return true
+	end
+	return widget_group.onNavigateRight(self)
+end
+
+local vlist_group = class(list_group)
+function vlist_group:onNavigateUp()
+	if self:onNavigatePrev() then
+		return true
+	end
+	return widget_group.onNavigateUp(self)
+end
+function vlist_group:onNavigateDown()
+	if self:onNavigateNext() then
+		return true
+	end
+	return widget_group.onNavigateDown(self)
+end
+
 
 -- ==========
 -- mui_screen
@@ -76,44 +221,39 @@ function screenctrl:init()
 	self._focusWidget = nil
 end
 
-function screenctrl:_groupDef(group)
-	return (self._def.groups and self._def.groups[group]) or {}
-end
-
-local function matchSameCoord(coord)
-	return function(w)
-		local wc = w:getControllerCoord()
-		return wc[1] == coord[1]
+function screenctrl:_initFocus()
+	local defaultGroup = self._def.defaultGroup
+	if defaultGroup and self._groups[defaultGroup] and self._groups[defaultGroup]:onEnter() then
+		return true
 	end
-end
-
-function screenctrl:_getDefaultWidget()
-	local groupDef = self:_groupDef(self._focusGroup)
-	local widgetLine = self._widgetGrid[self._focusGroup]
-	if not widgetLine[1] then
-		return
-	end
-	local widget = nil
-
-	if groupDef.defaultCoords then
-		for _,default in ipairs(groupDef.defaultCoords) do
-			widget = array.findIf(widgetLine, matchSameCoord(default))
-			if widget and isAvailableWidget(widget) then
-				return widget
+	local defaultGroupChain = self._def.defaultGroupChain
+	if defaultGroupChain then
+		for _, defaultGroup in ipairs(defaultGroupChain) do
+			if self._groups[defaultGroup] and self._groups[defaultGroup]:onEnter() then
+				return true
 			end
 		end
 	end
-
-	return nextActiveWidget(widgetLine, 0)
+	if self._groups[1] then
+		return self._groups[1]:onEnter()
+	end
 end
+
+local GROUP_FACTORY = {
+	VLIST = vlist_group,
+	HLIST = hlist_group,
+}
 
 function screenctrl:onActivate(screen, layout)
 	simlog("LOG_QEDCTRL", "padctrl:onActivate %s", tostring(screen._filename))
 	self._screen = screen
 	self._def = layout or {}
-	self._widgetGrid = {}
 	self._focusWidget = nil
-	self._focusGroup = 1
+	self._groups = {}
+	for i, groupDef in ipairs(self._def.groups or {}) do
+		self._groups[i] = GROUP_FACTORY[groupDef.shape or 'VLIST'](self, groupDef)
+	end
+
 	screen:addEventHandler( self, mui_defs.EVENT_KeyDown )
 end
 
@@ -122,15 +262,15 @@ function screenctrl:afterActivate()
 		inputmgr.setMouseEnabled(false)
 	end
 	if not inputmgr.isMouseEnabled() and self:hasWidgets() then
-		self:setFocus(self._focusWidget or self:_getDefaultWidget())
+		self:_initFocus()
 	end
 end
 
 function screenctrl:onDeactivate()
 	simlog("LOG_QEDCTRL", "padctrl:onDeactivate %s", tostring(self._screen._filename))
 	self._screen:removeEventHandler( self )
-	self._screen, self._focusWidget = nil
-	self._widgetGrid = nil
+	self._screen, self._def = nil
+	self._focusWidget, self._groups = nil
 end
 
 function screenctrl:addWidget( widget )
@@ -138,25 +278,30 @@ function screenctrl:addWidget( widget )
 	local coord = widget:getControllerCoord()
 	simlog("LOG_QEDCTRL", "padctrl:addWidget %s/%s %s g=%s", self._screen._filename, widget._def.name or "?ui?", util.tostringl(coord), tostring(group))
 
-	local idx = coord[1]
-	self._widgetGrid[group] = self._widgetGrid[group] or {}
-	insertSorted(self._widgetGrid[group], widget)
+	self._groups[group] = self._groups[group] or vlist_group(self)
+	self._groups[group]:addWidget(widget)
 end
 
 function screenctrl:removeWidget( widget )
 	local group = widget:getControllerGroup()
-	if self._widgetGrid[group] then
-		array.removeElement(self._widgetGrid[group], widget)
+	if self._groups[group] then
+		self._groups[group]:removeWidget(widget)
 	end
 end
 
+function screenctrl:enterGroup( group, ... )
+	if self._groups[group] then
+		return self._groups[group]:onEnter(...)
+	end
+end
+
+
 function screenctrl:hasWidgets()
-	return self._widgetGrid[1] and self._widgetGrid[1][1]
+	return self._groups[1] and self._groups[1]:hasWidgets()
 end
 
 function screenctrl:setFocus( focusWidget )
 	self._focusWidget = focusWidget
-	self._focusGroup = focusWidget:getControllerGroup()
 	if focusWidget then
 		simlog("LOG_QEDCTRL", "padctrl:focus %s/%s %s g=%s", self._screen._filename, focusWidget._def.name or "?ui?", util.tostringl(focusWidget:getControllerCoord()), tostring(focusWidget:getControllerGroup()))
 	else
@@ -166,52 +311,39 @@ function screenctrl:setFocus( focusWidget )
 	self._screen._focusWidget = focusWidget
 end
 
-local function isPadCtrlKey( key )
-	return (
-		key == mui_defs.K_LEFTARROW or
-		key == mui_defs.K_UPARROW or
-		key == mui_defs.K_RIGHTARROW or
-		key == mui_defs.K_DOWNARROW or
-		key == mui_defs.K_PERIOD
-	)
-end
+local NAV_KEY = {
+	[mui_defs.K_UPARROW] = [[onNavigateUp]],
+	[mui_defs.K_DOWNARROW] = [[onNavigateDown]],
+	[mui_defs.K_LEFTARROW] = [[onNavigateLeft]],
+	[mui_defs.K_RIGHTARROW] = [[onNavigateRight]],
+}
 
-local function maybeAutoClick(self)
+local function maybeAutoClick(self, widget)
 	-- Confirm button can click immediately if there's only one widget in the screen.
-	local singleWidget = #self._widgetGrid == 1 and #self._widgetGrid[self._focusGroup] == 1
-	if self._focusWidget.handleControllerClick and singleWidget then
-		simlog("LOG_QEDCTRL", "padctrl:click %s %s AUTO", self._screen._filename, self._focusWidget._def.name or "?ui?")
-		return self._focusWidget:handleControllerClick()
+	if widget and widget:getControllerDef().autoConfirm and widget.handleControllerClick then
+		simlog("LOG_QEDCTRL", "padctrl:click %s %s AUTO", self._screen._filename, widget._def.name or "?ui?")
+		return widget:handleControllerClick()
 	end
 	return true
 end
 
-local function isPrevBinding(key, shape)
-	return (
-		(shape == VLIST and key == mui_defs.K_UPARROW)
-		or (shape == HLIST and key == mui_defs.K_LEFTARROW)
-	)
-end
-local function isNextBinding(key, shape)
-	return (
-		(shape == VLIST and key == mui_defs.K_DOWNARROW)
-		or (shape == HLIST and key == mui_defs.K_RIGHTARROW)
-	)
-end
-
 function screenctrl:handleEvent( ev )
 	-- simlog("LOG_QEDCTRL", "padctrl:handleEvent %s %s %s", self._screen._filename, tostring(ev.eventType), tostring(ev.key))
-	if not (ev.eventType == mui_defs.EVENT_KeyDown and self:hasWidgets() and isPadCtrlKey( ev.key )) then
+	local isConfirmBinding = mui_util.isBinding(ev, mui_defs.K_PERIOD)
+	if not (ev.eventType == mui_defs.EVENT_KeyDown
+			and (isConfirmBinding or NAV_KEY[ev.key])
+			and self:hasWidgets()
+	) then
 		return
 	end
 
 	if not self._focusWidget then
 		-- Focus the default widget.
 		inputmgr.setMouseEnabled(false)
-		self:setFocus(self:_getDefaultWidget())
+		self:_initFocus()
 
-		if ev.key == mui_defs.K_PERIOD and self._focusWidget then
-			return maybeAutoClick(self)
+		if isConfirmBinding then
+			return maybeAutoClick(self, self._focusWidget)
 		end
 		return true
 	elseif inputmgr.isMouseEnabled() then
@@ -219,32 +351,30 @@ function screenctrl:handleEvent( ev )
 		inputmgr.setMouseEnabled(false)
 		self:setFocus(self._focusWidget)
 
-		if ev.key == mui_defs.K_PERIOD and self._focusWidget then
-			return maybeAutoClick(self)
+		if isConfirmBinding then
+			return maybeAutoClick(self, self._focusWidget)
 		end
 		return true
-	elseif ev.key == mui_defs.K_PERIOD and self._focusWidget.handleControllerClick then
-		simlog("LOG_QEDCTRL", "padctrl:click %s %s", self._screen._filename, self._focusWidget._def.name or "?ui?")
-		return self._focusWidget:handleControllerClick()
+	elseif isConfirmBinding then
+		if self._focusWidget.handleControllerClick then
+			simlog("LOG_QEDCTRL", "padctrl:click %s %s", self._screen._filename, self._focusWidget._def.name or "?ui?")
+			return self._focusWidget:handleControllerClick()
+		end
+		return true
 	end
 
 	-- Navigation key pressed.
-	local groupDef = self:_groupDef(self._focusGroup)
-	local widgetLine = self._widgetGrid[self._focusGroup]
-	local idx = array.find(widgetLine, self._focusWidget)
-	if isPrevBinding(ev.key, groupDef.shape or 1) and idx > 1 then
-		local prevWidget = prevActiveWidget(widgetLine, idx)
-		if prevWidget then
-			self:setFocus(prevWidget)
-		end
-		return true
-	elseif isNextBinding(ev.key, groupDef.shape or 1) and idx < #widgetLine then
-		local nextWidget = nextActiveWidget(widgetLine, idx)
-		if nextWidget then
-			self:setFocus(nextWidget)
-		end
+	local navCall = NAV_KEY[ev.key]
+	local widget = self._focusWidget
+	local group = self._groups[widget:getControllerGroup()]
+
+	if widget[navCall] and widget[navCall](widget) then
 		return true
 	end
+	if group[navCall](group) then
+		return true
+	end
+	return true
 end
 
 return {
