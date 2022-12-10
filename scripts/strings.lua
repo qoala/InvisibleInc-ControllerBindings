@@ -1,0 +1,11 @@
+local MOD_STRINGS =
+{
+	KEYBIND =
+	{
+		HEADER = "MOD - CONTROLLER BINDINGS",
+		CONFIRM = "CONFIRM",
+		CANCEL = "CANCEL and TURN MENU",
+	},
+}
+
+return MOD_STRINGS

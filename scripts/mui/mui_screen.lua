@@ -1,6 +1,5 @@
-local util = include( "modules/util" )
 local mui_defs = include("mui/mui_defs")
-local mui_util = include("mui/mui_util")
+local util = include( "client_util" )
 
 local mui_screen = include("mui/mui_screen")
 
@@ -41,7 +40,7 @@ local oldHandleInputEvent = mui_screen.handleInputEvent
 function mui_screen:handleInputEvent( ev, ... )
 	local handled = oldHandleInputEvent( self, ev, ... )
 
-	if (not handled and ev.eventType == mui_defs.EVENT_KeyDown and mui_util.isBinding(ev, mui_defs.K_COMMA)) then
+	if (not handled and ev.eventType == mui_defs.EVENT_KeyDown and util.isKeyBindingEvent("QEDCTRL_CANCEL", ev)) then
 		-- Treat "cancel" as "Esc" in screens that don't have a native cancel binding.
 		local fakeEv = util.tdupe(ev)
 		fakeEv.key = mui_defs.K_ESCAPE

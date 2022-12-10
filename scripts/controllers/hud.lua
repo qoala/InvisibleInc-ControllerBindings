@@ -33,7 +33,6 @@ hud.createHud = function( ... )
 		if btnEndTurnMenu and not btnEndTurnMenu.isnull then
 			hudObject._qedctrl_endTurnDialog = end_turn_dialog(hudObject._game)
 
-			btnEndTurnMenu:setHotkey(mui_defs.K_COMMA)
 			btnEndTurnMenu.onClick = util.makeDelegate(nil, onClickEndTurnMenu, hudObject)
 		end
 	end

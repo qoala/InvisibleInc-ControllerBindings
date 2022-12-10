@@ -1,7 +1,6 @@
 local array = include("modules/array")
-local util = require( "modules/util" )
 local mui_defs = include("mui/mui_defs")
-local mui_util = include("mui/mui_util")
+local util = require( "client_util" )
 
 -- Widgets can specify { ctrlProperties = {...} } to be placed in the screens control layout:
 -- * coord = { index }:
@@ -347,7 +346,7 @@ end
 
 function screenctrl:handleEvent( ev )
 	-- simlog("LOG_QEDCTRL", "padctrl:handleEvent %s %s %s", self._screen._filename, tostring(ev.eventType), tostring(ev.key))
-	local isConfirmBinding = mui_util.isBinding(ev, mui_defs.K_PERIOD)
+	local isConfirmBinding = util.isKeyBindingEvent("QEDCTRL_CONFIRM", ev)
 	if not (ev.eventType == mui_defs.EVENT_KeyDown
 			and (isConfirmBinding or NAV_KEY[ev.key])
 			and self:hasWidgets()

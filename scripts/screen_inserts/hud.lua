@@ -20,6 +20,7 @@ local inserts =
 			sx = 1,
 			sy = 1,
 			ctor = [[button]],
+			hotkey = [[QEDCTRL_CANCEL]],
 			halign = MOAITextBox.CENTER_JUSTIFY,
 			valign = MOAITextBox.CENTER_JUSTIFY,
 			text_style = [[]],

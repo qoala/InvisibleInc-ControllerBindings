@@ -442,7 +442,7 @@ properties =
 	sinksInput = true,
 	activateTransition = [[activate_left]],
 	deactivateTransition = [[deactivate_right]],
-	ctrlLayout =
+	ctrlProperties =
 	{
 		forceController = true,
 	}

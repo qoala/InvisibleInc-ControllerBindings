@@ -8,8 +8,8 @@ local function initStrings(modApi)
 	local dataPath = modApi:getDataPath()
 	local scriptPath = modApi:getScriptPath()
 
-	-- local MOD_STRINGS = include( scriptPath .. "/strings" )
-	-- modApi:addStrings( dataPath, "QEDCTRL", MOD_STRINGS)
+	local MOD_STRINGS = include( scriptPath .. "/strings" )
+	modApi:addStrings( dataPath, "QEDCTRL", MOD_STRINGS)
 end
 
 local function init(modApi)
@@ -18,6 +18,7 @@ local function init(modApi)
 	rawset(_G,"SCRIPT_PATHS",rawget(_G,"SCRIPT_PATHS") or {})
 	SCRIPT_PATHS.qedctrl = scriptPath
 
+	include(scriptPath.."/client_defs")
 	include(scriptPath.."/input-manager")
 
 	include(scriptPath.."/mui/mui_button")
