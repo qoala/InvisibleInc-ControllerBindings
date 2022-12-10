@@ -442,6 +442,10 @@ properties =
 	sinksInput = true,
 	activateTransition = [[activate_left]],
 	deactivateTransition = [[deactivate_right]],
+	ctrlLayout =
+	{
+		forceController = true,
+	}
 }
 return { dependents = dependents, text_styles = text_styles, transitions = transitions, skins = skins, widgets = widgets, properties = properties, currentSkin = nil }
 

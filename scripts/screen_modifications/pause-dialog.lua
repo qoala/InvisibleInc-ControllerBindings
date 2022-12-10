@@ -6,7 +6,16 @@ local function assignCtrl(childIndex, coord)
 	}
 end
 
+local function setLayout(layout)
+	return {
+		"pause_dialog_screen.lua",
+		{ "properties" },
+		{ ctrlLayout = layout },
+	}
+end
+
 local modifications = {
+	setLayout({ forceController = true }),
 	assignCtrl(7,  {1}), -- resumeBtn
 	assignCtrl(5,  {2}), -- optionsBtn
 	assignCtrl(10, {3}), -- helpBtn

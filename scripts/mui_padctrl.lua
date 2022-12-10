@@ -16,6 +16,8 @@ local mui_defs = include("mui/mui_defs")
 --       Shape values (below) define how coordinates for this group's widgets are interpreted.
 --   * defaultCoords = { {index}, {fallbackIndex}, ... }:
 --       Specify the default widget when first entering this group. The first available index (accounting for hidden/disabled elements) will be focused.
+--   * forceController = true:
+--       If true, input will be forced to controller mode immediately on screen activation.
 
 -- Group shape values
 local VLIST = 1 -- Vertical list, starting from the top.
@@ -116,6 +118,9 @@ function screenctrl:onActivate(screen, layout)
 end
 
 function screenctrl:afterActivate()
+	if self._def.forceController then
+		inputmgr.setMouseEnabled(false)
+	end
 	if not inputmgr.isMouseEnabled() and self:hasWidgets() then
 		self:setFocus(self._focusWidget or self:_getDefaultWidget())
 	end
