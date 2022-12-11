@@ -9,8 +9,7 @@ local oldInit = mui_screen.init
 function mui_screen:init( ... )
 	oldInit( self, ... )
 
-	-- simlog("LOG_QEDCTRL", "screen:init %s", self._filename )
-	self._qedctrl = mui_padctrl.screenctrl()
+	self._qedctrl_ctrl = mui_padctrl.screenctrl(self._props.ctrlProperties)
 
 	-- Hide the sinksInput flag from the vanilla handleInputEvent.
 	self._qedctrl_sinksInput = self._props.sinksInput
@@ -18,22 +17,28 @@ function mui_screen:init( ... )
 	self._props.sinksInput = false
 end
 
+function mui_screen:getControllerControl()
+	return self._qedctrl_ctrl
+end
+
 local oldOnActivate = mui_screen.onActivate
 function mui_screen:onActivate( ... )
-	self._qedctrl:onActivate( self, self._props.ctrlProperties )
+	self._qedctrl_ctrl:onActivate(self) -- Prepare to receive widgets.
+
 	oldOnActivate( self, ... )
-	self._qedctrl:afterActivate()
+
+	self._qedctrl_ctrl:afterActivate() -- Finalize for input.
 end
 
 local oldOnDeactivate = mui_screen.onDeactivate
 function mui_screen:onDeactivate( ... )
-	-- Don't leave widgets focused if this screen is reused.
+	-- Don't leave widgets focused, in case this screen is reused.
 	if self._focusWidget then
 		self:dispatchEvent({eventType = mui_defs.EVENT_FocusChanged, newFocus = nil, oldFocus = self._focusWidget })
 	end
 
+	self._qedctrl_ctrl:onDeactivate()
 	oldOnDeactivate( self, ... )
-	self._qedctrl:onDeactivate()
 end
 
 local oldHandleInputEvent = mui_screen.handleInputEvent

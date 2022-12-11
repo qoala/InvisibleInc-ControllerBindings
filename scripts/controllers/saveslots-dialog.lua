@@ -26,7 +26,7 @@ function dialog:showState( state, campaign, ... )
 	oldShowState( self, state, campaign, ... )
 
 	-- TODO: Changing groups here doesn't work. Because of the transitions, the popup widgets aren't visible yet.
-	local ctrl = self._screen._qedctrl
+	local ctrl = self._screen:getControllerControl()
 	if state == STATE_NEW_GAME then
 		ctrl:enterGroup(2)
 	elseif state == STATE_CONTINUE_GAME then

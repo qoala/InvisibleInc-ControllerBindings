@@ -52,7 +52,7 @@ function mui_listbox:setControllerFocus(idx)
 
 	if widget then
 		self._qedctrl_focusIdx = idx
-		return self._qedctrl:setProxyFocus(self, widget, idx)
+		return self._qedctrl_ctrl:setProxyFocus(self, widget, idx)
 	end
 end
 
