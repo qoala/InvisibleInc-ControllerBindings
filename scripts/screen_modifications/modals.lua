@@ -72,22 +72,18 @@ local modifications = {
 	modifyDialog("modal-grafter.lua", 16, ctrlID("installSocketBtn")),
 	modifyDialog("modal-grafter.lua", 15, ctrlID("installAugmentBtn")),
 	modifyDialog("modal-grafter.lua", 17, ctrlID("cancelBtn")),
-	util.setLayouts("modal-grafter.lua",
+	util.setSingleLayout("modal-grafter.lua",
 		{
+			-- Drill grid, coord = 1
 			{
-				id = 1,
+				id = "actions", coord = 2,
 				shape = [[HLIST]],
 				children = widgetList("installSocketBtn", "installAugmentBtn"),
 				default = "installAugmentBtn",
-				downTo = {2},
 			},
-			{
-				id = 2,
-				children = widgetList("cancelBtn"),
-				upTo = {1},
-			},
+			widget("cancelBtn", 3),
 		},
-		{ defaultLayoutChain = {1, 2} }
+		{ defaultChain = { "actions", "cancelBtn" } }
 	),
 
 	modifyDialog("modal-install-augment.lua", 6, ctrlID("installAugmentBtn")),
@@ -101,34 +97,29 @@ local modifications = {
 		{ shape = [[HLIST]], default = "okBtn" }
 	),
 
-	-- TODO: listbox @9 above okBtn.
+	-- TODO: listbox @9 above okBtn. Needs: sub-item selection, scroll handling, custom hover effects.
 	modifyDialog("modal-select-dlc.lua", 6, ctrlID("okBtn")),
 	modifyDialog("modal-select-dlc.lua", 7, ctrlID("cancelBtn")),
 	util.setSingleLayout("modal-select-dlc.lua", widgetList("okBtn", "cancelBtn")),
 
-	-- Skipping the input elements and okBtn.
+	-- Ignoring the input elements and okBtn.
 	modifyDialog("modal-signup.lua", 17, skinButton(ctrlID("cancelBtn"))),
 	util.setSingleLayout("modal-signup.lua", widgetList("cancelBtn")),
 
 	modifyDialog("modal-story.lua", 7, ctrlID("skipBtn")),
 	modifyDialog("modal-story.lua", 8, ctrlID("prevBtn")),
 	modifyDialog("modal-story.lua", 9, ctrlID("nextBtn")),
-	util.setLayouts("modal-story.lua",
+	util.setSingleLayout("modal-story.lua",
 		{
+			widget("skipBtn", 1),
 			{
-				id = 1,
-				children = widgetList("skipBtn"),
-				downTo = {2},
-			},
-			{
-				id = 2,
+				id = "nav", coord = 2,
 				shape = [[HLIST]],
 				children = widgetList("prevBtn", "nextBtn"),
 				default = "nextBtn",
-				upTo = {1},
 			},
 		},
-		{ defaultLayout = 2 }
+		{ default = "nav" }
 	),
 
 	modifyDialog("modal-update-disclaimer.lua", 5, skinButton(ctrlID("okBtn"))),
@@ -138,20 +129,15 @@ local modifications = {
 	modifyDialog("modal-update-disclaimer_b.lua", 6, skinButton(ctrlID("resetBtn"))),
 	modifyDialog("modal-update-disclaimer_b.lua", 5, skinButton(ctrlID("okBtn"))),
 	modifyDialog("modal-update-disclaimer_b.lua", 4, skinButton(ctrlID("readMoreBtn"))),
-	util.setLayouts("modal-update-disclamer_b.lua",
+	util.setSingleLayout("modal-update-disclamer_b.lua",
 		{
+			widget("resetBtn", 1),
 			{
-				id = 1,
-				children = widgetList("resetBtn"),
-				rightTo = {2},
-			},
-			{
-				id = 2,
+				id = "actions", coord = 2,
 				children = widgetList("okBtn", "readMoreBtn"),
-				leftTo = {1},
 			},
 		},
-		{ defaultLayout = 2 }
+		{ shape = [[HLIST]], default = "actions" }
 	),
 }
 

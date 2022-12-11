@@ -1,6 +1,7 @@
 -- Helpers for screen modifications.
 
 local util = include("modules/util")
+local ctrl_defs = include(SCRIPT_PATHS.qedctrl.."/ctrl_defs")
 
 local _M = {}
 
@@ -64,7 +65,7 @@ end
 
 -- Full modification entry for assigning a single screen-wide layout.
 function _M.setSingleLayout(filename, children, layoutProperties, otherProperties)
-	local layoutDef = { id = 1, children = children }
+	local layoutDef = { id = ctrl_defs.DEFAULT_LAYOUT, children = children }
 	if layoutProperties then
 		layoutDef = util.extend(layoutProperties)(layoutDef)
 	end

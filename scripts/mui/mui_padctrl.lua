@@ -4,33 +4,77 @@ local util = require( "client_util" )
 
 local ctrl_defs = include(SCRIPT_PATHS.qedctrl.."/ctrl_defs")
 
+-- == Widget-level properties
 -- Widgets can specify { ctrlProperties = { ... } to be placed in the screen's control layout:
 -- * id = "" (required):
---     Unique identifier within this screen. Used by widget references in the layout.
--- * soloButton = true, autoConfirm = true:
---     If true and the only interactive widget, then this screen does not need to define layouts.
---     This widget will automatically be the screen's sole child.
---     Pressing confirm will automatically trigger this widget, even from mouse mode.
+--     Unique identifier within this screen. Layouts (below) reference their widgets by this ID.
+-- * soloButton = true:
+--     If true, then this screen does not need to define layouts.
+--     This widget will automatically be placed as the screen's sole child.
+--     It is an error to specify this on multiple widgets or on a screen with defined layouts.
+-- * autoConfirm = true:
+--     With both soloButton and autoConfirm, pressing confirm will automatically trigger this
+--     widget, even from mouse mode. On its own, autoConfirm has no effect.
 
+-- == Screen-level properties
 -- Screens can specify { properties = { ctrlProperties = {...} } }:
--- * layouts = { layout1Def, layout2Def, ... }:
---     Specify properties of each widget layout group.
---   * id = "":
---     Unique identifier within this layout's parent.
---   * shape = "VLIST"|"HLIST" (default VLIST):
---       Shape values define how coordinates for this layout's children are interpreted.
---   * default = ID (default first available child):
---       Specify the default child when first entering this layout.
---   * defaultChain = { ID1, ID2, ... }:
---       Array of child identifieres to try as a default. The first available widget (accounting for hidden/disabled elements) will be focused.
---   * leftTo = { layoutID } / rightTo = / upTo = / downTo =:
---       If control can't move any further in the specified direction within this group, move to the specified group.
--- * defaultLayout = layoutID (default 1):
+-- * layouts = { rootLayoutDef, rootLayoutDef, ... }:
+--     Specify logical layouts of widgets (see below).
+--     Each entry at this level is a valid root layout for ctrl:setRoot(),
+--     and may contain an arbitrary tree of child layouts.
+-- * initialRoot = layoutID (default "root"):
 --     The layout that will be initially focused on this screen.
--- * defaultLayoutChain = { layoutID1, layoutID2, ... }:
---     Array of layouts to try as default. The first layout that succeeds will be focused.
+--     Unlike defaults for layout children, this sets the root even if the target has no available focus targets.
 -- * forceController = true:
 --     If true, input will be forced to controller mode immediately on screen activation.
+--
+-- == Layouts
+-- Layouts must have one of id or widgetID:
+--   * id = "":
+--     Unique identifier within this layout's parent.
+--   * widgetID = "":
+--     Control ID of a widget specified in this screen's widgets tree.
+--     The specified widget is placed at this position as a leaf-node of the layout tree.
+--     Must be unique among id and widgetID values within this layout's parent.
+-- Non-widget layouts can specify:
+--   * shape = "VLIST"|"HLIST" (default VLIST):
+--       Shape values define how coordinates for this layout's children are interpreted.
+--   * children = { layoutDef, layoutDef, ... }
+--       Child layouts within this layout.
+--   * default = ID:
+--       Specify the default child when first entering this layout.
+--       If default and defaultChain are unspecified or fail to find an available target,
+--       then the first available child will be focused instead.
+--   * defaultChain = { ID1, ID2, ... }:
+--       Array of child identifieres to try as a default. The first available widget (accounting for hidden/disabled elements) will be focused.
+-- All layouts can specify:
+--   * leftTo = { navigatePath... } / rightTo = / upTo = / downTo =:
+--       If control can't move any further in the specified direction within this group, move
+--       focus to the layout specified by this path. This applies before navigation falls back to
+--       the parent layout, so may help encode unusual layout structures.
+
+-- == ctrl:navigateTo({options}, navigatePath...)
+-- Navigates focus to a specific point in the layout, as specified by the ID path in the varargs.
+-- For example, ctrl:navigateTo(options, "a", "b", "c") selects
+-- the root layout "a", "a"'s child layout "b", "b"'s child layout "c", and then whichever target is the default within "c" and its descendants.
+--
+-- Recognized options:
+--   * force = true:
+--       If true, this will set the current focus position within each level of the layout,
+--       even if there are no available widgets below that path. If relevant widgets become visible
+--       later, then focus will be applied at that time. As long as there are no available widgets
+--       below the specified root, navigation with controller bindings may stop responding.
+--   * recall = true:
+--       When a child is unspecified by the path, the most recently focused child at each node will
+--       be tried before falling back to the layout's defaults.
+--   * dir = UP|DOWN|LEFT|RIGHT:
+--       When a child is unspecified by the path, the nearest child when approached from this
+--       direction will be focused, instead of the layout's defaults.
+--   * continue = true:
+--       Combined with a direction, if the specified path has no available widgets, then navigation
+--       will attempt to continue onwards in that direction, as if focus was starting from the
+--       specified path.
+--       Normally an overspecified path would be a no-op when called without force=true.
 
 
 local _M = {}
@@ -85,14 +129,14 @@ local NAV_TO_FIELDS = {
 	[ctrl_defs.LEFT] = "leftTo",
 	[ctrl_defs.RIGHT] = "rightTo",
 }
-function _M.layout_group:onNav(navDir)
-	if self._focusChild and self._focusChild:onNav(navDir) then return true end
+function _M.layout_group:onNav(navDir, coord, ...)
+	if not coord and self._focusChild and self._focusChild:onNav(navDir) then return true end
 
-	if self._onInternalNav and self:_onInternalNav(navDir) then return true end
+	if self._onInternalNav and self:_onInternalNav(navDir, coord, ...) then return true end
 
-	local toID = self._def[NAV_TO_FIELDS[navDir]]
-	if toID then
-		return self._ctrl:setRoot(unpack(toID))
+	local toPath = self._def[NAV_TO_FIELDS[navDir]]
+	if toPath then
+		return self._ctrl:navigateTo({dir=navDir, continue=true}, unpack(toPath))
 	end
 end
 
@@ -220,10 +264,10 @@ function _M.list_layout:onDeactivate( ... )
 end
 
 function _M.list_layout:_doFocus(options, child, idx, ...)
-	self._focusChild = child
-	self._focusIdx = idx
-	if child then
-		return child:onFocus(options, ...)
+	if (child and child:onFocus(options, ...)) or options.force then
+		self._focusChild = child
+		self._focusIdx = idx
+		return true
 	end
 end
 
@@ -231,9 +275,11 @@ function _M.list_layout:onFocus(options, childID, ...)
 	options = options or {}
 	if childID then
 		local child, idx = self:_findChild(childID)
-		if child then
-			return self:_doFocus(options, child, idx, ...)
+		local ok = child and self:_doFocus(options, child, idx, ...)
+		if not ok and idx and options.dir and options.continue then
+			return self:onNav(options.dir, idx)
 		end
+		return ok
 	elseif options.recall and self._focusIdx then
 		local child = self._children[self._focusIdx]
 		if child and self:_doFocus(options, child, self._focusIdx, ...) then
@@ -298,9 +344,9 @@ function _M.list_layout:_nextChild( idx )
 		i = i + 1
 	end
 end
-function _M.list_layout:_onInternalNav( navDir )
+function _M.list_layout:_onInternalNav( navDir, idx )
+	idx = idx or self._focusIdx
 	local child
-	local idx = self._focusIdx
 	if navDir == self.PREV_DIR and idx and idx > 1 then
 		child, idx = self:_prevChild(idx)
 	elseif navDir == self.NEXT_DIR and idx and idx < #self._children then
@@ -354,27 +400,17 @@ function screen_ctrl:init(def, debugName)
 		end
 	else
 		self._soloLayout = _M.solo_layout()
-		self._layouts[1] = self._soloLayout
+		self._layouts[ctrl_defs.DEFAULT_LAYOUT] = self._soloLayout
 	end
 end
 
 function screen_ctrl:_initFocus()
 	local defaultLayout = self._def.defaultLayout
-	if defaultLayout and self:setRoot(defaultLayout) then
-		return true
+	if defaultLayout then
+		return self:setRoot(defaultLayout, {force=true})
 	end
 
-	if self._def.defaultLayoutChain then
-		for _, defaultLayout in ipairs(self._def.defaultLayoutChain) do
-			if self:setRoot(defaultLayout) then
-				return true
-			end
-		end
-	end
-	if self:setRoot(1) then
-		return true
-	end
-	simlog("[QEDCTRL] Failed to initialize controller focus on %s.", self._debugName)
+	return self:setRoot(ctrl_defs.DEFAULT_LAYOUT, {force=true})
 end
 
 function screen_ctrl:onActivate(screen)
@@ -419,12 +455,11 @@ end
 
 function screen_ctrl:attachWidget( widget )
 	local id = widget:getControllerID()
-	simlog("LOG_QEDCTRL", "ctrl:addWidget %s/%s", self._debugName, id)
 	if not self._widgets then
-		simlog("[QEDCTRL] screen_ctrl:addWidget Can't activate widget before screen %s is activated.", self._debugName)
+		simlog("[QEDCTRL] Can't activate widget %s before screen %s is activated.", id, self._debugName)
 	end
 	if self._widgets[id] then
-		simlog("[QEDCTRL] screen_ctrl:addWidget Non-unique widget ID %s in %s.", id, self._debugName)
+		simlog("[QEDCTRL] Non-unique widget ID %s in %s.", id, self._debugName)
 		return
 	end
 	self._widgets[id] = widget
@@ -437,7 +472,10 @@ function screen_ctrl:attachWidget( widget )
 			simlog("[QEDCTRL] Can't add multiple soloButtons %s,... to screen %s.", id, self._debugName)
 		else
 			soloLayout:setWidget(widget)
+			simlog("LOG_QEDCTRL", "ctrl:attachSoloWidget %s=%s auto=%s", soloLayout._debugName, id, tostring(soloLayout:hasAutoConfirm()))
 		end
+	else
+		simlog("LOG_QEDCTRL", "ctrl:attachWidget %s/%s", self._debugName, id)
 	end
 end
 
@@ -460,12 +498,15 @@ function screen_ctrl:navigateTo( options, layoutID, ... )
 		return true
 	end
 	if self._layouts and self._layouts[layoutID] then
-		self._rootLayout = self._layouts[layoutID]
-		return self._rootLayout:onFocus(options, ...)
+		local layout = self._layouts[layoutID]
+		if layout:onFocus(options or {}, ...) or (options and options.force) then
+			self._rootLayout = layout
+			return true
+		end
 	end
 end
-function screen_ctrl:setRoot( layoutID )
-	return self:navigateTo({}, layoutID)
+function screen_ctrl:setRoot( layoutID, options )
+	return self:navigateTo(options or {}, layoutID)
 end
 
 
@@ -495,9 +536,9 @@ end
 
 local function maybeAutoClick(self)
 	-- Confirm button can click immediately if there's a solo widget in the screen.
-	if self._soloGroup and self._soloGroup:hasAutoConfirm() then
-		simlog("LOG_QEDCTRL", "ctrl:click %s AUTO", self._debugName)
-		return self._soloGroup:onConfirm()
+	if self._soloLayout and self._soloLayout:hasAutoConfirm() then
+		simlog("LOG_QEDCTRL", "ctrl:confirm %s AUTO", self._debugName)
+		return self._soloLayout:onConfirm()
 	end
 	return true
 end
@@ -517,22 +558,18 @@ function screen_ctrl:handleEvent( ev )
 		inputmgr.setMouseEnabled(false)
 		self:_initFocus()
 
-		if isConfirmBinding then
-			maybeAutoClick(self)
-		end
+		if isConfirmBinding then maybeAutoClick(self) end
 		return true
 	elseif inputmgr.isMouseEnabled() then
 		-- Refocus the most recent controller focus.
 		inputmgr.setMouseEnabled(false)
 		self:onUpdate()
 
-		if isConfirmBinding then
-			maybeAutoClick(self)
-		end
+		if isConfirmBinding then maybeAutoClick(self) end
 		return true
 	elseif isConfirmBinding then
 		if self._rootLayout then
-			simlog("LOG_QEDCTRL", "ctrl:click %s", self._debugName)
+			simlog("LOG_QEDCTRL", "ctrl:confirm %s", self._debugName)
 			self._rootLayout:onConfirm()
 		end
 		return true

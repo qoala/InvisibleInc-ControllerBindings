@@ -447,7 +447,7 @@ properties =
 		forceController = true,
 		layouts =
 		{{
-			id = 1,
+			id = [[root]],
 			children =
 			{
 				{ widgetID = [[resumeBtn]],  coord = 1 },

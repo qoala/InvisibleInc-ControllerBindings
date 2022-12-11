@@ -13,7 +13,7 @@ function dialog:show( ... )
  
 	local user = savefiles.getCurrentGame()
 	local ctrl = self._screen:getControllerControl()
-	ctrl:navigateTo({}, "main", "saveSlots", user.data.lastSaveSlot)
+	ctrl:navigateTo({force=true}, "main", "saveSlots", user.data.lastSaveSlot)
 end
 
 local oldShowState = dialog.showState
@@ -22,10 +22,10 @@ function dialog:showState( state, campaign, ... )
 
 	local ctrl = self._screen:getControllerControl()
 	if state == STATE_NEW_GAME then
-		ctrl:setRoot("newGame")
+		ctrl:setRoot("newGame", {force=true})
 	elseif state == STATE_CONTINUE_GAME then
-		ctrl:setRoot("continueGame")
+		ctrl:setRoot("continueGame", {force=true})
 	else -- STATE_SELECT_SAVE
-		ctrl:navigateTo({recall=true}, "main", "saveSlots")
+		ctrl:navigateTo({force=true, recall=true}, "main", "saveSlots")
 	end
 end

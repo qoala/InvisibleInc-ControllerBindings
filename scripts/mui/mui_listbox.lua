@@ -84,7 +84,11 @@ end
 function mui_listbox:onControllerFocus(options, idx, ...)
 	options = options or {}
 	if idx then
-		return self:_setControllerFocus(options, idx, ...)
+		local ok = self:_setControllerFocus(options, idx, ...)
+		if not ok and options.dir and options.continue then
+			return self:onControllerNav(options.dir, idx)
+		end
+		return ok
 	elseif self._qedctrl_focusIdx and (options.recall or isOrthogonalDir(self._orientation, options.dir)) then
 		-- Consider entry from orthogonal directions
 		return self:_setControllerFocus(options, self._qedctrl_focusIdx, ...)
@@ -110,8 +114,8 @@ function mui_listbox:onControllerUpdate()
 	end
 end
 
-function mui_listbox:onControllerNav( navDir )
-	local i = self._qedctrl_focusIdx
+function mui_listbox:onControllerNav( navDir, i )
+	i = i or self._qedctrl_focusIdx
 	if not i then
 		return
 	elseif isPrevDir(self._orientation, navDir) then
