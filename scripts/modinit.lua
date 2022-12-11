@@ -26,6 +26,7 @@ local function init(modApi)
 	include(scriptPath.."/mui/mui_listbox")
 	include(scriptPath.."/mui/mui_screen")
 
+	include(scriptPath.."/controllers/camhandler")
 	include(scriptPath.."/controllers/hud")
 	include(scriptPath.."/controllers/saveslots-dialog")
 end
