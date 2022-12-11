@@ -24,7 +24,7 @@ local function isNextDir(orient, navDir)
 	end
 end
 local function isOrthogonalDir(orient, navDir)
-	if self._orientation == ORIENT_H then
+	if orient == ORIENT_H then
 		return navDir == ctrl_defs.UP or navDir == ctrl_defs.DOWN
 	else
 		return navDir == ctrl_defs.LEFT or navDir == ctrl_defs.RIGHT
@@ -77,7 +77,7 @@ function mui_listbox:_setControllerFocus(options, idx, ...)
 
 	if item.hitbox then
 		self._qedctrl_focusIdx = idx
-		return self._qedctrl_ctrl:setFocus(item.hitbox)
+		return self._qedctrl_ctrl:setFocus(item.hitbox, self._qedctrl_debugName.."/"..idx)
 	end
 end
 
@@ -90,19 +90,20 @@ function mui_listbox:onControllerFocus(options, idx, ...)
 		return self:_setControllerFocus(options, self._qedctrl_focusIdx, ...)
 	end
 	if isPrevDir(self._orientation, options.dir) then
-		return self:_doFocus(options, #self._items)
+		return self:_setControllerFocus(options, #self._items)
 	elseif isNextDir(self._orientation, options.dir) then
-		return self:_doFocus(options, 1)
+		return self:_setControllerFocus(options, 1)
 	end
 	-- TODO: Focus the first _visible_ item if there's a scrollbar and no specific target.
 	return self:_setControllerFocus(options, 1)
 end
 
 function mui_listbox:onControllerUpdate()
-	if self._qedctrl_focusIdx and self._items[self._qedctrl_focusIdx] then
-		local item = self._items[self._qedctrl_focusIdx]
+	local i = self._qedctrl_focusIdx
+	if i and self._items[i] then
+		local item = self._items[i]
 		if item.hitbox then
-			self._qedctrl_ctrl:setFocus(item.hitbox)
+			self._qedctrl_ctrl:setFocus(item.hitbox, self._qedctrl_debugName.."/"..i)
 		end
 	elseif #self._items > 0 then
 		self:onControllerFocus()
