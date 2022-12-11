@@ -228,13 +228,22 @@ function list_layout:_doFocus(options, child, idx, ...)
 end
 
 function list_layout:onFocus(options, childID, ...)
+	options = options or {}
 	if childID then
 		local child, idx = self:_findChild(childID)
 		if child then
 			return self:_doFocus(options, child, idx, ...)
 		end
-	elseif options and options.recall and self._focusIdx then
-		return self:_doFocus(options, self._children[self._focusIdx], self._focusIdx, ...)
+	elseif options.recall and self._focusIdx then
+		local child = self._children[self._focusIdx]
+		if child and self:_doFocus(options, child, self._focusIdx, ...) then
+			return true
+		end
+	end
+	if options.dir == self.PREV_DIR then
+		return self:_doFocus(options, self:_prevChild(#self._children + 1))
+	elseif options.dir == self.NEXT_DIR then
+		return self:_doFocus(options, self:_nextChild(0))
 	end
 	return self:_doFocus(options, self:_defaultChild())
 end
@@ -278,15 +287,6 @@ function list_layout:_prevChild( idx )
 		i = i - 1
 	end
 end
-function list_layout:onNavigatePrev()
-	if self._focusIdx and self._focusIdx > 1 then
-		local child, idx = self:_prevChild(self._focusIdx)
-		if child then
-			return self:_doFocus({force=true}, child, idx)
-		end
-	end
-end
-
 function list_layout:_nextChild( idx )
 	local i = idx + 1
 	local size = #self._children
@@ -298,32 +298,26 @@ function list_layout:_nextChild( idx )
 		i = i + 1
 	end
 end
-function list_layout:onNavigateNext()
-	if self._focusIdx and self._focusIdx < #self._children then
-		local child, idx = self:_nextChild(self._focusIdx)
-		if child then
-			return self:_doFocus({force=true}, child, idx)
-		end
+function list_layout:_onInternalNav( navDir )
+	local child
+	local idx = self._focusIdx
+	if navDir == self.PREV_DIR and idx and idx > 1 then
+		child, idx = self:_prevChild(idx)
+	elseif navDir == self.NEXT_DIR and idx and idx < #self._children then
+		child, idx = self:_nextChild(idx)
 	end
-end
-
-local hlist_layout = class(list_layout)
-function hlist_layout:_onInternalNav( navDir )
-	if navDir == ctrl_defs.LEFT then
-		return self:onNavigatePrev()
-	elseif navDir == ctrl_defs.RIGHT then
-		return self:onNavigateNext()
+	if child then
+		return self:_doFocus({dir=navDir}, child, idx)
 	end
 end
 
 local vlist_layout = class(list_layout)
-function vlist_layout:_onInternalNav( navDir )
-	if navDir == ctrl_defs.UP then
-		return self:onNavigatePrev()
-	elseif navDir == ctrl_defs.DOWN then
-		return self:onNavigateNext()
-	end
-end
+vlist_layout.PREV_DIR = ctrl_defs.UP
+vlist_layout.NEXT_DIR = ctrl_defs.DOWN
+
+local hlist_layout = class(list_layout)
+hlist_layout.PREV_DIR = ctrl_defs.LEFT
+hlist_layout.NEXT_DIR = ctrl_defs.RIGHT
 
 
 -- ==========
@@ -558,6 +552,7 @@ end
 
 -- function widget:canControllerFocus()
 -- optional function widget:onControllerFocus()
+-- optional function widget:onControllerUpdate() -- Required if onControllerFocus is defined.
 -- optional function widget:onControllerNav( navDir )
 -- optional function widget:onControllerConfirm()
 

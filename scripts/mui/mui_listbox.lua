@@ -6,13 +6,33 @@ local mui_listbox = include("mui/widgets/mui_listbox")
 local ctrl_defs = include(SCRIPT_PATHS.qedctrl.."/ctrl_defs")
 local padctrl_widget = include(SCRIPT_PATHS.qedctrl.."/mui/mui_padctrl").widget
 
-local ITEM_Inactive = 1
-local ITEM_Active = 2
-local ITEM_Hover = 3
-
 local ORIENT_H = 1
-local ORIENT_V = 2
+local ORIENT_V = 2 -- default
 
+local function isPrevDir(orient, navDir)
+	if orient == ORIENT_H then
+		return navDir == ctrl_defs.LEFT
+	else
+		return navDir == ctrl_defs.UP
+	end
+end
+local function isNextDir(orient, navDir)
+	if orient == ORIENT_H then
+		return navDir == ctrl_defs.RIGHT
+	else
+		return navDir == ctrl_defs.DOWN
+	end
+end
+local function isOrthogonalDir(orient, navDir)
+	if self._orientation == ORIENT_H then
+		return navDir == ctrl_defs.UP or navDir == ctrl_defs.DOWN
+	else
+		return navDir == ctrl_defs.LEFT or navDir == ctrl_defs.RIGHT
+	end
+end
+
+
+-- ===
 
 local oldInit = mui_listbox.init
 function mui_listbox:init( screen, def, ... )
@@ -62,12 +82,19 @@ function mui_listbox:_setControllerFocus(options, idx, ...)
 end
 
 function mui_listbox:onControllerFocus(options, idx, ...)
+	options = options or {}
 	if idx then
 		return self:_setControllerFocus(options, idx, ...)
+	elseif self._qedctrl_focusIdx and (options.recall or isOrthogonalDir(self._orientation, options.dir)) then
+		-- Consider entry from orthogonal directions
+		return self:_setControllerFocus(options, self._qedctrl_focusIdx, ...)
 	end
-	if options and options.recall and self._qedctrl_focusIdx then
-		return self:_setControllerFocus(self._qedctrl_focusIdx)
+	if isPrevDir(self._orientation, options.dir) then
+		return self:_doFocus(options, #self._items)
+	elseif isNextDir(self._orientation, options.dir) then
+		return self:_doFocus(options, 1)
 	end
+	-- TODO: Focus the first _visible_ item if there's a scrollbar and no specific target.
 	return self:_setControllerFocus(options, 1)
 end
 
@@ -86,17 +113,13 @@ function mui_listbox:onControllerNav( navDir )
 	local i = self._qedctrl_focusIdx
 	if not i then
 		return
-	elseif ((self._orientation ~= ORIENT_H and navDir == ctrl_defs.UP)
-		or (self._orientation == ORIENT_H and navDir == ctrl_defs.LEFT))
-	then
+	elseif isPrevDir(self._orientation, navDir) then
 		if i > 1 then
-			return self:_setControllerFocus({}, i - 1)
+			return self:_setControllerFocus({dir=navDir}, i - 1)
 		end
-	elseif ((self._orientation ~= ORIENT_H and navDir == ctrl_defs.DOWN)
-		or (self._orientation == ORIENT_H and navDir == ctrl_defs.RIGHT))
-	then
+	elseif isNextDir(self._orientation, navDir) then
 		if i < #self._items then
-			return self:_setControllerFocus({}, i + 1)
+			return self:_setControllerFocus({dir=navDir}, i + 1)
 		end
 	end
 end
