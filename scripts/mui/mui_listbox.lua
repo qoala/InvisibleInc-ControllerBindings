@@ -55,11 +55,9 @@ function mui_listbox:_setControllerFocus(options, idx, ...)
 		return
 	end
 
-	if not self._no_hitbox then
-		if item.hitbox then
-			self._qedctrl_focusIdx = idx
-			return self._qedctrl_ctrl:setFocus(item.hitbox)
-		end
+	if item.hitbox then
+		self._qedctrl_focusIdx = idx
+		return self._qedctrl_ctrl:setFocus(item.hitbox)
 	end
 end
 
@@ -73,24 +71,34 @@ function mui_listbox:onControllerFocus(options, idx, ...)
 	return self:_setControllerFocus(options, 1)
 end
 
+function mui_listbox:onControllerUpdate()
+	if self._qedctrl_focusIdx and self._items[self._qedctrl_focusIdx] then
+		local item = self._items[self._qedctrl_focusIdx]
+		if item.hitbox then
+			self._qedctrl_ctrl:setFocus(item.hitbox)
+		end
+	elseif #self._items > 0 then
+		self:onControllerFocus()
+	end
+end
+
 function mui_listbox:onControllerNav( navDir )
 	local i = self._qedctrl_focusIdx
-	if ((self._orientation ~= ORIENT_H and navDir == ctrl_defs.UP)
+	if not i then
+		return
+	elseif ((self._orientation ~= ORIENT_H and navDir == ctrl_defs.UP)
 		or (self._orientation == ORIENT_H and navDir == ctrl_defs.LEFT))
 	then
 		if i > 1 then
-			simlog("LOG_QEDCTRL", "listbox:onNav o=%s n=%s %s/%s", tostring(self._orientation), tostring(navDir), tostring(i), #self._items)
 			return self:_setControllerFocus({}, i - 1)
 		end
 	elseif ((self._orientation ~= ORIENT_H and navDir == ctrl_defs.DOWN)
 		or (self._orientation == ORIENT_H and navDir == ctrl_defs.RIGHT))
 	then
 		if i < #self._items then
-			simlog("LOG_QEDCTRL", "listbox:onNav o=%s n=%s %s/%s", tostring(self._orientation), tostring(navDir), tostring(i), #self._items)
 			return self:_setControllerFocus({}, i + 1)
 		end
 	end
-	simlog("LOG_QEDCTRL", "listbox:onNav SKIP o=%s n=%s %s/%s", tostring(self._orientation), tostring(navDir), tostring(i), #self._items)
 end
 
 function mui_listbox:onControllerConfirm()

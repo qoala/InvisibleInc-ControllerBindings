@@ -60,11 +60,19 @@ end
 
 function layout_group:onActivate(screenCtrl)
 	self._ctrl = screenCtrl
-	self._focusChild, self._focusReady = nil
+	self._focusChild = nil
 end
 function layout_group:onDeactivate()
 	self._ctrl = nil
 	self._focusChild, self._focusReady = nil
+end
+
+function layout_group:onUpdate()
+	if self._focusChild then
+		self._focusChild:onUpdate()
+	elseif not self:isEmpty() then
+		self:onFocus()
+	end
 end
 
 local NAV_TO_FIELDS = {
@@ -74,9 +82,6 @@ local NAV_TO_FIELDS = {
 	[ctrl_defs.RIGHT] = "rightTo",
 }
 function layout_group:onNav(navDir)
-	if not self._focusChild and not self._focusReady then
-		return not self:isEmpty() and self:onFocus()
-	end
 	if self._focusChild and self._focusChild:onNav(navDir) then return true end
 
 	if self._onInternalNav and self:_onInternalNav(navDir) then return true end
@@ -115,14 +120,18 @@ end
 function widget_reference:onFocus( options, ... )
 	local widget = self._widgetID and self._ctrl:getWidget(self._widgetID)
 	if widget and widget.onControllerFocus then
-		if widget:onControllerFocus(options, ...) or (options and options.force) then
-			self._focusReady = true -- Tell the base class that we're ready despite no child layout.
-			return true
-		end
+		return widget:onControllerFocus(options, ...)
 	elseif widget or (options and options.force) then
-		self._focusReady = true
 		return self._ctrl:setFocus(widget)
 	end
+end
+
+function widget_reference:onUpdate()
+	local widget = self._widgetID and self._ctrl:getWidget(self._widgetID)
+	if widget and widget.onControllerUpdate then
+		return widget:onControllerUpdate()
+	end
+	return self._ctrl:setFocus(widget)
 end
 
 function widget_reference:_onInternalNav( navDir )
@@ -270,7 +279,7 @@ function list_layout:_prevChild( idx )
 	end
 end
 function list_layout:onNavigatePrev()
-	if self._focusIdx > 1 then
+	if self._focusIdx and self._focusIdx > 1 then
 		local child, idx = self:_prevChild(self._focusIdx)
 		if child then
 			return self:_doFocus({force=true}, child, idx)
@@ -290,7 +299,7 @@ function list_layout:_nextChild( idx )
 	end
 end
 function list_layout:onNavigateNext()
-	if self._focusIdx < #self._children then
+	if self._focusIdx and self._focusIdx < #self._children then
 		local child, idx = self:_nextChild(self._focusIdx)
 		if child then
 			return self:_doFocus({force=true}, child, idx)
@@ -366,7 +375,7 @@ function screen_ctrl:onActivate(screen)
 	simlog("LOG_QEDCTRL", "ctrl:onActivate %s", tostring(screen._filename))
 	self._screen = screen
 	self._widgets = {}
-	self._rootLayout, self._focusWidget = nil
+	self._rootLayout = nil
 	for _, layout in pairs(self._layouts) do
 		layout:onActivate(self)
 	end
@@ -395,7 +404,7 @@ function screen_ctrl:onDeactivate()
 		layout:onDeactivate()
 	end
 	self._screen, self._widgets = nil
-	self._rootLayout, self._focusWidget = nil
+	self._rootLayout = nil
 end
 
 function screen_ctrl:getWidget( widgetID )
@@ -461,23 +470,21 @@ function screen_ctrl:hasWidgets()
 end
 
 function screen_ctrl:setFocus( focusWidget )
-	self._focusWidget = focusWidget
-	simlog("LOG_QEDCTRL", "ctrl:focus %s/%s", tostring(self._screen._filename), tostring(focusWidget:getControllerID()))
-	if not inputmgr.isMouseEnabled() then
-		self._screen:dispatchEvent({eventType = mui_defs.EVENT_FocusChanged, newFocus = focusWidget, oldFocus = self._screen._focusWidget })
+	if focusWidget ~= self._screen._focusWidget then
+		simlog("LOG_QEDCTRL", "ctrl:focus %s/%s", tostring(self._screen._filename), tostring(focusWidget:getControllerID()))
+		if not inputmgr.isMouseEnabled() then
+			self._screen:dispatchEvent({eventType = mui_defs.EVENT_FocusChanged, newFocus = focusWidget, oldFocus = self._screen._focusWidget })
+			self._screen._focusWidget = focusWidget
+		end
 	end
-	self._screen._focusWidget = focusWidget
 	return true
 end
 
 function screen_ctrl:onUpdate()
-	if not self:hasWidgets() then
-		return
+	if self._rootLayout then
+		self._rootLayout:onUpdate()
 	end
-	if self._focusWidget ~= self._screen._focusWidget then
-		self:setFocus(self._focusWidget)
-		return true
-	end
+	return true
 end
 
 local function maybeAutoClick(self)
@@ -505,16 +512,16 @@ function screen_ctrl:handleEvent( ev )
 		self:_initFocus()
 
 		if isConfirmBinding then
-			maybeAutoClick(self, self._focusWidget)
+			maybeAutoClick(self)
 		end
 		return true
 	elseif inputmgr.isMouseEnabled() then
 		-- Refocus the most recent controller focus.
 		inputmgr.setMouseEnabled(false)
-		self:setFocus(self._focusWidget)
+		self:onUpdate()
 
 		if isConfirmBinding then
-			maybeAutoClick(self, self._focusWidget)
+			maybeAutoClick(self)
 		end
 		return true
 	elseif isConfirmBinding then

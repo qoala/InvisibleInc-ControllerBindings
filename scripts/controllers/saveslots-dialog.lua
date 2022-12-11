@@ -11,7 +11,6 @@ local oldShow = dialog.show
 function dialog:show( ... )
 	oldShow( self, ... )
  
-	-- TODO: Set these as hidden selections if mouse is active.
 	local user = savefiles.getCurrentGame()
 	local ctrl = self._screen:getControllerControl()
 	ctrl:navigateTo({}, "main", "saveSlots", user.data.lastSaveSlot)
@@ -21,7 +20,6 @@ local oldShowState = dialog.showState
 function dialog:showState( state, campaign, ... )
 	oldShowState( self, state, campaign, ... )
 
-	-- TODO: Changing layouts here doesn't work. Because of the transitions, the popup widgets aren't visible yet.
 	local ctrl = self._screen:getControllerControl()
 	if state == STATE_NEW_GAME then
 		ctrl:setRoot("newGame")
