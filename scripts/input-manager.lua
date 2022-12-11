@@ -13,12 +13,18 @@ local function extractUpvalue(fn, name)
 end
 
 local _M = inputmgr.getInputInternals()
-local oldOnMouseMove = extractUpvalue(inputmgr.init, "onMouseMove")
-local oldOnMouseWheel = extractUpvalue(inputmgr.init, "onMouseWheel")
-local oldOnMouseLeft = extractUpvalue(inputmgr.init, "onMouseLeft")
-local oldOnMouseMiddle = extractUpvalue(inputmgr.init, "onMouseMiddle")
-local oldOnMouseRight = extractUpvalue(inputmgr.init, "onMouseRight")
+local oldOnMouseMove = _M._onMouseMove or extractUpvalue(inputmgr.init, "onMouseMove")
+local oldOnMouseWheel = _M._onMouseWheel or extractUpvalue(inputmgr.init, "onMouseWheel")
+local oldOnMouseLeft = _M._onMouseLeft or extractUpvalue(inputmgr.init, "onMouseLeft")
+local oldOnMouseMiddle = _M._onMouseMiddle or extractUpvalue(inputmgr.init, "onMouseMiddle")
+local oldOnMouseRight = _M._onMouseRight or extractUpvalue(inputmgr.init, "onMouseRight")
 
+
+do
+	local originalFn = extractUpvalue(inputmgr.init, "onMouseMove")
+	_M._createInputEvent = _M._notifyListeners or extractUpvalue(originalFn, "createInputEvent")
+	_M._notifyListeners = _M._notifyListeners or extractUpvalue(originalFn, "notifyListeners")
+end
 _M._mouseEnabled = true
 
 function inputmgr.isMouseEnabled()
@@ -37,6 +43,11 @@ function _M._onMouseMove(x, y, ...)
 		simlog("LOG_QEDCTRL", "inputmgr autoEnableMouse")
 		_M._mouseEnabled = true
 		oldOnMouseMove(x, y, ...)
+	else
+		-- The normal UI relies on continuously emitted MouseMove events to keep focus updated.
+		-- Emit our own update event instead.
+		local ev = _M._createInputEvent("ControllerUpdate")
+		_M._notifyListeners(ev)
 	end
 end
 

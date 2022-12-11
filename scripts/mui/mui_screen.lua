@@ -43,6 +43,10 @@ end
 
 local oldHandleInputEvent = mui_screen.handleInputEvent
 function mui_screen:handleInputEvent( ev, ... )
+	if ev.eventType == 'ControllerUpdate' then
+		return self._qedctrl_ctrl:onUpdate()
+	end
+
 	local handled = oldHandleInputEvent( self, ev, ... )
 
 	if (not handled and ev.eventType == mui_defs.EVENT_KeyDown and util.isKeyBindingEvent("QEDCTRL_CANCEL", ev)) then

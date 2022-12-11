@@ -257,7 +257,7 @@ end
 function screenctrl:onActivate(screen)
 	simlog("LOG_QEDCTRL", "screenctrl:onActivate %s", tostring(screen._filename))
 	self._screen = screen
-	self._focusWidget = nil
+	self._focusWidget, self._trueFocusWidget = nil
 	for _, group in ipairs(self._groups) do
 		group:onActivate(self)
 	end
@@ -281,7 +281,7 @@ function screenctrl:onDeactivate()
 	for _, group in ipairs(self._groups) do
 		group:onDeactivate()
 	end
-	self._screen, self._focusWidget = nil
+	self._screen, self._focusWidget, self._trueFocusWidget = nil
 end
 
 function screenctrl:addWidget( widget )
@@ -320,6 +320,7 @@ function screenctrl:setFocus( focusWidget )
 	end
 
 	self._focusWidget = focusWidget
+	self._trueFocusWidget = focusWidget
 	if focusWidget then
 		simlog("LOG_QEDCTRL", "screenctrl:focus %s/%s %s/%s", self._screen._filename, debugWidgetName(focusWidget), tostring(focusWidget:getControllerGroup()), util.tostringl(focusWidget:getControllerCoord()))
 	else
@@ -331,12 +332,10 @@ function screenctrl:setFocus( focusWidget )
 end
 
 function screenctrl:setProxyFocus( proxyWidget, focusWidget, proxyIndex )
-	if not focusWidget then
-		return self:setFocus(proxyWidget)
-	end
 	-- TODO: Support nested onControllerFocus.
 
 	self._focusWidget = proxyWidget
+	self._trueFocusWidget = focusWidget
 	simlog("LOG_QEDCTRL", "screenctrl:focus %s/%s/%s %s/%s g=%s", self._screen._filename, debugWidgetName(proxyWidget), debugWidgetName(focusWidget), util.tostringl(focusWidget:getControllerCoord()), tostring(proxyIndex), tostring(focusWidget:getControllerGroup()))
 	self._screen:dispatchEvent({eventType = mui_defs.EVENT_FocusChanged, newFocus = focusWidget, oldFocus = self._screen._focusWidget })
 	self._screen._focusWidget = focusWidget
@@ -357,6 +356,16 @@ local function maybeAutoClick(self, widget)
 		return widget:onControllerConfirm()
 	end
 	return true
+end
+
+function screenctrl:onUpdate()
+	if not self:hasWidgets() then
+		return
+	end
+	if self._trueFocusWidget ~= self._screen._focusWidget then
+		self:setProxyFocus(self._focusWidget, self._trueFocusWidget, 'update')
+		return true
+	end
 end
 
 function screenctrl:handleEvent( ev )
