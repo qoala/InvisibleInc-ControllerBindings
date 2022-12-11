@@ -182,7 +182,7 @@ widgets =
 				hpx = true,
 				sx = 1,
 				sy = 1,
-				ctrlProperties = { coord = {1} },
+				ctrlProperties = { id = [[resumeBtn]], },
 				tooltip =
 				{
 					str = [[STR_413948372]],
@@ -267,7 +267,7 @@ widgets =
 				hpx = true,
 				sx = 1,
 				sy = 1,
-				ctrlProperties = { coord = {2} },
+				ctrlProperties = { id = [[endTurnBtn]], },
 				tooltip =
 				{
 					str = [[STR_610854735]],
@@ -355,7 +355,7 @@ widgets =
 				hpx = true,
 				sx = 1,
 				sy = 1,
-				ctrlProperties = { coord = {3} },
+				ctrlProperties = { id = [[rewindBtn]], },
 				ctor = [[button]],
 				clickSound = [[SpySociety/HUD/menu/click]],
 				hoverSound = [[SpySociety/HUD/menu/rollover]],
@@ -445,6 +445,16 @@ properties =
 	ctrlProperties =
 	{
 		forceController = true,
+		layouts =
+		{{
+			id = 1,
+			children =
+			{
+				{ widgetID = [[resumeBtn]],  coord = 1 },
+				{ widgetID = [[endTurnBtn]], coord = 2 },
+				{ widgetID = [[rewindBtn]],  coord = 3 },
+			},
+		}},
 	}
 }
 return { dependents = dependents, text_styles = text_styles, transitions = transitions, skins = skins, widgets = widgets, properties = properties, currentSkin = nil }

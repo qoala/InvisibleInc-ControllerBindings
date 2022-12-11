@@ -1,11 +1,19 @@
-local modifications = {
-	-- widgets,2 : panel
-	{
+local util = include(SCRIPT_PATHS.qedctrl.."/screen_util")
+local widgetList = util.layoutDef.widgetList
+
+local function assignID(childIndex, id)
+	return {
 		"modal-monst3r.lua",
-		{ "widgets", 2, "children", 9 }, -- closeBtn
-		{ ctrlProperties = { coord = {1} } },
-	},
+		{ "widgets", 2, "children", childIndex },
+		{ ctrlProperties = { id = id } },
+	}
+end
+
+local modifications = {
+	assignID(9, "closeBtn"),
 	-- TODO: inventory & shop item.
+
+	util.setSingleLayout("modal-monst3r.lua", widgetList("closeBtn")),
 }
 
 return modifications

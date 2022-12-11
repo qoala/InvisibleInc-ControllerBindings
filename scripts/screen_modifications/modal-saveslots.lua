@@ -1,6 +1,7 @@
 local util = include(SCRIPT_PATHS.qedctrl.."/screen_util")
-local ctrlGroupCoord = util.ctrlGroupCoord
-local skinButton = util.skinButton
+local ctrlID = util.modificationDef.ctrlID
+local skinButton = util.modificationDef.skinButton
+local widgetList = util.layoutDef.widgetList
 
 local function modifyWidget(childIndex, modification)
 	return {
@@ -18,22 +19,36 @@ local function modifySubWidget(childIndex1, childIndex2, modification)
 end
 
 local modifications = {
-	util.setLayout("modal-saveslots.lua", {
-		{}, -- panel
-		{}, -- newGame
-		{ defaultCoordChain = {{1}, {3}} }, -- continueGame prefers continue, but falls back to cancel before delete.
-	}),
 	-- panel/
-	modifyWidget(3, ctrlGroupCoord(1, {1}, { listBoxSelectsItems = true })), -- listbox[SaveSlot]
-	modifyWidget(8, skinButton(ctrlGroupCoord(1, {2}))), -- cancelGame
+	modifyWidget(3, ctrlID("saveSlots", { listBoxSelectsItems = true })), -- listbox[SaveSlot]
+	modifyWidget(8, skinButton(ctrlID"cancelGame")),
 	-- panel/newGame/
-	modifySubWidget(6,1, ctrlGroupCoord(2, {1})), -- storyBtn
-	modifySubWidget(6,2, ctrlGroupCoord(2, {2})), -- tutorialBtn
-	modifySubWidget(6,3, ctrlGroupCoord(2, {3})), -- cancelGameBtn
+	modifySubWidget(6,1, ctrlID"storyBtn"),
+	modifySubWidget(6,2, ctrlID"tutorialBtn"),
+	modifySubWidget(6,3, ctrlID"cancelGameBtn"),
 	-- panel/continueGame/
-	modifySubWidget(7,1, ctrlGroupCoord(3, {1})), -- continueBtn
-	modifySubWidget(7,2, ctrlGroupCoord(3, {2})), -- deleteBtn
-	modifySubWidget(7,3, ctrlGroupCoord(3, {3})), -- cancelContinueBtn
+	modifySubWidget(7,1, ctrlID"continueBtn"),
+	modifySubWidget(7,2, ctrlID"deleteBtn"),
+	modifySubWidget(7,3, ctrlID"cancelContinueBtn"),
+
+	util.setLayouts("modal-saveslots.lua",
+		{
+			{
+				id = "main",
+				children = widgetList("saveSlots", "cancelGame"),
+			},
+			{
+				id = "newGame",
+				children = widgetList("storyBtn", "tutorialBtn", "cancelGameBtn"),
+			},
+			{
+				id = "continueGame",
+				children = widgetList("continueBtn", "deleteBtn", "cancelContinueBtn"),
+				defaultChain = {"continueBtn", "cancelContinueBtn"}, -- skip deleteBtn if continueBtn is disabled.
+			},
+		},
+		{ defaultLayout = "main" }
+	),
 }
 
 return modifications

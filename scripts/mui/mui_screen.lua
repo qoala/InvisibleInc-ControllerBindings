@@ -9,7 +9,7 @@ local oldInit = mui_screen.init
 function mui_screen:init( ... )
 	oldInit( self, ... )
 
-	self._qedctrl_ctrl = mui_padctrl.screenctrl(self._props.ctrlProperties)
+	self._qedctrl_ctrl = mui_padctrl.screen_ctrl(self._props.ctrlProperties, self._filename)
 
 	-- Hide the sinksInput flag from the vanilla handleInputEvent.
 	self._qedctrl_sinksInput = self._props.sinksInput
@@ -24,9 +24,7 @@ end
 local oldOnActivate = mui_screen.onActivate
 function mui_screen:onActivate( ... )
 	self._qedctrl_ctrl:onActivate(self) -- Prepare to receive widgets.
-
 	oldOnActivate( self, ... )
-
 	self._qedctrl_ctrl:afterActivate() -- Finalize for input.
 end
 

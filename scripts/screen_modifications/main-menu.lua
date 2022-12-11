@@ -1,17 +1,24 @@
-local function assignCoord(widgetIndex, coord)
+local util = include(SCRIPT_PATHS.qedctrl.."/screen_util")
+local widgetList = util.layoutDef.widgetList
+
+local function assignID(widgetIndex, id)
 	return {
 		"main-menu.lua",
 		{ "widgets", widgetIndex },
-		{ ctrlProperties = { coord = coord } },
+		{ ctrlProperties = { id = id } },
 	}
 end
 
 local modifications = {
-	assignCoord(9,  {1}), -- playBtn
-	assignCoord(13, {2}), -- optionsBtn
-	assignCoord(12, {3}), -- creditsBtn
-	assignCoord(11, {4}), -- exitBtn
-	assignCoord(10, {5}), -- signUpBtn
+	assignID(9,  "playBtn"),
+	assignID(13, "optionsBtn"),
+	assignID(12, "creditsBtn"),
+	assignID(11, "exitBtn"),
+	assignID(10, "signUpBtn"),
+
+	util.setSingleLayout("main-menu.lua",
+		widgetList("playBtn", "optionsBtn", "creditsBtn", "exitBtn", "signUpBtn")
+	),
 }
 
 return modifications
