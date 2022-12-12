@@ -42,6 +42,9 @@ function inputmgr.setMouseEnabled(enabled)
 	simlog("LOG_QEDCTRL", "inputmgr %s", enabled and "enableMouse" or "disableMouse")
 	_M._qedctrl_mouseEnabled = enabled
 end
+function inputmgr.onControllerError() -- Call if we soft-fail in a method that could be called on update events to pause controller handling.
+	inputmgr.setMouseEnabled(true)
+end
 
 function _M._onMouseMove(x, y, ...)
 	if _M._qedctrl_mouseEnabled then

@@ -53,7 +53,7 @@ padctrl_widget.defineCtrlMethods(mui_listbox, {
 })
 
 function mui_listbox:canControllerFocus()
-	if not self:isVisible() or #self._items < 1 then
+	if not self:isVisible() or util.tempty(self._items) then
 		return
 	elseif self._no_hitbox then -- TODO: Support listboxes without item-level hitboxes.
 		return
@@ -63,7 +63,7 @@ end
 
 -- TODO: Can individual listbox items be unavailable for focus?
 function mui_listbox:_setControllerFocus(options, idx, ...)
-	if #self._items > 0 then
+	if not util.tempty(self._items) then
 		idx = math.min(math.max(idx, 1), #self._items)
 	end
 	local item = self._items[idx]
@@ -107,10 +107,10 @@ function mui_listbox:onControllerUpdate()
 	if i and self._items[i] then
 		local item = self._items[i]
 		if item.hitbox then
-			self._qedctrl_ctrl:setFocus(item.hitbox, self._qedctrl_debugName.."/"..i)
+			return self._qedctrl_ctrl:setFocus(item.hitbox, self._qedctrl_debugName.."/"..i)
 		end
-	elseif #self._items > 0 then
-		self:onControllerFocus()
+	elseif not util.tempty(self._items) then
+		return self:onControllerFocus()
 	end
 end
 
