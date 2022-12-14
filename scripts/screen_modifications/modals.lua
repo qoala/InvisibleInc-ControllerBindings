@@ -1,10 +1,8 @@
 -- Modal dialogs with a simple layout of buttons.
 
-local util = include(SCRIPT_PATHS.qedctrl.."/screen_util")
-local ctrlID = util.modificationDef.ctrlID
-local skinButton = util.modificationDef.skinButton
-local widget = util.layoutDef.widget
-local widgetList = util.layoutDef.widgetList
+local sutil = include(SCRIPT_PATHS.qedctrl.."/screen_util")
+local ctrlID = sutil.ctrlID
+local skinButton = sutil.skinButton
 
 local function soloButton()
 	return ctrlID("btn", { soloButton = true, autoConfirm = true })
@@ -20,7 +18,18 @@ local function oneButtonDialog(filename)
 	return modifyDialog(filename, 3, skinButton(soloButton()))
 end
 
-local modifications = {
+-- The rest are only 1 level deeper.
+local function modifySubWidget(filename, childIndex, subChildIndex, modification)
+	return {
+		filename,
+		{ "widgets", 2, "children", childIndex, "children", subChildIndex },
+		modification,
+	}
+end
+
+
+local modifications =
+{
 	oneButtonDialog("modal-alarm.lua"),
 	oneButtonDialog("modal-agents-added.lua"),
 	oneButtonDialog("modal-blindspots.lua"),
@@ -43,79 +52,110 @@ local modifications = {
 	modifyDialog("modal-alarm-first.lua", 4, skinButton(soloButton())),
 	modifyDialog("modal-unlock.lua", 5, skinButton(soloButton())),
 	modifyDialog("modal-unlock-agents.lua", 5, skinButton(soloButton())),
-	{ "modal-posttutorial.lua", { "widgets", 2, "children", 3, "children", 3 }, soloButton() },
+	modifySubWidget("modal-posttutorial.lua", 3, 3, soloButton()),
 
 	modifyDialog("modal-dialog.lua", 5, ctrlID("okBtn")),
 	modifyDialog("modal-dialog.lua", 6, ctrlID("cancelBtn")),
 	modifyDialog("modal-dialog.lua", 8, ctrlID("auxBtn")),
-	util.setSingleLayout("modal-dialog.lua", widgetList("okBtn", "cancelBtn", "auxBtn")),
+	sutil.setSingleLayout("modal-dialog.lua", sutil.widgetList("okBtn", "cancelBtn", "auxBtn")),
 	modifyDialog("modal-dialog-large.lua", 3, ctrlID("okBtn")),
 	modifyDialog("modal-dialog-large.lua", 4, ctrlID("cancelBtn")),
 	modifyDialog("modal-dialog-large.lua", 6, ctrlID("auxBtn")),
-	util.setSingleLayout("modal-dialog-large.lua", widgetList("okBtn", "cancelBtn", "auxBtn")),
+	sutil.setSingleLayout("modal-dialog-large.lua", sutil.widgetList("okBtn", "cancelBtn", "auxBtn")),
 
 	modifyDialog("modal-execterminals.lua", 5, skinButton(ctrlID("location1"))),
 	modifyDialog("modal-execterminals.lua", 6, skinButton(ctrlID("location2"))),
 	modifyDialog("modal-execterminals.lua", 7, skinButton(ctrlID("location3"))),
 	modifyDialog("modal-execterminals.lua", 8, skinButton(ctrlID("location4"))),
-	util.setSingleLayout("modal-execterminals.lua",
-		-- TODO: Grid layout.
+	sutil.setSingleLayout("modal-execterminals.lua",
 		{
-			widget("location1", 1),
-			widget("location2", 2),
-			widget("location3", 3),
-			widget("location4", 4),
-		}
+			sutil.widget("location1", {1,1}), sutil.widget("location2", {2,1}),
+			sutil.widget("location3", {1,2}), sutil.widget("location4", {2,2}),
+		},
+		{ shape = [[RGRID]], w = 2, h = 2 }
 	),
 
-	-- TODO: Drill button grid widgets[2].children[20].children[...]
+	-- Normal interactions in the lower half of the modal.
 	modifyDialog("modal-grafter.lua", 16, ctrlID("installSocketBtn")),
 	modifyDialog("modal-grafter.lua", 15, ctrlID("installAugmentBtn")),
 	modifyDialog("modal-grafter.lua", 17, ctrlID("cancelBtn")),
-	util.setSingleLayout("modal-grafter.lua",
+	-- Per-augment drill targets. Layout:
+	-- 1 2 3 4
+	-- 5 6
+	modifySubWidget("modal-grafter.lua", 20, 2, skinButton(ctrlID("drillAug1"))),
+	modifySubWidget("modal-grafter.lua", 20, 3, skinButton(ctrlID("drillAug2"))),
+	modifySubWidget("modal-grafter.lua", 20, 6, skinButton(ctrlID("drillAug3"))),
+	modifySubWidget("modal-grafter.lua", 20, 4, skinButton(ctrlID("drillAug4"))),
+	modifySubWidget("modal-grafter.lua", 20, 5, skinButton(ctrlID("drillAug5"))),
+	modifySubWidget("modal-grafter.lua", 20, 1, skinButton(ctrlID("drillAug6"))),
+	-- TODO: Add visual indicator of focus. Not sure why the following doesn't work.
+	-- {
+	-- 	"modal-grafter.lua", -- skins > 3:Group 2 > 2:btn > 2:hover
+	-- 	{ "skins", 3, "children", 2, "images", 2 },
+	-- 	{
+	-- 		color =
+	-- 		{
+	-- 			1,
+	-- 			1,
+	-- 			1,
+	-- 			0.800000011920929,
+	-- 		},
+	-- 	},
+	-- },
+	sutil.setSingleLayout("modal-grafter.lua",
 		{
-			-- Drill grid, coord = 1
+			{
+				id = "drill", coord = 1,
+				shape = [[RGRID]], w = 4, h = 2,
+				children =
+				{
+					sutil.widget("drillAug1", {1,1}), sutil.widget("drillAug2", {2,1}), -- Row 1
+					sutil.widget("drillAug3", {3,1}), sutil.widget("drillAug4", {4,1}), -- Row 1, cont.
+					sutil.widget("drillAug5", {1,2}), sutil.widget("drillAug6", {2,2}), -- Row 2
+				},
+			},
 			{
 				id = "actions", coord = 2,
 				shape = [[HLIST]],
-				children = widgetList("installSocketBtn", "installAugmentBtn"),
+				children = sutil.widgetList("installSocketBtn", "installAugmentBtn"),
 				default = "installAugmentBtn",
 			},
-			widget("cancelBtn", 3),
+			sutil.widget("cancelBtn", 3),
 		},
 		{ defaultChain = { "actions", "cancelBtn" } }
 	),
 
 	modifyDialog("modal-install-augment.lua", 6, ctrlID("installAugmentBtn")),
 	modifyDialog("modal-install-augment.lua", 5, ctrlID("leaveInInventoryBtn")),
-	util.setSingleLayout("modal-install-augment.lua", widgetList("installAugmentBtn", "leaveInInventoryBtn")),
+	sutil.setSingleLayout("modal-install-augment.lua",
+		sutil.widgetList("installAugmentBtn", "leaveInInventoryBtn")),
 
 	modifyDialog("modal-rewind.lua", 7, skinButton(ctrlID("cancelBtn"))),
 	modifyDialog("modal-rewind.lua", 3, skinButton(ctrlID("okBtn"))),
-	util.setSingleLayout("modal-rewind.lua",
-		widgetList("cancelBtn", "okBtn"),
+	sutil.setSingleLayout("modal-rewind.lua",
+		sutil.widgetList("cancelBtn", "okBtn"),
 		{ shape = [[HLIST]], default = "okBtn" }
 	),
 
 	-- TODO: listbox @9 above okBtn. Needs: sub-item selection, scroll handling, custom hover effects.
 	modifyDialog("modal-select-dlc.lua", 6, ctrlID("okBtn")),
 	modifyDialog("modal-select-dlc.lua", 7, ctrlID("cancelBtn")),
-	util.setSingleLayout("modal-select-dlc.lua", widgetList("okBtn", "cancelBtn")),
+	sutil.setSingleLayout("modal-select-dlc.lua", sutil.widgetList("okBtn", "cancelBtn")),
 
 	-- Ignoring the input elements and okBtn.
 	modifyDialog("modal-signup.lua", 17, skinButton(ctrlID("cancelBtn"))),
-	util.setSingleLayout("modal-signup.lua", widgetList("cancelBtn")),
+	sutil.setSingleLayout("modal-signup.lua", sutil.widgetList("cancelBtn")),
 
 	modifyDialog("modal-story.lua", 7, ctrlID("skipBtn")),
 	modifyDialog("modal-story.lua", 8, ctrlID("prevBtn")),
 	modifyDialog("modal-story.lua", 9, ctrlID("nextBtn")),
-	util.setSingleLayout("modal-story.lua",
+	sutil.setSingleLayout("modal-story.lua",
 		{
-			widget("skipBtn", 1),
+			sutil.widget("skipBtn", 1),
 			{
 				id = "nav", coord = 2,
 				shape = [[HLIST]],
-				children = widgetList("prevBtn", "nextBtn"),
+				children = sutil.widgetList("prevBtn", "nextBtn"),
 				default = "nextBtn",
 			},
 		},
@@ -124,17 +164,17 @@ local modifications = {
 
 	modifyDialog("modal-update-disclaimer.lua", 5, skinButton(ctrlID("okBtn"))),
 	modifyDialog("modal-update-disclaimer.lua", 4, skinButton(ctrlID("readMoreBtn"))),
-	util.setSingleLayout("modal-update-disclaimer.lua", widgetList("okBtn", "readMoreBtn")),
+	sutil.setSingleLayout("modal-update-disclaimer.lua", sutil.widgetList("okBtn", "readMoreBtn")),
 
 	modifyDialog("modal-update-disclaimer_b.lua", 6, skinButton(ctrlID("resetBtn"))),
 	modifyDialog("modal-update-disclaimer_b.lua", 5, skinButton(ctrlID("okBtn"))),
 	modifyDialog("modal-update-disclaimer_b.lua", 4, skinButton(ctrlID("readMoreBtn"))),
-	util.setSingleLayout("modal-update-disclamer_b.lua",
+	sutil.setSingleLayout("modal-update-disclamer_b.lua",
 		{
-			widget("resetBtn", 1),
+			sutil.widget("resetBtn", 1),
 			{
 				id = "actions", coord = 2,
-				children = widgetList("okBtn", "readMoreBtn"),
+				children = sutil.widgetList("okBtn", "readMoreBtn"),
 			},
 		},
 		{ shape = [[HLIST]], default = "actions" }

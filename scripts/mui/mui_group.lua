@@ -1,17 +1,20 @@
 --
--- 'group' elements at the top of a skin can have an inheritDefs property to override properties on their children.
--- Notably, this allows specifying properties on a skin reference that will apply to the inner elements after the skin is resolved.
+-- 'group' elements can specify an inheritDefs property to override properties on their children.
+-- Notably, given a skin with a top-level group element, a usage of that skin can specify this to
+-- propagate location-specific values inwards when the skin is resolved.
 --
--- inheritDefs is a table with (key = child name) and (value = override table). Overrides are applied as a shallow replacement.
+-- inheritDefs is a table with (key = child name) and (value = override table).
+-- Overrides apply like util.extend().
 --
 
-local util = require( "modules/util" )
 local mui_binder = require("mui/mui_binder")
 local mui_defs = require( "mui/mui_defs" )
 local mui_container = require( "mui/widgets/mui_container" )
 local mui_widget = require( "mui/widgets/mui_widget" )
 
 local mui_group = require( "mui/widgets/mui_group" )
+
+local qutil = include(SCRIPT_PATHS.qedctrl.."/qed_util")
 
 
 -- Overwrite mui_group:init
@@ -24,7 +27,7 @@ function mui_group:init( screen, def )
 	
 	for i,childdef in ipairs(def.children) do
 		if def.inheritDef and def.inheritDef[childdef.name] then
-			childdef = util.inherit(childdef)(def.inheritDef[childdef.name])
+			childdef = qutil.extendData(def.inheritDef[childdef.name], childdef){}
 		end
 
 		local child = screen:createWidget( childdef )

@@ -1,5 +1,4 @@
-local util = include(SCRIPT_PATHS.qedctrl.."/screen_util")
-local widgetList = util.layoutDef.widgetList
+local sutil = include(SCRIPT_PATHS.qedctrl.."/screen_util")
 
 local function assignID(childIndex, id)
 	return {
@@ -17,8 +16,8 @@ local modifications = {
 	assignID(9,  "abortBtn"),
 	assignID(8,  "retireBtn"),
 
-	util.setSingleLayout("pause_dialog_screen.lua",
-		widgetList(
+	sutil.setSingleLayout("pause_dialog_screen.lua",
+		sutil.widgetList(
 			"resumeBtn",
 			"optionsBtn",
 			"helpBtn",

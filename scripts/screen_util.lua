@@ -1,55 +1,64 @@
 -- Helpers for screen modifications.
 
-local util = include("modules/util")
-local ctrl_defs = include(SCRIPT_PATHS.qedctrl.."/ctrl_defs")
+local qutil = include(SCRIPT_PATHS.qedctrl.."/qed_util")
 
 local _M = {}
 
+-- Re-exports
+_M.extendData = qutil.extendData
+
 -- Full modification entry for an arbitrary modification.
-function _M.modify(filename, path, modification)
-	return { filename, path, modification }
+--
+-- Usage:
+--     sutil.modify("file.lua", "widgets", ...)
+--     {
+--     },
+function _M.modify(filename, ...)
+	local path = { ... }
+	return function(modification)
+		return { filename, path, modification }
+	end
 end
+_M.insert = _M.modify
+
 
 -- ===
 -- Modification args.
 -- Helpers that return a value for the 3rd argument of a modifyUIElement line.
 
-_M.modificationDef = {}
-
 -- Modification arg that applies a ctrl ID to a widget.
-function _M.modificationDef.ctrlID(id, otherProperties)
+function _M.ctrlID(id, otherProperties)
 	local ctrlProperties = { id = id }
 	if otherProperties then
-		ctrlProperties = util.extend(otherProperties)(ctrlProperties)
+		ctrlProperties = qutil.extendData(otherProperties)(ctrlProperties)
 	end
 	return { ctrlProperties = ctrlProperties }
 end
 
 -- Modification arg that applies a given modification arg to the [[btn]] widget within a skin.
 -- The shared screen_button skin is common, though some use screens have their own skin with the same btn child.
-function _M.modificationDef.skinButton(buttonModification)
+function _M.skinButton(buttonModification)
 	return { inheritDef = { ["btn"] = buttonModification } }
 end
+
 
 -- ===
 -- Layout helpers.
 
-_M.layoutDef = {}
-
 -- Helper for widget references in layout children.
-function _M.layoutDef.widget(widgetID, coord, otherProperties)
+function _M.widget(widgetID, coord, otherProperties)
 	local t = { widgetID = widgetID, coord = coord }
 	if otherProperties then
-		return util.extend(otherProperties)(t)
+		return qutil.extendData(otherProperties)(t)
 	end
 	return t
 end
 
 -- Helper for the common case where all of a list layout's children are widget references.
-function _M.layoutDef.widgetList(...)
+function _M.widgetList(...)
 	local t = {}
 	for i, widgetID in ipairs({...}) do
-		t[i] = _M.layoutDef.widget(widgetID, i)
+		t[i] = _M.widget(widgetID, i)
 	end
 	return t
 end
@@ -58,23 +67,23 @@ end
 function _M.setLayouts(filename, layouts, otherProperties)
 	local ctrlProperties = { layouts = layouts }
 	if otherProperties then
-		ctrlProperties = util.extend(otherProperties)(ctrlProperties)
+		ctrlProperties = qutil.extendData(otherProperties)(ctrlProperties)
 	end
 	return { filename, { "properties" }, { ctrlProperties = ctrlProperties } }
 end
 
 -- Full modification entry for assigning a single screen-wide layout.
 function _M.setSingleLayout(filename, children, layoutProperties, otherProperties)
-	local layoutDef = { id = ctrl_defs.DEFAULT_LAYOUT, children = children }
+	local layoutDef = { id = "root", children = children }
 	if layoutProperties then
-		layoutDef = util.extend(layoutProperties)(layoutDef)
+		layoutDef = qutil.extendData(layoutProperties)(layoutDef)
 	end
 	local ctrlProperties = { layouts = {layoutDef} }
 	if otherProperties then
-		ctrlProperties = util.extend(otherProperties)(ctrlProperties)
+		ctrlProperties = qutil.extendData(otherProperties)(ctrlProperties)
 	end
 	return { filename, { "properties" }, { ctrlProperties = ctrlProperties } }
 end
 
 
-return util.tmerge(util, _M)
+return _M

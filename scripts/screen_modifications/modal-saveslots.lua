@@ -1,7 +1,6 @@
-local util = include(SCRIPT_PATHS.qedctrl.."/screen_util")
-local ctrlID = util.modificationDef.ctrlID
-local skinButton = util.modificationDef.skinButton
-local widgetList = util.layoutDef.widgetList
+local sutil = include(SCRIPT_PATHS.qedctrl.."/screen_util")
+local ctrlID = sutil.ctrlID
+local skinButton = sutil.skinButton
 
 local function modifyWidget(childIndex, modification)
 	return {
@@ -31,23 +30,22 @@ local modifications = {
 	modifySubWidget(7,2, ctrlID"deleteBtn"),
 	modifySubWidget(7,3, ctrlID"cancelContinueBtn"),
 
-	util.setLayouts("modal-saveslots.lua",
-		{
+	sutil.setLayouts("modal-saveslots.lua",
+		{ -- 3 independent roots; saveslot-dialog.lua swaps them out as submenus open/close.
 			{
 				id = "main",
-				children = widgetList("saveSlots", "cancelGame"),
+				children = sutil.widgetList("saveSlots", "cancelGame"),
 			},
 			{
 				id = "newGame",
-				children = widgetList("storyBtn", "tutorialBtn", "cancelGameBtn"),
+				children = sutil.widgetList("storyBtn", "tutorialBtn", "cancelGameBtn"),
 			},
 			{
 				id = "continueGame",
-				children = widgetList("continueBtn", "deleteBtn", "cancelContinueBtn"),
+				children = sutil.widgetList("continueBtn", "deleteBtn", "cancelContinueBtn"),
 				defaultChain = {"continueBtn", "cancelContinueBtn"}, -- skip deleteBtn if continueBtn is disabled.
 			},
-		},
-		{ defaultLayout = "main" }
+		}
 	),
 }
 

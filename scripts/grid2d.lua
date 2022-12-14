@@ -1,16 +1,22 @@
 -- Sparse 2D grid with fixed bounds.
 --
--- Iterating using ipairs only yields the non-nil elements.
---     for coord, v in ipairs(grid) do coord.i, coord.j, ... end
---
--- Iteration over all coordinates is supported as:
---     for i, j, v in grid:ijIter() do ... end
---
--- Access can be through get/set. Indexing is currently disabled.
+-- Access values through get/set.
 --    grid:get(i,j)
 --    grid:set(i,j,v)
---    -- grid[i][j]
 --
+-- Iterating over all non-nil elements in i,j order:
+--     for i, j, v in grid:iter() do ... end
+--
+-- Iterating over non-nil elements from specified points and/or specified directions:
+-- (Use grid:reverseRowIter and row:reverseIter to go in the reverse direction.)
+--     for i, row in grid:rowIter(i0) do
+--         for j, v in row:iter(j0) do
+--             ...
+--         end
+--     end
+--
+
+local array = include("modules/array")
 
 local sclass = include(SCRIPT_PATHS.qedctrl.."/simple_class")
 
@@ -22,14 +28,16 @@ function Grid2D:init(iMax, jMax, debugName)
 
 	rawset(self, "_iMax", iMax)
 	rawset(self, "_jMax", jMax)
-	rawset(self, "_data", {}) -- Flattened grid.)
-	rawset(self, "_elems", {}) -- Unordered non-nil elements.)
-	rawset(self, "_views", {}) -- Views over constant-i lines, for indexed access.
+	rawset(self, "_data", {}) -- Elements indexed by the flattened-grid transform of the coordinates.
+	rawset(self, "_array", {}) -- Dense array of non-nil elements, in i,j iteration order.
+	rawset(self, "_cache", false) -- Index of row start/stop indexes into array.
 end
+
 function Grid2D:get(i, j)
 	if Grid2D._ijValid(self, i, j) then
 		-- simlog("LOG_QEDCTRL", "g2d:get %s,%s:%s -- %s", i, j, Grid2D._ij2n(self, i, j), self._dbg)
-		return self._data[Grid2D._ij2n(self, i, j)]
+		local entry = self._data[Grid2D._ij2n(self, i, j)]
+		return entry and entry.v
 	else
 		simlog("[QEDCTRL] Out of bounds access to grid: %s,%s into %s\n%s",
 			tostring(i), tostring(j), self._dbg, debug.traceback())
@@ -42,17 +50,19 @@ function Grid2D:set(i, j, v)
 		local old = self._data[n]
 		-- simlog("LOG_QEDCTRL", "g2d:set %s,%s:%s %s->%s count=%s -- %s", i, j, n,
 		-- 	tostring(old), tostring(v), #self._elems - (old and 1 or 0) + (v and 1 or 0), self._dbg)
-		if n then
-			for p, elem in ipairs(self._elems) do
-				if i == elem.i and j == elem.j then
-					table.remove(self._elems, p)
-					break
-				end
-			end
-		end
-		self._data[n] = v
-		if v ~= nil then
-			table.insert(self._elems, { i=i, j=j, v=v })
+
+		if old and v == nil then -- Delete entry.
+			self._cache = false -- Invalidate cache.
+			self._data[n] = nil
+			array.removeElement(self._array, old)
+		elseif old then -- Update in place.
+			old.v = v
+		elseif v ~= nil then -- New entry.
+			local entry = { i=i, j=j, v=v }
+
+			self._cache = false -- Invalidate cache.
+			self._data[n] = entry
+			Grid2D._insertSortedEntry(self._array, entry)
 		end
 	else
 		simlog("[QEDCTRL] Out of bounds assignment to grid: %s,%s=%s into %s\n%s",
@@ -60,53 +70,38 @@ function Grid2D:set(i, j, v)
 		inputmgr.onControllerError()
 	end
 end
-
-local function sparseSkippingIter(grid, dat)
-	dat._n = dat._n + 1
-	local elem = grid._elems[dat._n]
-	if elem then
-		dat.i, dat.j = elem.i, elem.j
-		-- simlog("LOG_QEDCTRL", "grid:ipairs %s:%s,%s -- %s", tostring(dat._n), tostring(dat.i), tostring(dat.j), grid._dbg)
-		return dat, elem.v
-	-- else
-	--	simlog("LOG_QEDCTRL", "grid:ipairs %s end -- %s", tostring(dat._n), grid._dbg)
-	end
-end
-function Grid2D:iter()
-	return sparseSkippingIter, self, { _n=0 }
-end
-function Grid2D:ijIter()
-	local n = 0
-	local function ijIter(grid)
-		n = n + 1
-		local i, j = grid:_n2ij(n)
-		if i <= grid._iMax then
-			return i, j, grid._data[n]
+function Grid2D._insertSortedEntry(ary, entry)
+	local i, j = entry.i, entry.j
+	for t = #ary, 1, -1 do -- Reverse-search for the common case of "inserts already in order".
+		local other = ary[t]
+		if (other.i == i and other.j < j) or other.i < i then
+			table.insert(ary, t+1, entry)
+			return
 		end
 	end
-	return ijIter, self
+	table.insert(ary, 1, entry)
 end
+function Grid2D:_refreshCache()
+	local i2row = {} -- Rows index by i.
+	local rows = {} -- Dense array of non-empty rows.
 
--- function Grid2D:__index(i)
--- 	if Grid2D._ijValid(self, i, 1) then
--- 		local views = rawget(self, "_views")
--- 		if not views[i] then views[i] = Grid2D._LineView(self, i) end
--- 		return views[i]
--- 	elseif type(i) ~= "number" then
--- 		return Grid2D[i]
--- 	end
--- 	local dbg = rawget(self, "dbg")
--- 	simlog("[QEDCTRL] Out of bounds access to grid: %s,? into %s\n%s",
--- 		tostring(i), dbg, debug.traceback())
---	inputmgr.onControllerError()
--- end
-function Grid2D:__newindex(k, v)
-	local dbg = rawget(self, "dbg")
-	simlog("[QEDCTRL] Illegal assignment to 2D grid: [%s]=%s into %s\n%s",
-		tostring(k), tostring(v), tostring(dbg), debug.traceback())
-	inputmgr.onControllerError()
+	local i, rowT = 0, 0
+	local row
+	for t, entry in ipairs(self._array) do
+		entry.t = t
+		if entry.i > i then
+			if row then row.finish = t-1 end
+
+			i, rowT = entry.i, rowT + 1
+			row = { rowT=rowT, i=i, start=t }
+			i2row[i] = row
+			rows[rowT] = row
+		end
+	end
+	row.finish = #self._array
+
+	self._cache = { i2row = i2row, rows = rows }
 end
-
 function Grid2D:_ijValid(i, j)
 	local iMax, jMax = rawget(self, "_iMax"), rawget(self, "_jMax")
 	return (type(i) == "number" and  i >= 1 and i <= iMax and math.floor(i) == i
@@ -115,39 +110,172 @@ end
 function Grid2D:_ij2n(i, j)
 	return i * rawget(self, "_jMax") + j
 end
-function Grid2D:_n2ij(n)
-	local jMax = rawget(self, "_jMax")
-	return (n % jMax), math.floor(n / jMax)
+
+
+-- ===
+-- Iteration over non-nil entries in i,j order.
+local function doArrayIter(dat)
+	dat.t = dat.t + 1
+	local entry = dat.grid._array[dat.t]
+	if entry then
+		return entry.i, entry.j, entry.v
+	end
+end
+function Grid2D:iter()
+	return doArrayIter, { grid=self, t=0 }
 end
 
--- Grid2D._LineView = sclass()
--- function Grid2D._LineView:init(grid, i)
--- 	rawset(self, "_g", grid)
--- 	rawset(self, "_i", i)
--- end
--- function Grid2D._LineView:__ipairs()
--- 	local function iter(line, j)
--- 		local grid = line._g
--- 		if j <= grid._jMax then
--- 			return line._i, j, grid._data[n]
--- 		end
--- 	end
--- 	return iter, self
--- end
--- function Grid2D._LineView:__index(j)
--- 	local grid, i = rawget(self, "_g"), rawget(self, "_i")
--- 	if Grid2D._ijValid(grid, i, j) then
--- 		return rawget(grid, "_data")[Grid2D._ij2n(grid, i, j)]
--- 	elseif type(j) ~= number then
--- 		return Grid2D._LineView[j]
--- 	end
--- 	simlog("[QEDCTRL] Out of bounds access to grid: %s,%s into %s\n%s",
--- 		tostring(i), tostring(j), grid._dbg, debug.traceback())
---	inputmgr.onControllerError()
--- end
--- function Grid2D._LineView:__newindex(j, v)
--- 	local grid, i = rawget(self, "_g"), rawget(self, "_i")
--- 	return Grid2D.set(grid, i, j, v)
--- end
+
+-- ===
+-- Iteration over non-empty rows in order.
+Grid2D._IteratorRow = sclass()
+function Grid2D._IteratorRow:init(grid)
+	assert(grid and grid:is_a(Grid2D), type(grid))
+	rawset(self, "_g", grid)
+	rawset(self, "_r", false)
+	rawset(self, "_last", false)
+end
+
+local function doRowIter(dat)
+	if dat.row then
+		local row = dat.row
+		dat.view._r, dat.view._last = row, false
+
+		if dat.delta then -- Prep next row.
+			dat.row = dat.grid._cache.rows[row.rowT + dat.delta]
+		else
+			dat.row = nil
+		end
+		return row.i, dat.view
+	end
+end
+local function doRowIterIter(dat)
+	local entry = dat.entry
+	if entry then
+		if entry.t == dat.limit then -- Prep next entry.
+			dat.entry = nil
+		else
+			dat.entry = dat.grid._array[entry.t + dat.delta]
+		end
+		return entry.j, entry.v
+	end
+end
+local function emptyIter()
+end
+function Grid2D:rowIter(i0)
+	if not self._cache then self:_refreshCache() end
+	local c = self._cache
+	local dat = { grid = self, delta = 1, view = Grid2D._IteratorRow(self) }
+
+	-- Find the starting row.
+	i0 = i0 or 1
+	dat.row = c.i2row[i0]
+	if dat.row then return doRowIter, dat end
+
+	for rowT, row in ipairs(c.rows) do
+		if row.i > i0 then
+			dat.row = row
+			return doRowIter, dat
+		end
+	end
+	return emptyIter
+end
+function Grid2D:reverseRowIter(i0)
+	if not self._cache then self:_refreshCache() end
+	local c = self._cache
+	local dat = { grid = self, delta = -1, view = Grid2D._IteratorRow(self) }
+
+	-- Find the starting row.
+	i0 = i0 or self._iMax
+	dat.row = c.i2row[i0]
+	if dat.row then return doRowIter, dat end
+
+	for rowT = #c.rows, 1, -1 do
+		dat.row = c.rows[rowT]
+		if dat.row.i < i0 then return doRowIter, dat end
+	end
+	return emptyIter
+end
+function Grid2D:getIterRow(i0)
+	if not self._cache then self:_refreshCache() end
+	local c = self._cache
+	local dat = { grid = self, delta = 0, view = Grid2D._IteratorRow(self) }
+
+	dat.row = c.i2row[i0]
+	return doRowIter, dat
+end
+function Grid2D._IteratorRow:iter(j0)
+	local grid, row, lastEntry = self._g, self._r, self._last
+	local i = row.i
+	local dat = { grid = grid, delta = 1, limit = row.finish }
+
+	-- Find the starting value.
+	j0 = j0 or 1
+	dat.entry = grid._data[grid:_ij2n(i, j0)]
+	if dat.entry then
+		self._last = dat.entry
+		return doRowIterIter, dat
+	end
+	if lastEntry then
+		if lastEntry.j == j0 then
+			dat.entry = lastEntry
+			return doRowIterIter, dat
+		end
+		dat.entry = grid._array[lastEntry.t + 1]
+		if dat.entry.j == j0 then
+			self._last = dat.entry
+			return doRowIterIter, dat
+		end
+	end
+
+	for t = row.start, row.finish do
+		dat.entry = grid._array[t]
+		if dat.entry.j > j0 then
+			self._last = dat.entry
+			return doRowIterIter, dat
+		end
+	end
+	return emptyIter
+end
+function Grid2D._IteratorRow:reverseIter(j0)
+	local grid, row, lastEntry = self._g, self._r, self._last
+	local i = row.i
+	local dat = { grid = grid, delta = -1, limit = row.start }
+
+	-- Find the starting entry.
+	j0 = j0 or self._jMax
+	dat.entry = grid._data[grid:_ij2n(i, j0)]
+	if dat.entry then
+		self._last = dat.entry
+		return doRowIterIter, dat
+	end
+	if lastEntry then
+		if lastEntry.j == j0 then
+			dat.entry = lastEntry
+			return doRowIterIter, dat
+		end
+		dat.entry = grid._array[lastEntry.t - 1]
+		if dat.entry.j == j0 then
+			self._last = dat.entry
+			return doRowIterIter, dat
+		end
+	end
+
+	for t = row.finish, row.start, -1 do
+		dat.entry = grid._array[t]
+		if dat.entry.j < j0 then
+			self._last = dat.entry
+			return doRowIterIter, dat
+		end
+	end
+	return emptyIter
+end
+
+
+function Grid2D:__newindex(k, v)
+	simlog("[QEDCTRL] Grid2D disallows assignment\n%s", debug.traceback())
+	inputmgr.onControllerError()
+end
+Grid2D._IteratorRow.__newIndex = Grid2D.__newIndex
 
 return Grid2D

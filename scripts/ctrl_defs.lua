@@ -1,7 +1,5 @@
 local _M = {}
 
-_M.DEFAULT_LAYOUT = "root"
-
 -- Navigation directions.
 _M.UP = 0
 _M.DOWN = 2

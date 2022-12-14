@@ -1,5 +1,4 @@
-local util = include(SCRIPT_PATHS.qedctrl.."/screen_util")
-local widgetList = util.layoutDef.widgetList
+local sutil = include(SCRIPT_PATHS.qedctrl.."/screen_util")
 
 local function assignID(childIndex, id)
 	return {
@@ -13,7 +12,7 @@ local modifications = {
 	assignID(9, "closeBtn"),
 	-- TODO: inventory & shop item.
 
-	util.setSingleLayout("modal-monst3r.lua", widgetList("closeBtn")),
+	sutil.setSingleLayout("modal-monst3r.lua", sutil.widgetList("closeBtn")),
 }
 
 return modifications

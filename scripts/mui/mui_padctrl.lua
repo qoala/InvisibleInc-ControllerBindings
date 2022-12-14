@@ -24,10 +24,10 @@ local sclass = include(SCRIPT_PATHS.qedctrl.."/simple_class")
 --     Specify logical layouts of widgets (see below).
 --     Each entry at this level is a valid root layout for ctrl:setRoot(),
 --     and may contain an arbitrary tree of child layouts.
--- * initialRoot = layoutID (default "root"):
+-- * initialRoot = layoutID (default: layouts[1].id):
 --     The layout that will be initially focused on this screen.
 --     Unlike defaults for layout children, this sets the root even if the target has no available
---     focus targets.
+--     focus targets. No fallbacks are attempted.
 -- * forceController = true:
 --     If true, input will be forced to controller mode immediately on screen activation.
 --
@@ -42,7 +42,7 @@ local sclass = include(SCRIPT_PATHS.qedctrl.."/simple_class")
 -- Non-widget layouts can specify:
 --   * shape = "VLIST"|"HLIST"|"RCGRID" (default VLIST):
 --       Shape values define how coordinates for this layout's children are interpreted.
---   * children = { layoutDef, layoutDef, ... }
+--   * children = { layoutDef, layoutDef, ... }:
 --       Child layouts within this layout. Children must specify a 'coord' value, of a format
 --       depending on this layout's shape. See below.
 --   * default = ID:
@@ -53,7 +53,7 @@ local sclass = include(SCRIPT_PATHS.qedctrl.."/simple_class")
 --       Array of child identifieres to try as a default. The first available widget (accounting for
 --       hidden/disabled elements) will be focused.
 -- All layouts can specify:
---   * leftTo = { navigatePath... } / rightTo = / upTo = / downTo =:
+--   * leftTo / rightTo / upTo / downTo = { navigatePath... }:
 --       If control can't move any further in the specified direction within this group, move
 --       focus to the layout specified by this path. This applies before navigation falls back to
 --       the parent layout, so may help encode unusual layout structures.
@@ -302,6 +302,13 @@ function list_layout:_findChild( childID )
 		end
 	end
 end
+
+function list_layout:canFocus()
+	for _,child in ipairs(self._children) do
+		if child:canFocus() then return true end
+	end
+end
+
 function list_layout:_doFocus(options, child, idx, ...)
 	if (child and child:onFocus(options, ...)) or options.force then
 		self._focusChild = child
@@ -309,7 +316,6 @@ function list_layout:_doFocus(options, child, idx, ...)
 		return true
 	end
 end
-
 function list_layout:onFocus(options, childID, ...)
 	options = options or {}
 	if childID then
@@ -353,12 +359,6 @@ function list_layout:_defaultChild()
 		return self:_getOrPrev(#self._children)
 	else
 		return self:_getOrNext(1)
-	end
-end
-
-function list_layout:canFocus()
-	for _,child in ipairs(self._children) do
-		if child:canFocus() then return true end
 	end
 end
 
@@ -443,7 +443,7 @@ do
 		if self._def.defaultYReverse then
 			self._defaultY, self._defaultYNext = self._h, DESC
 		else
-			self._defaultY, self._defaultYNext = 1, DESC
+			self._defaultY, self._defaultYNext = 1, ASC
 		end
 
 		do
@@ -474,12 +474,12 @@ do
 
 	function grid_layout:onActivate( ... )
 		_M.grid_layout._base.onActivate(self, ...)
-		for _,child in self._children:iter() do
+		for i,j,child in self._children:iter() do
 			child:onActivate(...)
 		end
 	end
 	function grid_layout:onDeactivate( ... )
-		for _,child in self._children:iter() do
+		for i,j,child in self._children:iter() do
 			child:onDeactivate(...)
 		end
 		_M.grid_layout._base.onDeactivate(self, ...)
@@ -489,10 +489,16 @@ do
 		return self._children:get(self:_xy2ij(x, y))
 	end
 	function grid_layout:_findChild( childID )
-		for _, child in self._children:iter() do
+		for i,j,child in self._children:iter() do
 			if child:getID() == childID then
 				return child, child.parentX, child.parentY
 			end
+		end
+	end
+
+	function grid_layout:canFocus()
+		for i,j,child in self._children:iter() do
+			if child:canFocus() then return true end
 		end
 	end
 
@@ -528,16 +534,16 @@ do
 		local dir = options.dir
 		if dir == ctrl_defs.UP then
 			return self:_doFocus(options,
-				self:_getOrNextXY(self._defaultX, self._defaultXNext, self._h, DESC))
+				self:_getOrNextXY(self._defaultX,self._defaultXNext, self._h,DESC))
 		elseif dir == ctrl_defs.DOWN then
 			return self:_doFocus(options,
-				self:_getOrNextXY(self._defaultX, self._defaultXNext, 1, ASC))
+				self:_getOrNextXY(self._defaultX,self._defaultXNext, 1,ASC))
 		elseif dir == ctrl_defs.LEFT then
 			return self:_doFocus(options,
-				self:_getOrNextXY(self._w, DESC, self._defaultY, self._defaultYNext))
+				self:_getOrNextXY(self._w,DESC, self._defaultY,self._defaultYNext))
 		elseif dir == ctrl_defs.RIGHT then
 			return self:_doFocus(options,
-				self:_getOrNextXY(1, ASC, self._defaultY, self._defaultYNext))
+				self:_getOrNextXY(1,ASC, self._defaultY,self._defaultYNext))
 		end
 		return self:_doFocus(options, self:_defaultChild())
 	end
@@ -558,7 +564,7 @@ do
 				end
 			end
 		end
-		return self:_getOrNextXY(self._defaultX, self._defaultXNext, self._defaultY, self._defaultYNext)
+		return self:_getOrNextXY(self._defaultX,self._defaultXNext, self._defaultY,self._defaultYNext)
 	end
 
 	-- Find the first available widget, varying the j coordinate first, then the i coordinate.
@@ -579,48 +585,51 @@ do
 		simlog("LOG_QEDCTRL", "grid:navJI %s%s,%s%s/%s,%s %s",
 			i0, SIGN_DBG[iSign] or "=", j0, SIGN_DBG[jSign] or "?", iMax, jMax, self._debugName)
 
-		local i = i0
-		repeat -- i incremented by iSign, if set
-			local j = j0
-			while j > 0 and j <= jMax do
-				local child = self._children:get(i, j)
-				if child and child:canFocus() then
-					return child, self:_xy2ij(i, j)
-				else
-					simlog("LOG_QEDCTRL", "grid:navJI [%s,%s] missing=%s canFocus=%s", i, j, tostring(not child), tostring(child and child:canFocus()))
-				end
-				j = j + jSign
-			end
+		local iIterFn, jIter, jBounceIter, jB0
+		if iSign == ASC then
+			iIterFn = self._children.rowIter
+		elseif iSign == DESC then
+			iIterFn = self._children.reverseRowIter
+		else
+			iIterFn = self._children.getIterRow
+		end
+		if jSign == ASC then
+			jIter, jBounceIter, jB0 = "iter", "reverseIter", j0 - 1
+		else
+			jIter, jBounceIter, jB0 = "reverseIter", "iter", j0 + 1
+		end
 
-			if bounceBack then -- Reverse!
-				j = j0
-				while j > 1 and j < jMax do
-					j = j - jSign
-					local child = self._children:get(i, j)
-					if child and child:canFocus() then
-						return child, self:_xy2ij(i, j)
+		for i, row in iIterFn(self._children, i0) do
+			for j, child in row[jIter](row, j0) do
+				if child:canFocus() then
+					return child, child.parentX, child.parentY
+				end
+			end
+			if bounceBack then
+				for j, child in row[jBounceIter](row, jB0) do
+					if child:canFocus() then
+						return child, child.parentX, child.parentY
 					end
 				end
 			end
-
-			i = i + (iSign or 0)
-		until not iSign or i < 1 or i > iMax
+		end
 	end
 
 	function grid_layout:_onInternalNav( navDir, x, y )
 		x = x or self._focusX
 		y = y or self._focusY
+		if not x or not y then return end
 		local child
 		local sign = _DIRMAP[navDir]
 		if navDir == ctrl_defs.UP or navDir == ctrl_defs.DOWN then
 			y = y + sign
 			if y > 0 and y <= self._h then
-				child, x, y = self:_getOrNextXY(x, nil, y, sign, true)
+				child, x, y = self:_getOrNextXY(x,nil, y,sign, true)
 			end
 		elseif navDir == ctrl_defs.LEFT or navDir == ctrl_defs.RIGHT then
 			x = x + sign
 			if x > 0 and x <= self._w then
-				child, x, y = self:_getOrNextXY(x, sign, y, nil, true)
+				child, x, y = self:_getOrNextXY(x,sign, y,nil, true)
 			end
 		end
 		if child then
@@ -638,7 +647,7 @@ do
 			xSign = self._def.defaultXReverse and ASC or DESC
 			bounceBack = true
 		end
-		return self:_getOrNextJI(x, xSign, y, ySign, bounceBack)
+		return self:_getOrNextJI(x,xSign, y,ySign, bounceBack)
 	end
 
 	cgrid_layout._SHAPE = "CGRID"
@@ -650,7 +659,7 @@ do
 			ySign = self._def.defaultYReverse and ASC or DESC
 			bounceBack = true
 		end
-		return self:_getOrNextJI(y, ySign, x, xSign, bounceBack)
+		return self:_getOrNextJI(y,ySign, x,xSign, bounceBack)
 	end
 end
 
@@ -691,8 +700,8 @@ function screen_ctrl:init(def, debugName)
 	self._debugName = debugName or "?"
 	self._deferredNavigate = nil -- Navigation unavailable until after activate.
 	self._def = def or {}
-	self._layouts = {}
 	if self._def.layouts then
+		self._layouts = {}
 		for i, layoutDef in ipairs(self._def.layouts) do
 			assert(layoutDef.id, "Missing ID for root layout "..i.." of "..self._debugName)
 			assert(not self._layouts[layoutDef.id], "Non-unique layout ID " .. tostring(layoutDef.id) .. " in " .. self._debugName)
@@ -700,17 +709,18 @@ function screen_ctrl:init(def, debugName)
 		end
 	else
 		self._soloLayout = _M.solo_layout(self._debugName)
-		self._layouts[ctrl_defs.DEFAULT_LAYOUT] = self._soloLayout
+		self._layouts = { self._soloLayout }
 	end
 end
 
 function screen_ctrl:_initFocus()
-	local defaultLayout = self._def.defaultLayout
-	if defaultLayout then
-		return self:setRoot(defaultLayout, {force=true})
+	local initialRoot = self._def.initialRoot
+	if initialRoot then
+		return self:setRoot(initialRoot, {force=true})
 	end
 
-	return self:setRoot(ctrl_defs.DEFAULT_LAYOUT, {force=true})
+	local firstLayoutID = self._soloLayout and 1 or self._def.layouts[1].id
+	return self:setRoot(firstLayoutID, {force=true})
 end
 
 function screen_ctrl:onActivate(screen)
@@ -816,8 +826,8 @@ end
 
 
 function screen_ctrl:hasWidgets()
-	-- An explicit layout implies that we have widgets.
-	-- Alternatively, the default solo layout is filled.
+	-- Enable controller handling if we either have explicit layout definitions,
+	-- or the default solo layout was filled.
 	return not self._soloLayout or not self._soloLayout:isEmpty()
 end
 
