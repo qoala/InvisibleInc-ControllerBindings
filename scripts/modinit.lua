@@ -22,7 +22,6 @@ local function init(modApi)
 	include(scriptPath.."/input-manager")
 
 	include(scriptPath.."/mui/mui_button")
-	include(scriptPath.."/mui/mui_group")
 	include(scriptPath.."/mui/mui_listbox")
 	include(scriptPath.."/mui/mui_screen")
 

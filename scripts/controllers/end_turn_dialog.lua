@@ -22,7 +22,6 @@ end_turn_dialog.END_TURN = RESULT_END_TURN
 end_turn_dialog.REWIND = RESULT_REWIND
 
 function end_turn_dialog:init( game )
-	simlog("QEDCTRL", "EndTurnDialog:init")
 	local screen = mui.createScreen("qedctrl-end-turn-dialog.lua")
 	self._game = game
 	self._screen = screen
@@ -35,7 +34,6 @@ function end_turn_dialog:init( game )
 end
 
 function end_turn_dialog:show()
-	simlog("QEDCTRL", "EndTurnDialog:show")
 	mui.activateScreen( self._screen )
 	FMODMixer:pushMix( "quiet" )
 	MOAIFmodDesigner.playSound( cdefs.SOUND_HUD_GAME_POPUP )
@@ -56,7 +54,6 @@ function end_turn_dialog:show()
 end
 
 function end_turn_dialog:hide()
-	simlog("QEDCTRL", "EndTurnDialog:hide")
 	if self._screen:isActive() then
 		mui.deactivateScreen( self._screen )
 		FMODMixer:popMix( "quiet" )

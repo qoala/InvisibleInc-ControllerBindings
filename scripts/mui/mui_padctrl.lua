@@ -129,11 +129,11 @@ _M.NAV_KEY = {
 -- =================
 
 local base_layout = sclass()
-function base_layout:init( def, debugName, debugCoord )
+function base_layout:init( def, debugParent, debugCoord )
 	self._def = def or {}
 	self._id = self._id or self._def.id -- Allow subclasses to force ID before we build debugName.
-	self._debugName = (debugName or "?").."/"..tostring(self._id or "[nil]")
-	simlog("LOG_QEDCTRL", "ctrl:init %s %s%s", tostring(self._debugName), tostring(self._SHAPE), debugCoord and " @"..debugCoord or "")
+	self._debugName = (debugParent or "?").."/"..tostring(self._id or "[nil]")
+	simlog("LOG_QEDCTRL", "ctrl:init %s:%s%s", tostring(self._debugName), tostring(self._SHAPE), debugCoord and " @"..debugCoord or "")
 end
 function base_layout:getID()
 	return self._id
@@ -145,7 +145,7 @@ end
 -- optional function layout:_onInternalNav( navDir ) : bool
 
 function base_layout:onActivate(screenCtrl)
-	simlog("LOG_QEDCTRL", "ctrl:activate %s:%s", tostring(self._debugName), tostring(self._SHAPE)) -- TODO: disable
+	-- simlog("LOG_QEDCTRL", "ctrl:activate %s:%s", tostring(self._debugName), tostring(self._SHAPE))
 	self._ctrl = screenCtrl
 	self._focusChild = nil
 end
@@ -233,6 +233,7 @@ end
 function widget_reference:onConfirm()
 	local widget = self._widgetID and self._ctrl:getWidget(self._widgetID)
 	if widget and widget.onControllerConfirm then
+		simlog("LOG_QEDCTRL", "ctrl:confirm %s", self._debugName)
 		return widget:onControllerConfirm()
 	end
 end
@@ -241,9 +242,9 @@ end
 -- Only constructed in the absence of a layout.
 local solo_layout = sclass(widget_reference)
 solo_layout._SHAPE = "-"
-function solo_layout:init( debugName )
+function solo_layout:init( debugParent )
 	self._id = "solo"
-	_M.base_layout.init(self, nil, debugName) -- Skip widget_reference:init
+	_M.base_layout.init(self, nil, debugParent) -- Skip widget_reference:init
 end
 function solo_layout:getWidgetID()
 	return self._widgetID
@@ -582,8 +583,8 @@ do
 			inputmgr.onControllerError()
 			return
 		end
-		simlog("LOG_QEDCTRL", "grid:navJI %s%s,%s%s/%s,%s %s",
-			i0, SIGN_DBG[iSign] or "=", j0, SIGN_DBG[jSign] or "?", iMax, jMax, self._debugName)
+		-- simlog("LOG_QEDCTRL", "grid:navJI %s%s,%s%s/%s,%s %s",
+		-- 	i0, SIGN_DBG[iSign] or "=", j0, SIGN_DBG[jSign] or "?", iMax, jMax, self._debugName)
 
 		local iIterFn, jIter, jBounceIter, jB0
 		if iSign == ASC then
@@ -681,14 +682,14 @@ _M.LAYOUT_FACTORY = {
 	RGRID = _M.rgrid_layout,
 	CGRID = _M.cgrid_layout,
 }
-function _M.createLayout(def, debugName, debugIdx, debugCoord)
+function _M.createLayout(def, debugParent, debugIdx, debugCoord)
 	if def.widgetID then
-		return _M.widget_reference(def, debugName, debugCoord)
+		return _M.widget_reference(def, debugParent, debugCoord)
 	end
-	assert(def.id, "Missing ID for non-widget child "..debugIdx.." of "..debugName)
+	assert(def.id, "Missing ID for non-widget child "..debugIdx.." of "..debugParent)
 	local layoutType = _M.LAYOUT_FACTORY[def.shape or "VLIST"]
-	assert(layoutType, "Unknown layout shape "..tostring(def.shape).." on "..debugName.."/"..tostring(def.id))
-	return layoutType(def, debugName)
+	assert(layoutType, "Unknown layout shape "..tostring(def.shape).." on "..debugParent.."/"..tostring(def.id))
+	return layoutType(def, debugParent)
 end
 
 -- =====================================
@@ -724,7 +725,7 @@ function screen_ctrl:_initFocus()
 end
 
 function screen_ctrl:onActivate(screen)
-	simlog("LOG_QEDCTRL", "ctrl:activate %s", self._debugName)
+	-- simlog("LOG_QEDCTRL", "ctrl:activate %s", self._debugName)
 	self._screen = screen
 	self._widgets = {}
 	self._rootLayout = nil
@@ -753,7 +754,7 @@ function screen_ctrl:afterActivate()
 end
 
 function screen_ctrl:onDeactivate()
-	simlog("LOG_QEDCTRL", "ctrl:onDeactivate %s", self._debugName)
+	-- simlog("LOG_QEDCTRL", "ctrl:deactivate %s", self._debugName)
 	self._screen:removeEventHandler( self )
 	self._deferredNavigate = nil -- Navigation unavailable until next activate.
 
@@ -770,25 +771,22 @@ end
 
 function screen_ctrl:attachWidget( widget )
 	local id = widget:getControllerID()
-	if not self._widgets then
-		simlog("[QEDCTRL] Can't activate widget %s before screen %s is activated.\n%s", id, self._debugName, debug.traceback())
-	end
-	if self._widgets[id] then
-		simlog("[QEDCTRL] Non-unique widget ID %s in %s.\n%s", id, self._debugName, debug.traceback())
-		return
-	end
+	assert(self._widgets, "[QEDCTRL] Can't activate widget "..tostring(id)..
+		" before screen "..tostring(self._debugName).." is activated.")
+	assert(not self._widgets[id], "[QEDCTRL] Non-unique widget ID "..tostring(id)..
+		" in "..tostring(self._debugName))
+
 	self._widgets[id] = widget
 
 	if widget:getControllerDef().soloButton then
 		local soloLayout = self._soloLayout
-		if not soloLayout then
-			simlog("[QEDCTRL] Can't add soloButton %s to non-solo screen %s.\n%s", id, self._debugName, debug.traceback())
-		elseif soloLayout:getWidgetID() then
-			simlog("[QEDCTRL] Can't add multiple soloButtons %s,... to screen %s.\n%s", id, self._debugName, debug.traceback())
-		else
-			soloLayout:setWidget(widget)
-			simlog("LOG_QEDCTRL", "ctrl:attachSoloWidget %s=%s auto=%s", soloLayout._debugName, id, tostring(soloLayout:hasAutoConfirm()))
-		end
+		assert(soloLayout, "[QEDCTRL] Can't add soloButton "..tostring(id)..
+			" to non-solo screen "..tostring(self._debugName))
+		assert(not soloLayout:getWidgetID(), "[QEDCTRL] Can't add multiple soloButtons "..tostring(id)..
+			", "..tostring(soloLayout:getWidgetID()).." to screen "..tostring(self._debugName))
+
+		soloLayout:setWidget(widget)
+		simlog("LOG_QEDCTRL", "ctrl:attachSoloWidget %s=%s auto=%s", soloLayout._debugName, id, tostring(soloLayout:hasAutoConfirm()))
 	else
 		simlog("LOG_QEDCTRL", "ctrl:attachWidget %s/%s", self._debugName, id)
 	end
@@ -852,7 +850,7 @@ end
 local function maybeAutoClick(self)
 	-- Confirm button can click immediately if there's a solo widget in the screen.
 	if self._soloLayout and self._soloLayout:hasAutoConfirm() then
-		simlog("LOG_QEDCTRL", "ctrl:confirm %s AUTO", self._debugName)
+		simlog("LOG_QEDCTRL", "ctrl:autoConfirm %s", self._debugName)
 		return self._soloLayout:onConfirm()
 	end
 	return true
@@ -884,8 +882,9 @@ function screen_ctrl:handleEvent( ev )
 		return true
 	elseif isConfirmBinding then
 		if self._rootLayout then
-			simlog("LOG_QEDCTRL", "ctrl:confirm %s", self._debugName)
-			self._rootLayout:onConfirm()
+			if not self._rootLayout:onConfirm() then
+				simlog("LOG_QEDCTRL", "ctrl:emptyConfirm %s", self._debugName)
+			end
 		end
 		return true
 	end

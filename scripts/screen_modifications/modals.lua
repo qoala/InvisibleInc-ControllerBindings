@@ -88,20 +88,35 @@ local modifications =
 	modifySubWidget("modal-grafter.lua", 20, 4, skinButton(ctrlID("drillAug4"))),
 	modifySubWidget("modal-grafter.lua", 20, 5, skinButton(ctrlID("drillAug5"))),
 	modifySubWidget("modal-grafter.lua", 20, 1, skinButton(ctrlID("drillAug6"))),
-	-- TODO: Add visual indicator of focus. Not sure why the following doesn't work.
-	-- {
-	-- 	"modal-grafter.lua", -- skins > 3:Group 2 > 2:btn > 2:hover
-	-- 	{ "skins", 3, "children", 2, "images", 2 },
-	-- 	{
-	-- 		color =
-	-- 		{
-	-- 			1,
-	-- 			1,
-	-- 			1,
-	-- 			0.800000011920929,
-	-- 		},
-	-- 	},
-	-- },
+	{
+		"modal-grafter.lua", -- skins > 3:Group 2 > 2:btn
+		{ "skins", 3, "children", 2, "images" },
+		{
+			{ -- > [1]:inactive (existing color: icon yellow)
+				stickyColor = true, -- UITR option.
+			},
+			{ -- > [2]:hover
+				color =
+				{
+					1,
+					1,
+					1,
+					0.800000011920929,
+				},
+				stickyColor = true,
+			},
+			{ -- > [3]:active
+				color =
+				{
+					1,
+					1,
+					1,
+					0.800000011920929,
+				},
+				stickyColor = true,
+			},
+		},
+	},
 	sutil.setSingleLayout("modal-grafter.lua",
 		{
 			{
