@@ -236,7 +236,7 @@ end
 
 
 local rgrid_layout = class(grid_layout)
-rgrid_layout._SHAPE = "RGRID"
+rgrid_layout._SHAPE = "rgrid"
 function rgrid_layout:_xy2ij(x, y) -- (x/w<->j, y/h<->i)
 	return y, x
 end
@@ -249,7 +249,7 @@ function rgrid_layout:_getOrNextXY(x, xSign, y, ySign, bounceBack)
 end
 
 local cgrid_layout = class(grid_layout)
-cgrid_layout._SHAPE = "CGRID"
+cgrid_layout._SHAPE = "cgrid"
 function cgrid_layout:_xy2ij(x, y) -- (x/w<->i, y/h<->j)
 	return x, y
 end

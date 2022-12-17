@@ -70,7 +70,7 @@ local modifications = {
 					sutil.widget("showOptionsBtn", 3),
 					sutil.widget("genOptsList", 4,
 						{
-							widgetType = [[LISTBOX]],
+							widgetType = [[listbox]],
 							alwaysRecall = true,
 						}
 					),
@@ -79,7 +79,7 @@ local modifications = {
 			},
 			sutil.widget("startBtn", 3),
 		},
-		{ shape = [[HLIST]], default = "startBtn", }
+		{ shape = [[hlist]], default = "startBtn", }
 	),
 }
 

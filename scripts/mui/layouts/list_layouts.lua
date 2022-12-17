@@ -147,12 +147,12 @@ do
 end
 
 local vlist_layout = class(list_layout)
-vlist_layout._SHAPE = "VLIST"
+vlist_layout._SHAPE = "vlist"
 vlist_layout.PREV_DIR = ctrl_defs.UP
 vlist_layout.NEXT_DIR = ctrl_defs.DOWN
 
 local hlist_layout = class(list_layout)
-hlist_layout._SHAPE = "HLIST"
+hlist_layout._SHAPE = "hlist"
 hlist_layout.PREV_DIR = ctrl_defs.LEFT
 hlist_layout.NEXT_DIR = ctrl_defs.RIGHT
 

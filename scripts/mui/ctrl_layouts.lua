@@ -23,26 +23,26 @@ do -- Re-export layout classes.
 end
 
 _M.LAYOUT_FACTORY = {
-	VLIST = _M.vlist_layout,
-	HLIST = _M.hlist_layout,
-	RGRID = _M.rgrid_layout,
-	CGRID = _M.cgrid_layout,
+	vlist = _M.vlist_layout,
+	hlist = _M.hlist_layout,
+	rgrid = _M.rgrid_layout,
+	cgrid = _M.cgrid_layout,
 }
 _M.WIDGET_NODE_FACTORY = {
-	DEFAULT = _M.widget_reference,
-	LISTBOX = _M.listbox_layout,
+	default = _M.widget_reference,
+	listbox = _M.listbox_layout,
 }
 function _M.createLayoutNode(def, debugParent, debugIdx, debugCoord)
 	if def.widgetID then
 		return _M._createWidgetNode(def, debugParent, debugCoord)
 	end
 	assert(def.id, "Missing ID for non-widget child "..debugIdx.." of "..debugParent)
-	local layoutType = _M.LAYOUT_FACTORY[def.shape or "VLIST"]
+	local layoutType = _M.LAYOUT_FACTORY[def.shape or "vlist"]
 	assert(layoutType, "Unknown layout shape "..tostring(def.shape).." on "..debugParent.."/"..tostring(def.id))
 	return layoutType(def, debugParent, debugCoord)
 end
 function _M._createWidgetNode(def, debugParent, debugCoord)
-	local refType = _M.WIDGET_NODE_FACTORY[def.widgetType or "DEFAULT"]
+	local refType = _M.WIDGET_NODE_FACTORY[def.widgetType or "default"]
 	assert(refType, "Unknown widget type "..tostring(def.widgetType).." on "..debugParent.."/"..tostring(def.id))
 	return refType(def, debugParent, debugCoord)
 end

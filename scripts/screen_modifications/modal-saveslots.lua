@@ -36,7 +36,7 @@ local modifications = {
 				id = "main",
 				children =
 				{
-					sutil.widget("saveSlots", 1, { widgetType = [[LISTBOX]] }),
+					sutil.widget("saveSlots", 1, { widgetType = [[listbox]] }),
 					sutil.widget("cancelGame", 2),
 				},
 			},

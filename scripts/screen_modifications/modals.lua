@@ -72,7 +72,7 @@ local modifications =
 			sutil.widget("location1", {1,1}), sutil.widget("location2", {2,1}),
 			sutil.widget("location3", {1,2}), sutil.widget("location4", {2,2}),
 		},
-		{ shape = [[RGRID]], w = 2, h = 2 }
+		{ shape = [[rgrid]], w = 2, h = 2 }
 	),
 
 	-- Normal interactions in the lower half of the modal.
@@ -121,7 +121,7 @@ local modifications =
 		{
 			{
 				id = "drill", coord = 1,
-				shape = [[RGRID]], w = 4, h = 2,
+				shape = [[rgrid]], w = 4, h = 2,
 				children =
 				{
 					sutil.widget("drillAug1", {1,1}), sutil.widget("drillAug2", {2,1}), -- Row 1
@@ -131,7 +131,7 @@ local modifications =
 			},
 			{
 				id = "actions", coord = 2,
-				shape = [[HLIST]],
+				shape = [[hlist]],
 				children = sutil.widgetList("installSocketBtn", "installAugmentBtn"),
 				default = "installAugmentBtn",
 			},
@@ -149,7 +149,7 @@ local modifications =
 	modifyDialog("modal-rewind.lua", 3, skinButton(ctrlID("okBtn"))),
 	sutil.setSingleLayout("modal-rewind.lua",
 		sutil.widgetList("cancelBtn", "okBtn"),
-		{ shape = [[HLIST]], default = "okBtn" }
+		{ shape = [[hlist]], default = "okBtn" }
 	),
 
 	modifyDialog("modal-select-dlc.lua", 9, ctrlID("dlcList")), -- TODO: non-hitbox listbox
@@ -157,7 +157,7 @@ local modifications =
 	modifyDialog("modal-select-dlc.lua", 7, ctrlID("cancelBtn")),
 	sutil.setSingleLayout("modal-select-dlc.lua",
 		{
-			sutil.widget("dlcList", 1, { widgetType = [[LISTBOX]] }),
+			sutil.widget("dlcList", 1, { widgetType = [[listbox]] }),
 			sutil.widget("okBtn", 2),
 			sutil.widget("cancelBtn", 3),
 		}
@@ -175,7 +175,7 @@ local modifications =
 			sutil.widget("skipBtn", 1),
 			{
 				id = "nav", coord = 2,
-				shape = [[HLIST]],
+				shape = [[hlist]],
 				children = sutil.widgetList("prevBtn", "nextBtn"),
 				default = "nextBtn",
 			},
@@ -198,7 +198,7 @@ local modifications =
 				children = sutil.widgetList("okBtn", "readMoreBtn"),
 			},
 		},
-		{ shape = [[HLIST]], default = "actions" }
+		{ shape = [[hlist]], default = "actions" }
 	),
 }
 
