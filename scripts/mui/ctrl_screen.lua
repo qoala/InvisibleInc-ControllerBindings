@@ -44,6 +44,9 @@
 --   * defaultChain = { ID1, ID2, ... }:
 --       Array of child identifieres to try as a default. The first available widget (accounting for
 --       hidden/disabled elements) will be focused.
+--   * alwaysRecall = true:
+--       If true and this layout node has previously been focused, then navigating into this node
+--       will always try to refocus its most recently focused child first.
 -- All layouts can specify:
 --   * leftTo / rightTo / upTo / downTo = { navigatePath... }:
 --       If control can't move any further in the specified direction within this group, move
@@ -226,6 +229,8 @@ function ctrl_screen:attachWidget( widget )
 
 		soloLayout:setWidget(widget)
 		simlog("LOG_QEDCTRL", "ctrl:attachSoloWidget %s=%s auto=%s", soloLayout._debugName, id, tostring(soloLayout:hasAutoConfirm()))
+	elseif widget.CONTROLLER_TYPE then
+		simlog("LOG_QEDCTRL", "ctrl:attachWidget %s/[%s]/%s", self._debugName, widget.CONTROLLER_TYPE, id)
 	else
 		simlog("LOG_QEDCTRL", "ctrl:attachWidget %s/%s", self._debugName, id)
 	end

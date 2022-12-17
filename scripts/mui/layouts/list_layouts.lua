@@ -74,7 +74,7 @@ do
 				return self:onNav(options.dir, idx)
 			end
 			return ok
-		elseif options.recall and self._focusIdx then
+		elseif (options.recall or self._def.alwaysRecall) and self._focusIdx then
 			local child = self._children[self._focusIdx]
 			if child and self:_doFocus(options, child, self._focusIdx, ...) then
 				return true

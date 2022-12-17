@@ -99,7 +99,7 @@ function listbox_layout:onFocus( options, idx, ... )
 			return self:onNav(options.dir, idx)
 		end
 		return ok
-	elseif self._focusIdx and (options.recall or isOrthogonalDir(listOrientation, options.dir)) then
+	elseif self._focusIdx and (options.recall or self._def.alwaysRecall or isOrthogonalDir(listOrientation, options.dir)) then
 		-- Consider entry from orthogonal directions as a recall=true move.
 		-- TODO: Maybe fall through if the recalled item is outside the current scroll range?
 		local item = listWidget._items[self._focusIdx]

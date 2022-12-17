@@ -117,7 +117,7 @@ function grid_layout:onFocus(options, childID, ...)
 			return self:onNav(options.dir, x, y)
 		end
 		return ok
-	elseif options.recall and self._focusX then
+	elseif (options.recall or self._def.alwaysRecall) and self._focusX then
 		local oldForce = options.force
 		if options.onUpdate then options.force = true end
 

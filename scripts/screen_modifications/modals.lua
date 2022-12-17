@@ -152,10 +152,16 @@ local modifications =
 		{ shape = [[HLIST]], default = "okBtn" }
 	),
 
-	-- TODO: listbox @9 above okBtn. Needs: sub-item selection, scroll handling, custom hover effects.
+	modifyDialog("modal-select-dlc.lua", 9, ctrlID("dlcList")), -- TODO: non-hitbox listbox
 	modifyDialog("modal-select-dlc.lua", 6, ctrlID("okBtn")),
 	modifyDialog("modal-select-dlc.lua", 7, ctrlID("cancelBtn")),
-	sutil.setSingleLayout("modal-select-dlc.lua", sutil.widgetList("okBtn", "cancelBtn")),
+	sutil.setSingleLayout("modal-select-dlc.lua",
+		{
+			sutil.widget("dlcList", 1, { widgetType = [[LISTBOX]] }),
+			sutil.widget("okBtn", 2),
+			sutil.widget("cancelBtn", 3),
+		}
+	),
 
 	-- Ignoring the input elements and okBtn.
 	modifyDialog("modal-signup.lua", 17, skinButton(ctrlID("cancelBtn"))),

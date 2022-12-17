@@ -43,6 +43,7 @@ local function unload( modApi )
 	modApi:addNewUIScreen("qedctrl-end-turn-dialog.lua", scriptPath.."/screens/qedctrl-end-turn-dialog")
 	modApi:insertUIElements(include(scriptPath.."/screen_inserts/hud"))
 
+	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/generation-options"))
 	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/main-menu"))
 	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/modal-monst3r"))
 	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/modal-saveslots"))
