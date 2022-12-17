@@ -222,7 +222,7 @@ function Grid2D._IteratorRow:iter(j0)
 			return doRowIterIter, dat
 		end
 		dat.entry = grid._array[lastEntry.t + 1]
-		if dat.entry.j == j0 then
+		if dat.entry and dat.entry.i == row.i and dat.entry.j == j0 then
 			self._last = dat.entry
 			return doRowIterIter, dat
 		end
@@ -255,7 +255,7 @@ function Grid2D._IteratorRow:reverseIter(j0)
 			return doRowIterIter, dat
 		end
 		dat.entry = grid._array[lastEntry.t - 1]
-		if dat.entry.j == j0 then
+		if dat.entry and dat.entry.i == row.i and dat.entry.j == j0 then
 			self._last = dat.entry
 			return doRowIterIter, dat
 		end
