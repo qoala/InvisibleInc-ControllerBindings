@@ -211,7 +211,8 @@ function widget_reference:onFocus( options, ... )
 		widget._qedctrl_debugName = self._debugName
 		return widget:onControllerFocus(options, ...)
 	elseif widget or (options and options.force) then
-		return self._ctrl:setFocus(widget, self._debugName)
+		local target = widget and widget:getControllerFocusTarget()
+		return self._ctrl:setFocus(target, self._debugName)
 	end
 end
 
@@ -220,7 +221,8 @@ function widget_reference:onUpdate()
 	if widget and widget.onControllerUpdate then
 		return widget:onControllerUpdate()
 	end
-	return self._ctrl:setFocus(widget, self._debugName)
+	local target = widget and widget:getControllerFocusTarget()
+	return self._ctrl:setFocus(target, self._debugName)
 end
 
 function widget_reference:_onInternalNav( navDir )
