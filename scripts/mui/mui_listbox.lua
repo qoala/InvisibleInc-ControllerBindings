@@ -4,7 +4,7 @@ local mui_defs = include("mui/mui_defs")
 local mui_listbox = include("mui/widgets/mui_listbox")
 
 local ctrl_defs = include(SCRIPT_PATHS.qedctrl.."/ctrl_defs")
-local padctrl_widget = include(SCRIPT_PATHS.qedctrl.."/mui/mui_padctrl").widget
+local ctrl_widget = include(SCRIPT_PATHS.qedctrl.."/mui/ctrl_widget")
 
 local ORIENT_H = 1
 local ORIENT_V = 2 -- default
@@ -38,12 +38,12 @@ local oldInit = mui_listbox.init
 function mui_listbox:init( screen, def, ... )
 	oldInit( self, screen, def, ... )
 
-	if padctrl_widget.init(self, def) then
+	if ctrl_widget.init(self, def) then
 		self._qedctrl_selectsItems = def.ctrlProperties.listBoxSelectsItems
 	end
 end
 
-padctrl_widget.defineCtrlMethods(mui_listbox, {
+ctrl_widget.defineCtrlMethods(mui_listbox, {
 	onActivate = function(self, screen)
 		self._qedctrl_focusIdx = nil
 	end,

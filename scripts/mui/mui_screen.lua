@@ -3,13 +3,13 @@ local util = include( "client_util" )
 
 local mui_screen = include("mui/mui_screen")
 
-local mui_padctrl = include(SCRIPT_PATHS.qedctrl.."/mui/mui_padctrl")
+local ctrl_screen = include(SCRIPT_PATHS.qedctrl.."/mui/ctrl_screen")
 
 local oldInit = mui_screen.init
 function mui_screen:init( ... )
 	oldInit( self, ... )
 
-	self._qedctrl_ctrl = mui_padctrl.screen_ctrl(self._props.ctrlProperties, self._filename)
+	self._qedctrl_ctrl = ctrl_screen(self._props.ctrlProperties, self._filename)
 
 	-- Hide the sinksInput flag from the vanilla handleInputEvent.
 	self._qedctrl_sinksInput = self._props.sinksInput
