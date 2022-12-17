@@ -10,12 +10,12 @@ do
 		list_layout._base.init(self, def, ...)
 
 		self._children = {}
-		assert(type(self._def.children) == "table", "Missing children for list layout "..self._debugName)
+		assert(type(self._def.children) == "table", "[QEDCTRL] Missing children for list layout "..self._debugName)
 		local ctrl_layouts = include(SCRIPT_PATHS.qedctrl.."/mui/ctrl_layouts")
 		for i, childDef in ipairs(self._def.children) do
-			assert(type(childDef.coord) == "number", "Invalid coord "..tostring(childDef.coord).." for child "..tostring(self._debugName).."/"..(childDef.id or i))
+			assert(type(childDef.coord) == "number", "[QEDCTRL] Invalid coord "..tostring(childDef.coord).." for child "..tostring(self._debugName).."/"..(childDef.id or i))
 
-			local child = ctrl_layouts.createLayout(childDef, self._debugName, i, childDef.coord)
+			local child = ctrl_layouts.createLayoutNode(childDef, self._debugName, i, childDef.coord)
 			if child then
 				child.parentIdx = childDef.coord
 				table.insert(self._children, child)
@@ -30,6 +30,7 @@ do
 
 	function list_layout:onActivate( ... )
 		list_layout._base.onActivate(self, ...)
+		self._focusIdx = nil
 		for i,child in ipairs(self._children) do
 			child:onActivate(...)
 		end
@@ -38,6 +39,7 @@ do
 		for _,child in ipairs(self._children) do
 			child:onDeactivate(...)
 		end
+		self._focusIdx = nil
 		list_layout._base.onDeactivate(self, ...)
 	end
 
@@ -56,8 +58,9 @@ do
 	end
 
 	function list_layout:_doFocus(options, child, idx, ...)
-		if (child and child:onFocus(options, ...)) or options.force then
-			self._focusChild = child
+		local ok = child and child:onFocus(options, ...)
+		if ok or options.force then
+			self._focusChild = ok and child or nil
 			self._focusIdx = idx
 			return true
 		end

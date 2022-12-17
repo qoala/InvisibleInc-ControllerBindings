@@ -3,12 +3,13 @@
 local _M = {}
 
 do -- Re-export layout classes.
-	local base_layout = include(SCRIPT_PATHS.qedctrl.."/mui/layouts/base_layout")
-	_M.base_layout = base_layout
+	_M.base_layout = include(SCRIPT_PATHS.qedctrl.."/mui/layouts/base_layout")
 
 	local single_layouts = include(SCRIPT_PATHS.qedctrl.."/mui/layouts/single_layouts")
 	_M.widget_reference = single_layouts.widget_reference
 	_M.solo_layout      = single_layouts.solo_layout
+
+	_M.listbox_layout = include(SCRIPT_PATHS.qedctrl.."/mui/layouts/listbox_layout")
 
 	local list_layouts = include(SCRIPT_PATHS.qedctrl.."/mui/layouts/list_layouts")
 	_M.list_layout  = list_layouts.list_layout
@@ -27,14 +28,23 @@ _M.LAYOUT_FACTORY = {
 	RGRID = _M.rgrid_layout,
 	CGRID = _M.cgrid_layout,
 }
-function _M.createLayout(def, debugParent, debugIdx, debugCoord)
+_M.WIDGET_NODE_FACTORY = {
+	DEFAULT = _M.widget_reference,
+	LISTBOX = _M.listbox_layout,
+}
+function _M.createLayoutNode(def, debugParent, debugIdx, debugCoord)
 	if def.widgetID then
-		return _M.widget_reference(def, debugParent, debugCoord)
+		return _M._createWidgetNode(def, debugParent, debugCoord)
 	end
 	assert(def.id, "Missing ID for non-widget child "..debugIdx.." of "..debugParent)
 	local layoutType = _M.LAYOUT_FACTORY[def.shape or "VLIST"]
 	assert(layoutType, "Unknown layout shape "..tostring(def.shape).." on "..debugParent.."/"..tostring(def.id))
-	return layoutType(def, debugParent)
+	return layoutType(def, debugParent, debugCoord)
+end
+function _M._createWidgetNode(def, debugParent, debugCoord)
+	local refType = _M.WIDGET_NODE_FACTORY[def.widgetType or "DEFAULT"]
+	assert(refType, "Unknown widget type "..tostring(def.widgetType).." on "..debugParent.."/"..tostring(def.id))
+	return refType(def, debugParent, debugCoord)
 end
 
 return _M

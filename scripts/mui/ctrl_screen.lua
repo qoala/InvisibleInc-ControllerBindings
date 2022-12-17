@@ -132,9 +132,9 @@ function ctrl_screen:init(def, debugName)
 	if self._def.layouts then
 		self._layouts = {}
 		for i, layoutDef in ipairs(self._def.layouts) do
-			assert(layoutDef.id, "Missing ID for root layout "..i.." of "..self._debugName)
-			assert(not self._layouts[layoutDef.id], "Non-unique layout ID " .. tostring(layoutDef.id) .. " in " .. self._debugName)
-			self._layouts[layoutDef.id] = ctrl_layouts.createLayout(layoutDef, self._debugName, i)
+			assert(layoutDef.id, "[QEDCTRL] Missing ID for root layout "..i.." of "..self._debugName)
+			assert(not self._layouts[layoutDef.id], "[QEDCTRL] Non-unique layout ID " .. tostring(layoutDef.id) .. " in " .. self._debugName)
+			self._layouts[layoutDef.id] = ctrl_layouts.createLayoutNode(layoutDef, self._debugName, i)
 		end
 	else
 		self._soloLayout = ctrl_layouts.solo_layout(self._debugName)
@@ -155,7 +155,7 @@ end
 function ctrl_screen:onActivate(screen)
 	-- simlog("LOG_QEDCTRL", "ctrl:activate %s", self._debugName)
 	self._screen = screen
-	self._widgets = {}
+	self._widgets, self._typedWidgets = {}, {}
 	self._rootLayout = nil
 	for _, layout in pairs(self._layouts) do
 		layout:onActivate(self)
@@ -189,7 +189,7 @@ function ctrl_screen:onDeactivate()
 	for _, layout in pairs(self._layouts) do
 		layout:onDeactivate()
 	end
-	self._screen, self._widgets = nil
+	self._screen, self._widgets, self._typedWidgets = nil
 	self._rootLayout = nil
 end
 
@@ -197,14 +197,25 @@ function ctrl_screen:getWidget( widgetID )
 	return self._widgets and self._widgets[widgetID]
 end
 
+function ctrl_screen:getTypedWidget( widgetType, widgetID )
+	local tbl = self._typedWidgets and self._typedWidgets[widgetType]
+	return tbl and tbl[widgetID]
+end
+
 function ctrl_screen:attachWidget( widget )
 	local id = widget:getControllerID()
 	assert(self._widgets, "[QEDCTRL] Can't activate widget "..tostring(id)..
 		" before screen "..tostring(self._debugName).." is activated.")
-	assert(not self._widgets[id], "[QEDCTRL] Non-unique widget ID "..tostring(id)..
+
+	local tbl = self._widgets
+	if widget.CONTROLLER_TYPE then
+		self._typedWidgets[widget.CONTROLLER_TYPE] = self._typedWidgets[widget.CONTROLLER_TYPE] or {}
+		tbl = self._typedWidgets[widget.CONTROLLER_TYPE]
+	end
+	assert(not tbl[id], "[QEDCTRL] Non-unique widget ID "..tostring(id)..
 		" in "..tostring(self._debugName))
 
-	self._widgets[id] = widget
+	tbl[id] = widget
 
 	if widget:getControllerDef().soloButton then
 		local soloLayout = self._soloLayout
@@ -222,8 +233,10 @@ end
 
 function ctrl_screen:detachWidget( widget )
 	local id = widget:getControllerID()
-	if self._widgets then
-		self._widgets[id] = nil
+	local tbl = self._widgets
+	if tbl and widget.CONTROLLER_TYPE then tbl = self._typedWidgets[widget.CONTROLLER_TYPE] end
+	if tbl then
+		tbl[id] = nil
 	end
 
 	-- Deactivate solo buttons, as needed.

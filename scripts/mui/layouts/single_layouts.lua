@@ -8,7 +8,7 @@ local base_layout = include(SCRIPT_PATHS.qedctrl.."/mui/layouts/base_layout")
 
 local widget_reference = class(base_layout)
 do
-	widget_reference._SHAPE = "WIDGET"
+	widget_reference._SHAPE = "widget"
 	function widget_reference:init( def, ... )
 		self._id = def and def.widgetID
 		widget_reference._base.init(self, def, ...)
@@ -16,17 +16,21 @@ do
 		self._widgetID = self._def.widgetID
 	end
 
+	function widget_reference:_getWidget()
+		return self._widgetID and self._ctrl:getWidget(self._widgetID)
+	end
+
 	function widget_reference:isEmpty()
-		return not (self._widgetID and self._ctrl:getWidget(self._widgetID))
+		return not self:_getWidget()
 	end
 
 	function widget_reference:canFocus()
-		local widget = self._widgetID and self._ctrl:getWidget(self._widgetID)
+		local widget = self:_getWidget()
 		return widget and widget:canControllerFocus()
 	end
 
 	function widget_reference:onFocus( options, ... )
-		local widget = self._widgetID and self._ctrl:getWidget(self._widgetID)
+		local widget = self:_getWidget()
 		if widget and widget.onControllerFocus then
 			widget._qedctrl_debugName = self._debugName
 			return widget:onControllerFocus(options, ...)
@@ -37,26 +41,27 @@ do
 	end
 
 	function widget_reference:onUpdate()
-		local widget = self._widgetID and self._ctrl:getWidget(self._widgetID)
+		local widget = self:_getWidget()
 		if widget and widget.onControllerUpdate then
 			return widget:onControllerUpdate()
 		end
 		local target = widget and widget:getControllerFocusTarget()
-		return self._ctrl:setFocus(target, self._debugName)
+		return self._ctrl:setFocus(target, self._debugName.."::onUpdate")
 	end
 
 	function widget_reference:_onInternalNav( navDir )
-		local widget = self._widgetID and self._ctrl:getWidget(self._widgetID)
+		local widget = self:_getWidget()
 		if widget and widget.onControllerNav then
 			return widget:onControllerNav(navDir)
 		end
 	end
 
 	function widget_reference:onConfirm()
-		local widget = self._widgetID and self._ctrl:getWidget(self._widgetID)
+		local widget = self:_getWidget()
 		if widget and widget.onControllerConfirm then
 			simlog("LOG_QEDCTRL", "ctrl:confirm %s", self._debugName)
-			return widget:onControllerConfirm()
+			widget:onControllerConfirm()
+			return true
 		end
 	end
 end

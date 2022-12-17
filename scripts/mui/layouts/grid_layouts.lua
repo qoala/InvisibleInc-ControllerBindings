@@ -22,8 +22,8 @@ grid_layout.ASC, grid_layout.DESC = ASC, DESC
 function grid_layout:init( def, ... )
 	grid_layout._base.init(self, def, ...)
 	assert(self._def.w and type(self._def.w) == "number" and self._def.h and type(self._def.h) == "number",
-		"Missing w,h ("..tostring(self._def.w)..","..tostring(self._def.h)..") for grid layout "..self._debugName)
-	assert(type(self._def.children) == "table", "Missing children for grid layout "..self._debugName)
+		"[QEDCTRL] Missing w,h ("..tostring(self._def.w)..","..tostring(self._def.h)..") for grid layout "..self._debugName)
+	assert(type(self._def.children) == "table", "[QEDCTRL] Missing children for grid layout "..self._debugName)
 
 	self._w = self._def.w
 	self._h = self._def.h
@@ -47,11 +47,11 @@ function grid_layout:init( def, ... )
 	self._isEmpty = true
 	for i, childDef in ipairs(self._def.children) do
 		local t = childDef.coord
-		assert(type(t) == "table" and #t == 2, "Invalid coord "..tostring(t).." for grid child "..tostring(self._debugName).."/"..(childDef.id or i))
+		assert(type(t) == "table" and #t == 2, "[QEDCTRL] Invalid coord "..tostring(t).." for grid child "..tostring(self._debugName).."/"..(childDef.id or i))
 		local x, y = t[1], t[2]
-		assert(not self:getChild(x, y), "Duplicate coord "..x..","..y.." for grid child "..tostring(self._debugName).."/"..(childDef.id or i))
+		assert(not self:getChild(x, y), "[QEDCTRL] Duplicate coord "..x..","..y.." for grid child "..tostring(self._debugName).."/"..(childDef.id or i))
 
-		local child = ctrl_layouts.createLayout(childDef, self._debugName, i, x..","..y)
+		local child = ctrl_layouts.createLayoutNode(childDef, self._debugName, i, x..","..y)
 		if child then
 			child.parentX, child.parentY = x, y
 			local i, j = self:_xy2ij(x, y)
@@ -68,6 +68,7 @@ end
 
 function grid_layout:onActivate( ... )
 	grid_layout._base.onActivate(self, ...)
+	self._focusX, self._focusY = nil
 	for i,j,child in self._children:iter() do
 		child:onActivate(...)
 	end
@@ -76,6 +77,7 @@ function grid_layout:onDeactivate( ... )
 	for i,j,child in self._children:iter() do
 		child:onDeactivate(...)
 	end
+	self._focusX, self._focusY = nil
 	grid_layout._base.onDeactivate(self, ...)
 end
 
@@ -97,8 +99,9 @@ function grid_layout:canFocus()
 end
 
 function grid_layout:_doFocus(options, child, x, y, ...)
-	if (child and child:onFocus(options, ...)) or options.force then
-		self._focusChild = child
+	local ok = child and child:onFocus(options, ...)
+	if ok or options.force then
+		self._focusChild = ok and child or nil
 		self._focusX = x
 		self._focusY = y
 		return true

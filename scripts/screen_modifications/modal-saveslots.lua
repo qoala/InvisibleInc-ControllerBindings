@@ -19,7 +19,7 @@ end
 
 local modifications = {
 	-- panel/
-	modifyWidget(3, ctrlID("saveSlots", { listBoxSelectsItems = true })), -- listbox[SaveSlot]
+	modifyWidget(3, ctrlID("saveSlots")), -- listbox[SaveSlot]
 	modifyWidget(8, skinButton(ctrlID"cancelGame")),
 	-- panel/newGame/
 	modifySubWidget(6,1, ctrlID"storyBtn"),
@@ -34,7 +34,11 @@ local modifications = {
 		{ -- 3 independent roots; saveslot-dialog.lua swaps them out as submenus open/close.
 			{
 				id = "main",
-				children = sutil.widgetList("saveSlots", "cancelGame"),
+				children =
+				{
+					sutil.widget("saveSlots", 1, { widgetType = [[LISTBOX]] }),
+					sutil.widget("cancelGame", 2),
+				},
 			},
 			{
 				id = "newGame",

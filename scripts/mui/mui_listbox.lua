@@ -1,36 +1,6 @@
-local util = include("modules/util")
-local mui_defs = include("mui/mui_defs")
-
 local mui_listbox = include("mui/widgets/mui_listbox")
 
-local ctrl_defs = include(SCRIPT_PATHS.qedctrl.."/ctrl_defs")
 local ctrl_widget = include(SCRIPT_PATHS.qedctrl.."/mui/ctrl_widget")
-
-local ORIENT_H = 1
-local ORIENT_V = 2 -- default
-
-local function isPrevDir(orient, navDir)
-	if orient == ORIENT_H then
-		return navDir == ctrl_defs.LEFT
-	else
-		return navDir == ctrl_defs.UP
-	end
-end
-local function isNextDir(orient, navDir)
-	if orient == ORIENT_H then
-		return navDir == ctrl_defs.RIGHT
-	else
-		return navDir == ctrl_defs.DOWN
-	end
-end
-local function isOrthogonalDir(orient, navDir)
-	if orient == ORIENT_H then
-		return navDir == ctrl_defs.UP or navDir == ctrl_defs.DOWN
-	else
-		return navDir == ctrl_defs.LEFT or navDir == ctrl_defs.RIGHT
-	end
-end
-
 
 -- ===
 
@@ -38,100 +8,8 @@ local oldInit = mui_listbox.init
 function mui_listbox:init( screen, def, ... )
 	oldInit( self, screen, def, ... )
 
-	if ctrl_widget.init(self, def) then
-		self._qedctrl_selectsItems = def.ctrlProperties.listBoxSelectsItems
-	end
+	ctrl_widget.init(self, def)
 end
 
-ctrl_widget.defineCtrlMethods(mui_listbox, {
-	onActivate = function(self, screen)
-		self._qedctrl_focusIdx = nil
-	end,
-	onDeactivate = function(self, screen)
-		self._qedctrl_focusIdx = nil
-	end,
-})
-
-function mui_listbox:canControllerFocus()
-	if not self:isVisible() or util.tempty(self._items) then
-		return
-	elseif self._no_hitbox then -- TODO: Support listboxes without item-level hitboxes.
-		return
-	end
-	return true
-end
-
--- TODO: Can individual listbox items be unavailable for focus?
-function mui_listbox:_setControllerFocus(options, idx, ...)
-	if not util.tempty(self._items) then
-		idx = math.min(math.max(idx, 1), #self._items)
-	end
-	local item = self._items[idx]
-	if not item then
-		if options and options.force then
-			self._qedctrl_focusIdx = idx
-			return self._qedctrl_ctrl:setFocus(nil)
-		end
-		return
-	end
-
-	if item.hitbox then
-		self._qedctrl_focusIdx = idx
-		return self._qedctrl_ctrl:setFocus(item.hitbox, self._qedctrl_debugName.."/"..idx)
-	end
-end
-
-function mui_listbox:onControllerFocus(options, idx, ...)
-	options = options or {}
-	if idx then
-		local ok = self:_setControllerFocus(options, idx, ...)
-		if not ok and options.dir and options.continue then
-			return self:onControllerNav(options.dir, idx)
-		end
-		return ok
-	elseif self._qedctrl_focusIdx and (options.recall or isOrthogonalDir(self._orientation, options.dir)) then
-		-- Consider entry from orthogonal directions
-		return self:_setControllerFocus(options, self._qedctrl_focusIdx, ...)
-	end
-	if isPrevDir(self._orientation, options.dir) then
-		return self:_setControllerFocus(options, #self._items)
-	elseif isNextDir(self._orientation, options.dir) then
-		return self:_setControllerFocus(options, 1)
-	end
-	-- TODO: Focus the first _visible_ item if there's a scrollbar and no specific target.
-	return self:_setControllerFocus(options, 1)
-end
-
-function mui_listbox:onControllerUpdate()
-	local i = self._qedctrl_focusIdx
-	if i and self._items[i] then
-		local item = self._items[i]
-		if item.hitbox then
-			return self._qedctrl_ctrl:setFocus(item.hitbox, self._qedctrl_debugName.."/"..i)
-		end
-	elseif not util.tempty(self._items) then
-		return self:onControllerFocus()
-	end
-end
-
-function mui_listbox:onControllerNav( navDir, i )
-	i = i or self._qedctrl_focusIdx
-	if not i then
-		return
-	elseif isPrevDir(self._orientation, navDir) then
-		if i > 1 then
-			return self:_setControllerFocus({dir=navDir}, i - 1)
-		end
-	elseif isNextDir(self._orientation, navDir) then
-		if i < #self._items then
-			return self:_setControllerFocus({dir=navDir}, i + 1)
-		end
-	end
-end
-
-function mui_listbox:onControllerConfirm()
-	if self._qedctrl_selectsItems and self.onItemClicked then
-		local i = self._qedctrl_focusIdx
-		util.callDelegate( self.onItemClicked, i, self._items[ i ].user_data )
-	end
-end
+mui_listbox.CONTROLLER_TYPE = "listbox"
+ctrl_widget.defineCtrlMethods(mui_listbox)
