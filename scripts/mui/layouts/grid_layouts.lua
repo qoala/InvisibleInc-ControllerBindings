@@ -2,7 +2,6 @@
 
 local ctrl_defs = include(SCRIPT_PATHS.qedctrl.."/ctrl_defs")
 local Grid2D = include(SCRIPT_PATHS.qedctrl.."/grid2d")
-local sclass = include(SCRIPT_PATHS.qedctrl.."/simple_class")
 local base_layout = include(SCRIPT_PATHS.qedctrl.."/mui/layouts/base_layout")
 
 
@@ -17,7 +16,7 @@ local _DIRMAP = {
 local SIGN_DBG = { [ASC] = "+", [DESC] = "-" }
 
 
-local grid_layout = sclass(base_layout)
+local grid_layout = class(base_layout)
 grid_layout.ASC, grid_layout.DESC = ASC, DESC
 
 function grid_layout:init( def, ... )
@@ -233,7 +232,7 @@ function grid_layout:_onInternalNav( navDir, x, y )
 end
 
 
-local rgrid_layout = sclass(grid_layout)
+local rgrid_layout = class(grid_layout)
 rgrid_layout._SHAPE = "RGRID"
 function rgrid_layout:_xy2ij(x, y) -- (x/w<->j, y/h<->i)
 	return y, x
@@ -246,7 +245,7 @@ function rgrid_layout:_getOrNextXY(x, xSign, y, ySign, bounceBack)
 	return self:_getOrNextJI(x,xSign, y,ySign, bounceBack)
 end
 
-local cgrid_layout = sclass(grid_layout)
+local cgrid_layout = class(grid_layout)
 cgrid_layout._SHAPE = "CGRID"
 function cgrid_layout:_xy2ij(x, y) -- (x/w<->i, y/h<->j)
 	return x, y

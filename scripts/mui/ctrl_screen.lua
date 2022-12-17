@@ -111,7 +111,6 @@ local util = require( "client_util" )
 
 local ctrl_defs = include(SCRIPT_PATHS.qedctrl.."/ctrl_defs")
 local ctrl_layouts = include(SCRIPT_PATHS.qedctrl.."/mui/ctrl_layouts")
-local sclass = include(SCRIPT_PATHS.qedctrl.."/simple_class")
 
 
 local NAV_KEY = {
@@ -125,7 +124,7 @@ local NAV_KEY = {
 -- Top-level controller for a mui_screen
 -- =====================================
 
-local ctrl_screen = sclass()
+local ctrl_screen = class()
 function ctrl_screen:init(def, debugName)
 	self._debugName = debugName or "?"
 	self._deferredNavigate = nil -- Navigation unavailable until after activate.

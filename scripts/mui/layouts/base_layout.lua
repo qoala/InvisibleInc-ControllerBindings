@@ -1,10 +1,9 @@
 -- Abstract base class of a layout node.
 
 local ctrl_defs = include(SCRIPT_PATHS.qedctrl.."/ctrl_defs")
-local sclass = include(SCRIPT_PATHS.qedctrl.."/simple_class")
 
 
-local base_layout = sclass()
+local base_layout = class()
 function base_layout:init( def, debugParent, debugCoord )
 	self._def = def or {}
 	self._id = self._id or self._def.id -- Allow subclasses to force ID before we build debugName.

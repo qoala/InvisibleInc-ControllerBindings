@@ -1,11 +1,10 @@
 -- Layouts with all children in a single line.
 
 local ctrl_defs = include(SCRIPT_PATHS.qedctrl.."/ctrl_defs")
-local sclass = include(SCRIPT_PATHS.qedctrl.."/simple_class")
 local base_layout = include(SCRIPT_PATHS.qedctrl.."/mui/layouts/base_layout")
 
 
-local list_layout = sclass(base_layout)
+local list_layout = class(base_layout)
 do
 	function list_layout:init( def, ... )
 		list_layout._base.init(self, def, ...)
@@ -144,12 +143,12 @@ do
 	end
 end
 
-local vlist_layout = sclass(list_layout)
+local vlist_layout = class(list_layout)
 vlist_layout._SHAPE = "VLIST"
 vlist_layout.PREV_DIR = ctrl_defs.UP
 vlist_layout.NEXT_DIR = ctrl_defs.DOWN
 
-local hlist_layout = sclass(list_layout)
+local hlist_layout = class(list_layout)
 hlist_layout._SHAPE = "HLIST"
 hlist_layout.PREV_DIR = ctrl_defs.LEFT
 hlist_layout.NEXT_DIR = ctrl_defs.RIGHT

@@ -18,9 +18,7 @@
 
 local array = include("modules/array")
 
-local sclass = include(SCRIPT_PATHS.qedctrl.."/simple_class")
-
-local Grid2D = sclass()
+local Grid2D = class()
 function Grid2D:init(iMax, jMax, debugName)
 	rawset(self, "_dbg", (debugName and debugName..":" or "")..tostring(iMax)..","..tostring(jMax))
 	assert(type(iMax) == "number" and iMax >= 1 and math.floor(iMax) == iMax, "Invalid iMax "..self._dbg)
@@ -128,7 +126,7 @@ end
 
 -- ===
 -- Iteration over non-empty rows in order.
-Grid2D._IteratorRow = sclass()
+Grid2D._IteratorRow = class()
 function Grid2D._IteratorRow:init(grid)
 	assert(grid and grid:is_a(Grid2D), type(grid))
 	rawset(self, "_g", grid)

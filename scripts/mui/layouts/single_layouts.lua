@@ -3,11 +3,10 @@
 -- * widget_reference: A singular interactive widget as a leaf node in the hierarchy.
 -- * solo_layout: Special root layout with at most one widget in the hierarchy.
 
-local sclass = include(SCRIPT_PATHS.qedctrl.."/simple_class")
 local base_layout = include(SCRIPT_PATHS.qedctrl.."/mui/layouts/base_layout")
 
 
-local widget_reference = sclass(base_layout)
+local widget_reference = class(base_layout)
 do
 	widget_reference._SHAPE = "WIDGET"
 	function widget_reference:init( def, ... )
@@ -64,7 +63,7 @@ end
 
 -- A solo top-level widget.
 -- Only constructed in the absence of a layout.
-local solo_layout = sclass(widget_reference)
+local solo_layout = class(widget_reference)
 do
 	solo_layout._SHAPE = "-"
 	function solo_layout:init( debugParent )
