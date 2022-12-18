@@ -49,6 +49,8 @@ local function unload( modApi )
 	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/modal-saveslots"))
 	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/modals"))
 	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/pause-dialog"))
+	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/screen-loadout-selector"))
+	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/team-preview-screen"))
 	-- TODO: modal-logs: listbox, nonlinear button arrangement.
 	-- TODO: modal-tutorials: buttons for internal pages all start visible, but all but the first are occluded.
 end

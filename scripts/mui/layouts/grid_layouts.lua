@@ -25,8 +25,9 @@ function grid_layout:init( def, ... )
 		"[QEDCTRL] Missing w,h ("..tostring(self._def.w)..","..tostring(self._def.h)..") for grid layout "..self._debugName)
 	assert(type(self._def.children) == "table", "[QEDCTRL] Missing children for grid layout "..self._debugName)
 
-	self._w = self._def.w
-	self._h = self._def.h
+	local scale = self._def.coordScale or 1
+	self._w = self._def.w * scale
+	self._h = self._def.h * scale
 	-- The initial x/y values when unspecified in navigation and which direction to vary it.
 	if self._def.defaultXReverse then
 		self._defaultX, self._defaultXNext = self._w, DESC
@@ -48,7 +49,7 @@ function grid_layout:init( def, ... )
 	for i, childDef in ipairs(self._def.children) do
 		local t = childDef.coord
 		assert(type(t) == "table" and #t == 2, "[QEDCTRL] Invalid coord "..tostring(t).." for grid child "..tostring(self._debugName).."/"..(childDef.id or i))
-		local x, y = t[1], t[2]
+		local x, y = t[1]*scale, t[2]*scale
 		assert(not self:getChild(x, y), "[QEDCTRL] Duplicate coord "..x..","..y.." for grid child "..tostring(self._debugName).."/"..(childDef.id or i))
 
 		local child = ctrl_layouts.createLayoutNode(childDef, self._debugName, i, x..","..y)

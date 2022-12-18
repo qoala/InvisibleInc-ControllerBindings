@@ -28,6 +28,7 @@ _M.insert = _M.modify
 
 -- Modification arg that applies a ctrl ID to a widget.
 function _M.ctrlID(id, otherProperties)
+	assert(type(id) == "string" or type(id) == "number", "[QEDCTRL] Illegal ID "..tostring(id))
 	local ctrlProperties = { id = id }
 	if otherProperties then
 		ctrlProperties = qutil.extendData(otherProperties)(ctrlProperties)

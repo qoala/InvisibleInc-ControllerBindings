@@ -77,6 +77,10 @@
 -- Grid-specific options:
 --   * w = #, h = #
 --       Fixed bounds of the grid. Both are required.
+--   * coordScale = # (default 1)
+--       If set, coordinates and width/height bounds will be multiplied by this value.
+--       For example, if trying to insert a value between {1,1} and {1,2} after the fact, setting
+--       the scale to 10, would allow inserting a value at {1,1.5}
 --   * defaultXReverse = true
 --       If set, then when x is unspecified, the grid starts from the right and seeks left.
 --       Also, if x is specified but a horizontal direction is not, then the grid will seek to the
