@@ -116,7 +116,7 @@ local modifications = {
 					-- DLC + Mods
 					"dlcBtn", "modPresetBtn", "cancelBtn"
 				),
-				alwaysRecall = true, -- TODO: set default programmaticaly to current difficulty.
+				recallOrthogonal = true, -- TODO: set default programmaticaly to current difficulty.
 			},
 			{
 				id = "center", coord = 2,
@@ -131,20 +131,21 @@ local modifications = {
 							sutil.widget("showOptionsBtn",  {1,3}),
 							sutil.widget("startBtn",        {2,3}),
 						},
-						alwaysRecall = true,
+						recallOrthogonalX = true,
+						recallOrthogonalY = true,
 						default = "startBtn",
 					},
 					sutil.widget("genOptsList", 2,
 						{
 							widgetType = [[listbox]],
-							alwaysRecall = true,
+							recallAlways = true,
 							-- Sim Constructor has an onItemClicked that's a no-op on PC.
 							ignoreOnItemClicked = true,
 							rightTo = { "root", "center", "top", "startBtn" },
 						}
 					),
 				},
-				alwaysRecall = true,
+				recallOrthogonal = true,
 			},
 		},
 		{

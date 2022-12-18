@@ -112,6 +112,12 @@ function listbox_layout:_doFocus( options, listWidget, item, idx, ... )
 	end
 end
 
+local function shouldRecall(options, ctrlDef, listOrientation)
+	if options.recall or ctrlDef.recallAlways then return true end
+
+	-- Implicitly consider entry from orthogonal directions as a recall=true move.
+	return ctrlDef.recallOrthogonal ~= false and isOrthogonalDir(listOrientation, options.dir)
+end
 function listbox_layout:onFocus( options, idx, ... )
 	local listWidget = self:_getListWidget()
 	if not listWidget then return end
@@ -125,8 +131,7 @@ function listbox_layout:onFocus( options, idx, ... )
 			return self:onNav(options.dir, idx)
 		end
 		return ok
-	elseif self._focusIdx and (options.recall or self._def.alwaysRecall or isOrthogonalDir(listOrientation, options.dir)) then
-		-- Consider entry from orthogonal directions as a recall=true move.
+	elseif self._focusIdx and shouldRecall(options, self._def, listOrientation) then
 		local focusIdx = self._focusIdx
 		topIndex, botIndex = self:_getVisibleRange( listWidget )
 		-- Ignore recall if the entry has been scrolled off the screen.

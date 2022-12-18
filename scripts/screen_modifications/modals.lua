@@ -193,11 +193,11 @@ local modifications =
 					sutil.widget("list",      2,
 						{
 							widgetType = [[listbox]],
-							alwaysRecall = true,
+							recallOrthogonal = true,
 						}
 					),
 				},
-				alwaysRecall = true,
+				recallOrthogonal = true,
 				rightTo = { "root", "bottom", },
 			},
 			{

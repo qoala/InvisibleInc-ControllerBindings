@@ -69,6 +69,11 @@ function list_layout:_doFocus(options, child, idx, ...)
 		return true
 	end
 end
+local function shouldRecall(options, ctrlDef, prevDir, nextDir)
+	if options.recall or ctrlDef.recallAlways then return true end
+
+	return ctrlDef.recallOrthogonal and options.dir ~= prevDir and options.dir ~= nextDir
+end
 function list_layout:onFocus(options, childID, ...)
 	options = options or {}
 	if childID then
@@ -78,7 +83,7 @@ function list_layout:onFocus(options, childID, ...)
 			return self:onNav(options.dir, idx)
 		end
 		return ok
-	elseif (options.recall or self._def.alwaysRecall) and self._focusIdx then
+	elseif self._focusIdx and shouldRecall(options, self._def, self.PREV_DIR, self.NEXT_DIR) then
 		local child = self._children[self._focusIdx]
 		if child and self:_doFocus(options, child, self._focusIdx, ...) then
 			return true

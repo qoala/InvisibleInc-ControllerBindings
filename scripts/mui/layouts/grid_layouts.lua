@@ -7,7 +7,7 @@ local base_layout = include(SCRIPT_PATHS.qedctrl.."/mui/layouts/base_layout")
 
 local ASC = 1
 local DESC = -1
-local _DIRMAP = {
+local DIRMAP = {
 	[ctrl_defs.UP] = DESC,
 	[ctrl_defs.DOWN] = ASC,
 	[ctrl_defs.LEFT] = DESC,
@@ -114,6 +114,17 @@ function grid_layout:_doFocus(options, child, x, y, ...)
 	end
 end
 
+local function shouldRecall(options, ctrlDef)
+	if options.recall or ctrlDef.recallAlways then
+		return true, true
+	end
+
+	local recallX = (ctrlDef.recallOrthogonalX
+		and options.dir ~= ctrl_defs.LEFT and options.dir ~= ctrl_defs.RIGHT)
+	local recallY = (ctrlDef.recallOrthogonalY
+		and options.dir ~= ctrl_defs.UP and options.dir ~= ctrl_defs.DOWN)
+	return recallX, recallY
+end
 function grid_layout:onFocus(options, childID, ...)
 	options = options or {}
 	if childID then
@@ -123,16 +134,41 @@ function grid_layout:onFocus(options, childID, ...)
 			return self:onNav(options.dir, x, y)
 		end
 		return ok
-	elseif (options.recall or self._def.alwaysRecall) and self._focusX then
-		local oldForce = options.force
-		if options.onUpdate then options.force = true end
+	elseif self._focusX then
+		local recallX, recallY = shouldRecall(options, self._def)
+		if recallX or recallY then
+			local oldForce = options.force
+			if options.onUpdate then options.force = true end
 
-		local child = self:getChild(self._focusX, self._focusY)
-		if child and self:_doFocus(options, child, self._focusX, self._focusY, ...) then
+			local x, y = self._focusX, self._focusY
+			local child
+			if recallX and recallY then
+				child = self:getChild(x, y)
+			elseif recallX then
+				local dir = options.dir
+				local ySign
+				if dir == ctrl_defs.UP then       y, ySign = self._h, DESC
+				elseif dir == ctrl_defs.DOWN then y, ySign = 1, ASC
+				else y, ySign = self._defaultY, self._defaultYNext end
+
+				child, x, y = self:_getOrNextXY(x, nil, y, ySign, false, true)
+
+			elseif recallY then
+				local dir = options.dir
+				local xSign
+				if dir == ctrl_defs.LEFT then      x, xSign = self._w, DESC
+				elseif dir == ctrl_defs.RIGHT then x, xSign = 1, ASC
+				else x, xSign = self._defaultX, self._defaultXNext end
+
+				child, x, y = self:_getOrNextXY(x, xSign, y, nil, false, true)
+
+			end
+			if child and self:_doFocus(options, child, x, y, ...) then
+				options.force = oldForce
+				return true
+			end
 			options.force = oldForce
-			return true
 		end
-		options.force = oldForce
 	end
 	local dir = options.dir
 	if dir == ctrl_defs.UP then
@@ -219,12 +255,43 @@ function grid_layout:_getOrNextJI(j0, jSign, i0, iSign, bounceBack)
 	end
 end
 
+-- Find the first available widget, varying only the i coordinate.
+function grid_layout:_getOrNextI(i0, iSign, j0)
+	local iMax, jMax = self:_xy2ij(self._w, self._h)
+	if (not i0 or i0 < 1 or i0 > iMax
+		or not j0 or j0 < 1 or j0 > jMax)
+	then
+		simlog("[QEDCTRL] Failed grid:navI with invalid args %s%s,%s= / %s,%s %s\n%s",
+			i0, SIGN_DBG[iSign] or "=", j0, iMax, jMax, self._debugName, debug.traceback())
+		inputmgr.onControllerError()
+		return
+	end
+	-- simlog("LOG_QEDCTRL", "grid:navI %s%s,%s= / %s,%s %s",
+	-- 	i0, SIGN_DBG[iSign] or "=", j0, iMax, jMax, self._debugName)
+
+	local iIterFn
+	if iSign == ASC then
+		iIterFn = self._children.rowIter
+	elseif iSign == DESC then
+		iIterFn = self._children.reverseRowIter
+	else
+		iIterFn = self._children.getIterRow
+	end
+
+	for i, row in iIterFn(self._children, i0) do
+		local child = self._children:get(i, j0)
+		if child and child:canFocus() then
+			return child, child.parentX, child.parentY
+		end
+	end
+end
+
 function grid_layout:_onInternalNav( navDir, x, y )
 	x = x or self._focusX
 	y = y or self._focusY
 	if not x or not y then return end
 	local child
-	local sign = _DIRMAP[navDir]
+	local sign = DIRMAP[navDir]
 	if navDir == ctrl_defs.UP or navDir == ctrl_defs.DOWN then
 		y = y + sign
 		if y > 0 and y <= self._h then
@@ -244,26 +311,40 @@ end
 
 local rgrid_layout = class(grid_layout)
 rgrid_layout._SHAPE = "rgrid"
+rgrid_layout._YI = true
+rgrid_layout._XJ = true
 function rgrid_layout:_xy2ij(x, y) -- (x/w<->j, y/h<->i)
 	return y, x
 end
-function rgrid_layout:_getOrNextXY(x, xSign, y, ySign, bounceBack)
-	if not xSign then -- Always consider variation within a row.
-		xSign = self._def.defaultXReverse and ASC or DESC
-		bounceBack = true
+function rgrid_layout:_getOrNextXY(x, xSign, y, ySign, bounceBack, lockDir)
+	if not xSign then
+		if lockDir then
+			return self:_getOrNextI(y,ySign, x)
+
+		else -- Otherwise, always consider variation within a column.
+			xSign = self._def.defaultXReverse and ASC or DESC
+			bounceBack = true
+		end
 	end
 	return self:_getOrNextJI(x,xSign, y,ySign, bounceBack)
 end
 
 local cgrid_layout = class(grid_layout)
 cgrid_layout._SHAPE = "cgrid"
+cgrid_layout._XI = true
+cgrid_layout._YJ = true
 function cgrid_layout:_xy2ij(x, y) -- (x/w<->i, y/h<->j)
 	return x, y
 end
-function cgrid_layout:_getOrNextXY(x, xSign, y, ySign, bounceBack)
-	if not ySign then -- Always consider variation within a column.
-		ySign = self._def.defaultYReverse and ASC or DESC
-		bounceBack = true
+function cgrid_layout:_getOrNextXY(x, xSign, y, ySign, bounceBack, lockDir)
+	if not ySign then
+		if lockDir then
+			return self:_getOrNextI(x,xSign, y)
+
+		else -- Otherwise, always consider variation within a column.
+			ySign = self._def.defaultYReverse and ASC or DESC
+			bounceBack = true
+		end
 	end
 	return self:_getOrNextJI(y,ySign, x,xSign, bounceBack)
 end
