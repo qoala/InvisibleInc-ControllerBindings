@@ -21,12 +21,15 @@ local function init(modApi)
 	include(scriptPath.."/client_defs")
 	include(scriptPath.."/input-manager")
 
+	-- Low-level MUI graphical primitives.
 	include(scriptPath.."/mui/mui_imagebutton")
 	include(scriptPath.."/mui/mui_listbox")
 	include(scriptPath.."/mui/mui_screen")
 
+	-- High-level UI controllers. (client/hud, client/gameplay, client/fe, etc)
 	include(scriptPath.."/controllers/camhandler")
 	include(scriptPath.."/controllers/hud")
+	include(scriptPath.."/controllers/moviescreen")
 	include(scriptPath.."/controllers/saveslots-dialog")
 end
 
