@@ -23,6 +23,18 @@ local function modifySubSubWidget(cid1, cid2, cid3, modification)
 		modification,
 	}
 end
+local function modifyNamedWidget(childName, modification)
+	return {
+		"generation-options.lua",
+		{ "widgets", 7 },
+		{
+			inheritDef =
+			{
+				[childName] = modification,
+			},
+		},
+	}
+end
 
 local function modifySkin(skinIndex, modification)
 	return {
@@ -59,7 +71,7 @@ local modifications = {
 					focusHoverImage = "arrow_down_active.png",
 					focusHoverColor = { 1, 1, 1, 1 },
 				}),
-			}
+			},
 		}
 	)),
 
@@ -73,7 +85,7 @@ local modifications = {
 	modifyWidget(18, skinButton(ctrlID("difficulty7"))),
 	modifyWidget(19, skinButton(ctrlID("difficulty8"))),
 	modifyWidget(21, skinButton(ctrlID("dlcBtn"))),
-	-- TODO: Custom Presets (preset saver mod)
+	modifyNamedWidget("presetBtn", skinButton(ctrlID("modPresetBtn"))), -- Mod Preset Saver
 	modifyWidget(13, skinButton(ctrlID("cancelBtn"))),
 
 	-- Center
@@ -102,7 +114,7 @@ local modifications = {
 					-- Advanced
 					"difficulty4", "difficulty5", "difficulty6", "difficulty7", "difficulty8",
 					-- DLC + Mods
-					"dlcBtn", "cancelBtn"
+					"dlcBtn", "modPresetBtn", "cancelBtn"
 				),
 				alwaysRecall = true, -- TODO: set default programmaticaly to current difficulty.
 			},
@@ -117,7 +129,7 @@ local modifications = {
 							sutil.widget("numRewinds",      {1,1}),
 							sutil.widget("levelRetriesBtn", {1,2}),
 							sutil.widget("showOptionsBtn",  {1,3}),
-							sutil.widget("startBtn",        {2,1}), -- TODO: 2,3
+							sutil.widget("startBtn",        {2,3}),
 						},
 						alwaysRecall = true,
 						default = "startBtn",

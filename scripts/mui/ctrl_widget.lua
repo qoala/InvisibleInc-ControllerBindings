@@ -26,6 +26,11 @@ function widget.defineCtrlMethods(cls, ctrlAppends, alwaysAppends)
 		return self._qedctrl_def
 	end
 
+	-- If the top-level of a listbox item skin is a supported interactive element, target it.
+	function cls:getControllerListItem()
+		return self
+	end
+
 	-- Widgets are added/removed on activate/deactivate,
 	-- because some of them are mui_component, and components aren't added directly to the screen.
 	local oldOnActivate = cls.onActivate

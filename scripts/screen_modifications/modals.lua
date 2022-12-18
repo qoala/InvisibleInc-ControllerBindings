@@ -177,6 +177,37 @@ local modifications =
 	modifyDialog("modal-signup.lua", 17, skinButton(ctrlID("cancelBtn"))),
 	sutil.setSingleLayout("modal-signup.lua", sutil.widgetList("cancelBtn")),
 
+	modifyDialog("modal-select-preset", 5, ctrlID("nameText")), -- TODO: editbox support.
+	modifyDialog("modal-select-preset", 12, ctrlID("list")),
+	modifyDialog("modal-select-preset",  8, ctrlID("saveBtn")),
+	modifyDialog("modal-select-preset",  9, ctrlID("loadBtn")),
+	modifyDialog("modal-select-preset", 10, ctrlID("deleteBtn")),
+	modifyDialog("modal-select-preset", 11, ctrlID("cancelBtn")),
+	sutil.setSingleLayout("modal-select-preset",
+		{ -- 2 vbox inside another vbox, but the inner ones can also move laterally.
+			{
+				id = "top", coord = 1,
+				children =
+				{
+					sutil.widget("nameText",  1),
+					sutil.widget("list",      2,
+						{
+							widgetType = [[listbox]],
+							alwaysRecall = true,
+						}
+					),
+				},
+				alwaysRecall = true,
+				rightTo = { "root", "bottom", },
+			},
+			{
+				id = "bottom", coord = 2,
+				children = sutil.widgetList("saveBtn", "loadBtn", "deleteBtn", "cancelBtn"),
+				leftTo = { "root", "top", },
+			},
+		}
+	),
+
 	modifyDialog("modal-story.lua", 7, ctrlID("skipBtn")),
 	modifyDialog("modal-story.lua", 8, ctrlID("prevBtn")),
 	modifyDialog("modal-story.lua", 9, ctrlID("nextBtn")),
