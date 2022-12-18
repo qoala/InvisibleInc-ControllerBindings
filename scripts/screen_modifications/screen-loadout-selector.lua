@@ -12,8 +12,19 @@ local function modifyWidget(childIndex, modification)
 	}
 end
 
+local function modifySkin(skinIndex, modification)
+	return {
+		"screen-loadout-selector.lua",
+		{ "skins", skinIndex },
+		modification,
+	}
+end
+
 local modifications = {
-	modifyWidget(3, ctrlID("loadoutList")), -- TODO: non-hitbox listbox
+	-- agent, for loadoutList.
+	modifySkin(3, sutil.ctrl({ bindListItemTo = "btn" })),
+
+	modifyWidget(3, ctrlID("loadoutList")),
 	modifyWidget(2, ctrlID("closeBtn")),
 
 	sutil.setSingleLayout("screen-loadout-selector.lua",
