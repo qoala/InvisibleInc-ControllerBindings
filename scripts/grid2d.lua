@@ -142,11 +142,17 @@ local function doRowIter(dat)
 		local row = dat.row
 		dat.view._r, dat.view._last = row, false
 
-		if dat.delta then -- Prep next row.
-			dat.row = dat.grid._cache.rows[row.rowT + dat.delta]
-		else
-			dat.row = nil
-		end
+		-- Prep next row.
+		dat.row = dat.grid._cache.rows[row.rowT + dat.delta]
+		return row.i, dat.view
+	end
+end
+local function doSingleRowIter(dat)
+	if dat.row then
+		local row = dat.row
+		dat.view._r, dat.view._last = row, false
+
+		dat.row = nil
 		return row.i, dat.view
 	end
 end
@@ -203,7 +209,7 @@ function Grid2D:getIterRow(i0)
 	local dat = { grid = self, delta = 0, view = Grid2D._IteratorRow(self) }
 
 	dat.row = c.i2row[i0]
-	return doRowIter, dat
+	return doSingleRowIter, dat
 end
 function Grid2D._IteratorRow:iter(j0)
 	local grid, row, lastEntry = self._g, self._r, self._last

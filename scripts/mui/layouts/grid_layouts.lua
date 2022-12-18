@@ -179,14 +179,15 @@ function grid_layout:_getOrNextJI(j0, jSign, i0, iSign, bounceBack)
 		or not i0 or i0 < 1 or i0 > iMax
 		or not j0 or j0 < 1 or j0 > jMax)
 	then
-		simlog("[QEDCTRL] Failed grid:navJI with invalid args %s%s,%s%s/%s,%s %s\n%s",
-			i0, SIGN_DBG[iSign] or "=", j0, SIGN_DBG[jSign] or "?", iMax, jMax,
-			self._debugName, debug.traceback())
+		simlog("[QEDCTRL] Failed grid:navJI with invalid args %s%s,%s%s%s / %s,%s %s\n%s",
+			i0, SIGN_DBG[iSign] or "=", j0, SIGN_DBG[jSign] or "?", bounceBack and "*" or "",
+			iMax, jMax, self._debugName, debug.traceback())
 		inputmgr.onControllerError()
 		return
 	end
-	-- simlog("LOG_QEDCTRL", "grid:navJI %s%s,%s%s/%s,%s %s",
-	-- 	i0, SIGN_DBG[iSign] or "=", j0, SIGN_DBG[jSign] or "?", iMax, jMax, self._debugName)
+	-- simlog("LOG_QEDCTRL", "grid:navJI %s%s,%s%s%s / %s,%s %s",
+	-- 	i0, SIGN_DBG[iSign] or "=", j0, SIGN_DBG[jSign] or "?", bounceBack and "*" or "",
+	-- 	iMax, jMax, self._debugName)
 
 	local iIterFn, jIter, jBounceIter, jB0
 	if iSign == ASC then
@@ -227,12 +228,12 @@ function grid_layout:_onInternalNav( navDir, x, y )
 	if navDir == ctrl_defs.UP or navDir == ctrl_defs.DOWN then
 		y = y + sign
 		if y > 0 and y <= self._h then
-			child, x, y = self:_getOrNextXY(x,nil, y,sign, true)
+			child, x, y = self:_getOrNextXY(x,nil, y,sign)
 		end
 	elseif navDir == ctrl_defs.LEFT or navDir == ctrl_defs.RIGHT then
 		x = x + sign
 		if x > 0 and x <= self._w then
-			child, x, y = self:_getOrNextXY(x,sign, y,nil, true)
+			child, x, y = self:_getOrNextXY(x,sign, y,nil)
 		end
 	end
 	if child then

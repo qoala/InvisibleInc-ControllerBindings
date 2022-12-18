@@ -77,23 +77,33 @@ local modifications = {
 			{
 				id = "center", coord = 2,
 				children = {
-					sutil.widget("numRewinds", 1),
-					sutil.widget("levelRetriesBtn", 2),
-					sutil.widget("showOptionsBtn", 3),
-					sutil.widget("genOptsList", 4,
+					{
+						id = "top", coord = 1,
+						shape = [[cgrid]], w = 2, h = 3,
+						children =
+						{
+							sutil.widget("numRewinds",      {1,1}),
+							sutil.widget("levelRetriesBtn", {1,2}),
+							sutil.widget("showOptionsBtn",  {1,3}),
+							sutil.widget("startBtn",        {2,1}), -- TODO: 2,3
+						},
+						alwaysRecall = true,
+						default = "startBtn",
+					},
+					sutil.widget("genOptsList", 2,
 						{
 							widgetType = [[listbox]],
 							alwaysRecall = true,
 							-- Sim Constructor has an onItemClicked that's a no-op on PC.
 							ignoreOnItemClicked = true,
+							rightTo = { "root", "center", "top", "startBtn" },
 						}
 					),
 				},
 				alwaysRecall = true,
 			},
-			sutil.widget("startBtn", 3),
 		},
-		{ shape = [[hlist]], default = "startBtn", }
+		{ shape = [[hlist]], default = "center", }
 	),
 }
 
