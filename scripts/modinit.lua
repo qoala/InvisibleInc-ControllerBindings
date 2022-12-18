@@ -23,6 +23,8 @@ local function init(modApi)
 	include(scriptPath.."/input-manager")
 
 	-- Low-level MUI graphical primitives.
+	include(scriptPath.."/mui/mui_checkbox")
+	include(scriptPath.."/mui/mui_combobox")
 	include(scriptPath.."/mui/mui_group")
 	include(scriptPath.."/mui/mui_imagebutton")
 	include(scriptPath.."/mui/mui_listbox")

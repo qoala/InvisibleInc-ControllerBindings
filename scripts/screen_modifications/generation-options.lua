@@ -51,9 +51,9 @@ local modifications = {
 	modifyWidget(13, skinButton(ctrlID("cancelBtn"))),
 
 	-- Center
-	modifySubWidget(17, 1, ctrlID("numRewinds")), -- TODO: combobox
-	modifyWidget(10, ctrlID("levelRetriesBtn")), -- TODO: checkbox
-	modifyWidget(20, ctrlID("showOptionsBtn")), -- TODO: checkbox
+	modifySubWidget(17, 1, ctrlID("numRewinds")),
+	modifyWidget(10, ctrlID("levelRetriesBtn")),
+	modifyWidget(20, ctrlID("showOptionsBtn")),
 	modifySubSubWidget(12, 2, 1, ctrlID("genOptsList")),
 
 	-- Start button, visibly to the right of the Center-Top options, but above the listbox.
