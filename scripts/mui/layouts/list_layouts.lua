@@ -117,32 +117,43 @@ do
 	end
 
 	function list_layout:_getOrPrev( i0 )
-		local i = i0
-		while i >= 1 do
+		for i = i0, 1, -1 do
 			local child = self._children[i]
 			if child:canFocus() then
 				return child, i
 			end
-			i = i - 1
+		end
+		if self._def.wrap and i0 < #self._children then
+			for i = #self._children, i0 + 1, -1 do
+				local child = self._children[i]
+				if child:canFocus() then
+					return child, i
+				end
+			end
 		end
 	end
 	function list_layout:_getOrNext( i0 )
-		local i = i0
-		local size = #self._children
-		while i <= size do
+		for i = i0, #self._children do
 			local child = self._children[i]
 			if child:canFocus() then
 				return child, i
 			end
-			i = i + 1
+		end
+		if self._def.wrap and i0 > 1 then
+			for i = 1, i0 - 1 do
+				local child = self._children[i]
+				if child:canFocus() then
+					return child, i
+				end
+			end
 		end
 	end
 	function list_layout:_onInternalNav( navDir, idx )
 		idx = idx or self._focusIdx
 		local child
-		if navDir == self.PREV_DIR and idx and idx > 1 then
+		if navDir == self.PREV_DIR and idx and (idx > 1 or self._def.wrap) then
 			child, idx = self:_getOrPrev(idx - 1)
-		elseif navDir == self.NEXT_DIR and idx and idx < #self._children then
+		elseif navDir == self.NEXT_DIR and idx and (idx < #self._children or self._def.wrap) then
 			child, idx = self:_getOrNext(idx + 1)
 		end
 		if child then

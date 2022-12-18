@@ -103,7 +103,7 @@ local modifications = {
 				children =
 				{
 					-- Top row (right-justified)  y = 1
-					sutil.widget("agentList", {3,1}, { widgetType = [[listbox]] }),
+					sutil.widget("agentList", {3,1}, { widgetType = [[listbox]], wrap = true, }),
 
 					-- Middle row  y = 2
 					{

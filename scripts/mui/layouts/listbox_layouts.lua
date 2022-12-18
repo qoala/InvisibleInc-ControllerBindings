@@ -155,24 +155,35 @@ function listbox_layout:onFocus( options, idx, ... )
 end
 
 function listbox_layout:_getOrPrev( items, i0 )
-	local i = i0
-	while i >= 1 do
+	for i = i0, 1, -1 do
 		local item = items[i]
 		if self._child:canFocusItem(item) then
 			return item, i
 		end
-		i = i - 1
+	end
+	if self._def.wrap and i0 < #items then
+		for i = #items, i0 + 1, -1 do
+			local item = items[i]
+			if self._child:canFocusItem(item) then
+				return item, i
+			end
+		end
 	end
 end
 function listbox_layout:_getOrNext( items, i0 )
-	local i = i0
-	local itemCount = #items
-	while i <= itemCount do
+	for i = i0, #items do
 		local item = items[i]
 		if self._child:canFocusItem(item) then
 			return item, i
 		end
-		i = i + 1
+	end
+	if self._def.wrap and i0 > 1 then
+		for i = 1, i0 - 1 do
+			local item = items[i]
+			if self._child:canFocusItem(item) then
+				return item, i
+			end
+		end
 	end
 end
 function listbox_layout:_onInternalNav( navDir, idx )
@@ -181,9 +192,9 @@ function listbox_layout:_onInternalNav( navDir, idx )
 	local listOrientation = listWidget._orientation
 	local items = listWidget._items
 	idx = idx or self._focusIdx
-	if isPrevDir(listOrientation, navDir) and idx and idx > 1 then
+	if isPrevDir(listOrientation, navDir) and idx and (idx > 1 or self._def.wrap) then
 		return self:_doFocus({dir=navDir}, listWidget, self:_getOrPrev(items, idx - 1))
-	elseif isNextDir(listOrientation, navDir) and idx and idx < #items then
+	elseif isNextDir(listOrientation, navDir) and idx and (idx < #items or self._def.wrap) then
 		return self:_doFocus({dir=navDir}, listWidget, self:_getOrNext(items, idx + 1))
 	end
 end
