@@ -274,7 +274,7 @@ function item_reference:onUpdate()
 	return self._ctrl:setFocus(target, self._debugName..(self._idx or "?").."::onUpdate")
 end
 
-function item_reference:onConfirm()
+function item_reference:_onConfirm()
 	local listWidget = self._parent:_getListWidget()
 	local item = self._idx and listWidget and listWidget._items[self._idx]
 	if not item then return end
@@ -325,10 +325,17 @@ function combobox_layout:_getListWidget()
 end
 
 function combobox_layout:setReturnPath( navigatePath )
-	-- Layout def initializes with a new empty table. Mutation is fine.
-	local oldPath = self._def.cancelTo
+	local oldPath = self._returnPath
+	self._returnPath = navigatePath
 	self._def.cancelTo = navigatePath
 	return oldPath
+end
+
+function combobox_layout:_onInternalCommand( command )
+	if command == ctrl_defs.CANCEL and self._listWidget.onControllerCancel then
+		util.callDelegate(self._listWidget.onControllerCancel)
+		return true
+	end
 end
 
 

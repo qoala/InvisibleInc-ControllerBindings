@@ -56,7 +56,7 @@ do
 		end
 	end
 
-	function widget_reference:onConfirm()
+	function widget_reference:_onConfirm()
 		local widget = self:_getWidget()
 		if widget and widget.onControllerConfirm then
 			simlog("LOG_QEDCTRL", "ctrl:confirm %s", self._debugName)

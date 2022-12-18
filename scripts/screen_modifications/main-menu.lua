@@ -16,7 +16,8 @@ local modifications = {
 	assignID(10, "signUpBtn"),
 
 	sutil.setSingleLayout("main-menu.lua",
-		sutil.widgetList("playBtn", "optionsBtn", "creditsBtn", "exitBtn", "signUpBtn")
+		sutil.widgetList("playBtn", "optionsBtn", "creditsBtn", "exitBtn", "signUpBtn"),
+		{ cancelTo = { "root", "exitBtn" }, }
 	),
 }
 

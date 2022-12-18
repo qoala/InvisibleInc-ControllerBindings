@@ -147,7 +147,11 @@ local modifications = {
 				alwaysRecall = true,
 			},
 		},
-		{ shape = [[hlist]], default = "center", },
+		{
+			shape = [[hlist]],
+			default = "center",
+			cancelTo = { "root", "leftbar", "cancelBtn" },
+		},
 		{ combobox = true, }
 	),
 }

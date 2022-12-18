@@ -126,6 +126,13 @@ local NAV_KEY = {
 	[mui_defs.K_LEFTARROW] = ctrl_defs.LEFT,
 	[mui_defs.K_RIGHTARROW] = ctrl_defs.RIGHT,
 }
+local CMD_KEYS = {
+	-- { binding = "QEDCTRL_CONFIRM", cmd = ctrl_defs.CONFIRM }, -- Handled directly.
+	{ binding = "QEDCTRL_CANCEL",  cmd = ctrl_defs.CANCEL },
+	{ binding = "cameraRotateL",   cmd = ctrl_defs.PPREV },
+	{ binding = "cameraRotateR",   cmd = ctrl_defs.PNEXT },
+	{ binding = "cycleSelection",  cmd = ctrl_defs.PNEXT },
+}
 
 -- =====================================
 -- Top-level controller for a mui_screen
@@ -171,6 +178,7 @@ function ctrl_screen:onActivate(screen)
 	-- simlog("LOG_QEDCTRL", "ctrl:activate %s", self._debugName)
 	self._screen = screen
 	self._widgets, self._typedWidgets = {}, {}
+	self._listeners = {}
 	self._rootLayout = nil
 	for _, layout in pairs(self._layouts) do
 		layout:onActivate(self)
@@ -205,7 +213,21 @@ function ctrl_screen:onDeactivate()
 		layout:onDeactivate()
 	end
 	self._screen, self._widgets, self._typedWidgets = nil
-	self._rootLayout = nil
+	self._rootLayout, self._listeners = nil
+end
+
+-- These events are sent through the layout hierarchy, so we don't track the listener objects here.
+-- We just want to know if there's a point to reporting the command.
+function ctrl_screen:incrementListenerCount( rootID, cmd )
+	local listeners = self._listeners[rootID] or {}
+	self._listeners[rootID] = listeners
+	listeners[cmd] = (listeners[cmd] or 0) + 1
+end
+function ctrl_screen:decrementListenerCount( rootID, cmd )
+	local listeners = self._listeners[rootID]
+	if listeners and listeners[cmd] then
+		listeners[cmd] = math.max(listeners[cmd] - 1, 0)
+	end
 end
 
 function ctrl_screen:getWidget( widgetID )
@@ -293,6 +315,7 @@ function ctrl_screen:startCombobox( listboxWidget, returnPath, initialIdx )
 	end
 	self._comboboxLayout:setListWidget(listboxWidget)
 	self._comboboxLayout:setReturnPath(returnPath or { self._rootLayout:getID() })
+	self:incrementListenerCount(COMBOBOX_L_ID, ctrl_defs.CANCEL)
 
 	self:navigateTo({force=true}, COMBOBOX_L_ID, initialIdx)
 end
@@ -300,6 +323,9 @@ function ctrl_screen:finishCombobox()
 	if not self._comboboxLayout then return end
 	self._comboboxLayout:setListWidget(nil)
 	local returnPath = self._comboboxLayout:setReturnPath(nil)
+	if returnPath then
+		self:decrementListenerCount(COMBOBOX_L_ID, ctrl_defs.CANCEL)
+	end
 
 	if self._comboboxLayout == self._rootLayout then
 		self:navigateTo({force=true, recall=true}, unpack(returnPath))
@@ -334,18 +360,33 @@ local function maybeAutoClick(self)
 	-- Confirm button can click immediately if there's a solo widget in the screen.
 	if self._soloLayout and self._soloLayout:hasAutoConfirm() then
 		simlog("LOG_QEDCTRL", "ctrl:autoConfirm %s", self._debugName)
-		return self._soloLayout:onConfirm()
+		return self._soloLayout:onCommand(ctrl_defs.CONFIRM, {})
 	end
 	return true
 end
 
 function ctrl_screen:handleEvent( ev )
 	-- simlog("LOG_QEDCTRL", "ctrl:handleEvent %s (%s,%s) root=%s", self._debugName, tostring(ev.eventType), tostring(ev.key), tostring(self._rootLayout and self._rootLayout:getID()))
-	local isConfirmBinding = util.isKeyBindingEvent("QEDCTRL_CONFIRM", ev)
-	if not (ev.eventType == mui_defs.EVENT_KeyDown
-			and (isConfirmBinding or NAV_KEY[ev.key])
-			and self:hasWidgets()
-	) then
+	if not (ev.eventType == mui_defs.EVENT_KeyDown and self:hasWidgets()) then return end
+
+	local navDir = NAV_KEY[ev.key]
+	local isConfirmBinding
+	if navDir then
+		-- continue
+	elseif util.isKeyBindingEvent("QEDCTRL_CONFIRM", ev) then
+		isConfirmBinding = true
+	elseif self._rootLayout and not inputmgr.isMouseEnabled() then
+		-- Remaining commands are only intercepted in controller mode
+		-- and cannot be used to enter controller mode.
+
+		local listeners = self._listeners[self._rootLayout:getID()] or {}
+		for _, cmdkey in ipairs(CMD_KEYS) do
+			if ((listeners[cmdkey.cmd] or 0) > 0
+				and util.isKeyBindingEvent(cmdkey.binding, ev))
+			then
+				return self._rootLayout:onCommand(cmdkey.cmd, {})
+			end
+		end
 		return
 	end
 
@@ -363,20 +404,15 @@ function ctrl_screen:handleEvent( ev )
 
 		if isConfirmBinding then maybeAutoClick(self) end
 		return true
+	elseif navDir then
+		self._rootLayout:onNav(navDir)
+		return true
 	elseif isConfirmBinding then
-		if self._rootLayout then
-			if not self._rootLayout:onConfirm() then
-				simlog("LOG_QEDCTRL", "ctrl:emptyConfirm %s", self._debugName)
-			end
+		if not self._rootLayout:onCommand(ctrl_defs.CONFIRM, {}) then
+			simlog("LOG_QEDCTRL", "ctrl:emptyConfirm %s", self._debugName)
 		end
 		return true
 	end
-
-	-- Navigation key pressed.
-	local navDir = NAV_KEY[ev.key]
-
-	self._rootLayout:onNav(navDir)
-	return true
 end
 
 

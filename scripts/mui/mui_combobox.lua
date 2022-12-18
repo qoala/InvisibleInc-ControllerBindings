@@ -167,7 +167,7 @@ function mui_combobox:_updateImageState()
 	end
 end
 
--- Re-implement. No changes.
+-- Re-implement. Controller handling.
 function mui_combobox:_destroyDropDown()
 	if self._listbox then
 		self:getScreen():unlockInput( self )
@@ -184,7 +184,7 @@ local function onItemSelected( combobox, old_idx, new_idx )
 	combobox:_destroyDropDown()
 end
 
--- Re-implement. No changes.
+-- Re-implement. Controller handling.
 local DEFAULT_COMBOBOX_SKIN = "combobox_listbox"
 function mui_combobox:_createDropDown()
 	if #self._items > 0 then
@@ -206,8 +206,9 @@ function mui_combobox:_createDropDown()
 		self._screen:refreshPriority()
 
 		if self._qedctrl_ctrl then
-			-- TODO: Return path
+			-- TODO: Proper return path
 			self._qedctrl_ctrl:startCombobox(lb, nil, self:getIndex())
+			lb.onControllerCancel = util.makeDelegate( self, "_destroyDropDown")
 		end
 		self._screen:lockInput( self )
 	end
