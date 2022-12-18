@@ -9,9 +9,9 @@ local ctrl_widget = include(SCRIPT_PATHS.qedctrl.."/mui/ctrl_widget")
 
 local function updateFocusLayout( self )
 	local focusImage = self._qedctrl_focusImage
-	local focusSize = self._qedctrl_focusSize
+	local focusW, focusH = self._qedctrl_focusImageW, self._qedctrl_focusImageH
 	focusImage:setPosition(self._w / 2 - self._checkSize)
-	focusImage:setSize(focusSize, focusSize)
+	focusImage:setSize(focusW, focusH)
 end
 
 local oldInit = mui_checkbox.init
@@ -19,19 +19,40 @@ function mui_checkbox:init( screen, def, ... )
 	oldInit(self, screen, def, ...)
 	ctrl_widget.init(self, def)
 
-	-- Prepare focus image regardless of ctrlProperties.
-	-- Listbox item widgets don't have ctrlProperties.id.
-	local focusImageDefs = def.ctrlProperties and def.ctrlProperties.focusImages
-	if not focusImageDefs then
-		focusImageDefs =
-		{{
-			file = "checkbox_no2.png",
-			name = "hover",
-		}}
+	local ctrlDef = def.ctrlProperties or {}
+	local focusImageDefs, focusOnButton
+	local focusW, focusH
+	if ctrlDef.focusButtonImages then
+		-- Focus image surrounding the checkbox.
+		focusImageDefs = ctrlDef.focusButtonImages
+		focusOnButton = true
+		local focusSize = (ctrlDef.focusImageSize
+				or (ctrlDef.focusImagePadding and self._checkSize + ctrlDef.focusImagePadding)
+				or (self._checkSize * 1.2))
+		focusW = ctrlDef.focusImageW or focusSize
+		focusH = ctrlDef.focusImageH or focusSize
+
+	-- elseif ctrlDef.focusImages then
+	-- 	-- Focus image surrounding the entire widget, including label.
+	--  -- (not supported)
+
+	else
+		-- Default focus image.
+		-- Listbox item widgets don't have ctrlProperties, and no native focus behavior,
+		-- so always initialize a focus texture.
+		focusImageDefs = "qedctrl/select-checkbox.png"
+		focusOnButton = true
+		focusW, focusH = self._checkSize, self._checkSize
 	end
-	self._qedctrl_focusImage = mui_texture(screen, { x = 0, y = 0, xpx = def.wpx, ypx = def.hpx, w = def.h, h = def.h, wpx = def.wpx, hpx = def.hpx, images = focusImageDefs })
+	self._qedctrl_focusImage = mui_texture(screen,
+		{
+			x = 0, y = 0, w = focusW, h = focusH,
+			xpx = def.wpx, ypx = def.hpx, wpx = def.wpx, hpx = def.hpx,
+			images = focusImageDefs
+		})
 	self._qedctrl_focusImage:setVisible(false)
-	self._qedctrl_focusSize = def.ctrlProperties and def.ctrlProperties.focusSize or (self._checkSize * 1.2)
+	self._qedctrl_focusImageW = focusW
+	self._qedctrl_focusImageH = focusH
 	self._cont:addComponent(self._qedctrl_focusImage)
 end
 
@@ -50,11 +71,11 @@ function mui_checkbox:handleEvent( ev, ... )
 	if ev.eventType == mui_defs.EVENT_OnResize then
 		updateFocusLayout( self )
 
-	elseif ev.widget == self._button then
-		self:_updateControllerFocusState()
-
 	elseif inputmgr.isMouseEnabled() ~= self._qedctrl_lastMouseEnabled then
 		self._qedctrl_lastMouseEnabled = inputmgr.isMouseEnabled()
+		self:_updateControllerFocusState()
+
+	elseif ev.widget == self._button then
 		self:_updateControllerFocusState()
 	end
 

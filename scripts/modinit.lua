@@ -19,6 +19,9 @@ local function init(modApi)
 	rawset(_G,"SCRIPT_PATHS",rawget(_G,"SCRIPT_PATHS") or {})
 	SCRIPT_PATHS.qedctrl = scriptPath
 
+	local dataPath = modApi:getDataPath()
+	KLEIResourceMgr.MountPackage( dataPath .. "/gui.kwad", "data" )
+
 	include(scriptPath.."/client_defs")
 	include(scriptPath.."/input-manager")
 

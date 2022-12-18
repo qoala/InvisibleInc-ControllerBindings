@@ -7,6 +7,17 @@ local _M = {}
 -- Re-exports
 _M.extendData = qutil.extendData
 
+
+-- ===
+-- Modification args.
+-- Helpers that return a value for the 3rd argument of a modifyUIElement line.
+
+-- Images for a basic border with corner highlights.
+_M.SELECT_BORDER_16 = "qedctrl/select16.png"
+_M.SELECT_BORDER_64 = "qedctrl/select64.png"
+_M.SELECT_BORDER_512 = "qedctrl/select512.png"
+
+
 -- Full modification entry for an arbitrary modification.
 --
 -- Usage:
@@ -22,9 +33,14 @@ end
 _M.insert = _M.modify
 
 
--- ===
--- Modification args.
--- Helpers that return a value for the 3rd argument of a modifyUIElement line.
+-- Modification arg that applies arbitrary ctrlProperties
+function _M.ctrl(properties, otherProperties)
+	local modification = { ctrlProperties = properties }
+	if otherProperties then
+		modification = qutil.extendData(otherProperties)(modification)
+	end
+	return modification
+end
 
 -- Modification arg that applies a ctrl ID to a widget.
 function _M.ctrlID(id, otherProperties)

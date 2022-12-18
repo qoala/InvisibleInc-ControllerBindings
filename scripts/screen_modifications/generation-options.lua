@@ -24,18 +24,44 @@ local function modifySubSubWidget(cid1, cid2, cid3, modification)
 	}
 end
 
-local function modifySkinCtrl(skinIndex, properties)
+local function modifySkin(skinIndex, modification)
 	return {
 		"generation-options.lua",
 		{ "skins", skinIndex },
-		{ ctrlProperties = properties },
+		modification,
+	}
+end
+local function modifySkinWidget(skinIndex, childIndex, modification)
+	return {
+		"generation-options.lua",
+		{ "skins", skinIndex, "children", childIndex },
+		modification,
 	}
 end
 
 local modifications = {
-	modifySkinCtrl(2, { bindListItemTo = "widget" }), -- ComboOption, for genOptsList
-	modifySkinCtrl(3, { bindListItemTo = "widget" }), -- CheckOption, for genOptsList
-	modifySkinCtrl(4, { bindListItemTo = "hideBtn" }), -- SectionHeader, for genOptsList
+	-- ComboOption, for genOptsList
+	modifySkin(2, sutil.ctrl({ bindListItemTo = "widget" })),
+	modifySkinWidget(2, 2, sutil.ctrl({
+		focusImages = sutil.SELECT_BORDER_16,
+		focusHoverImage = "arrow_down_active.png",
+		focusHoverColor = { 1, 1, 1, 1 },
+	})),
+	-- CheckOption, for genOptsList
+	modifySkin(3, sutil.ctrl({ bindListItemTo = "widget" })),
+	-- SectionHeader, for genOptsList
+	modifySkin(4, sutil.ctrl({ bindListItemTo = "hideBtn" },
+		{
+			inheritDef =
+			{
+				["hideBtn"] = sutil.ctrl({
+					focusImages = sutil.SELECT_BORDER_16,
+					focusHoverImage = "arrow_down_active.png",
+					focusHoverColor = { 1, 1, 1, 1 },
+				}),
+			}
+		}
+	)),
 
 	-- Left Bar
 	modifyWidget(2, skinButton(ctrlID("difficulty1"))),
@@ -51,7 +77,13 @@ local modifications = {
 	modifyWidget(13, skinButton(ctrlID("cancelBtn"))),
 
 	-- Center
-	modifySubWidget(17, 1, ctrlID("numRewinds")),
+	modifySubWidget(17, 1, ctrlID("numRewinds",
+		{
+			focusImages = sutil.SELECT_BORDER_16,
+			focusHoverImage = "arrow_down_active.png",
+			focusHoverColor = { 1, 1, 1, 1 },
+		}
+	)),
 	modifyWidget(10, ctrlID("levelRetriesBtn")),
 	modifyWidget(20, ctrlID("showOptionsBtn")),
 	modifySubSubWidget(12, 2, 1, ctrlID("genOptsList")),

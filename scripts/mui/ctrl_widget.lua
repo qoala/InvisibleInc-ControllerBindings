@@ -5,11 +5,10 @@ local widget = {}
 function widget.init(self, def)
 	if def.ctrlProperties then
 		assert(type(def.ctrlProperties) == "table", def.name)
-		assert(def.ctrlProperties.id, def.name)
 		self._qedctrl_ctrl = nil -- set on activate.
 		self._qedctrl_def = def.ctrlProperties
 		self._qedctrl_id = def.ctrlProperties.id
-		return true
+		return def.ctrlProperties
 	end
 end
 

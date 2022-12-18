@@ -64,14 +64,26 @@ local function modifySkinCtrl(skinIndex, properties)
 		{ ctrlProperties = properties },
 	}
 end
+local function modifySkinWidget(skinIndex, childIndex, modification)
+	return {
+		"team_preview_screen.lua",
+		{ "skins", skinIndex, "children", childIndex },
+		modification,
+	}
+end
 
 -- ===
 
 local modifications = {
-	modifySkinCtrl(6, { bindListItemTo = "img" }), -- agentSelect, for agentList.
+	-- agentSelect, for agentList.
+	modifySkinCtrl(6, { bindListItemTo = "img" }),
+	modifySkinWidget(6, 2, sutil.ctrl({
+		focusImages = "qedctrl/select-team-agent.png",
+		focusImagePadding = 0,
+	})),
 
 	-- Top row
-	modifyWidget(14, ctrlID("agentList")), -- TODO: Highlight focused portrait.
+	modifyWidget(14, ctrlID("agentList")),
 	-- Middle row
 	modifyWidget(3, skinAgent("agent1")),
 	modifyWidget(4, skinAgent("agent2")),
