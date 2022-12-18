@@ -7,41 +7,27 @@ local mui_checkbox = include("mui/widgets/mui_checkbox")
 local ctrl_widget = include(SCRIPT_PATHS.qedctrl.."/mui/ctrl_widget")
 
 
-local function updateFocusLayout( self )
-	local focusImage = self._qedctrl_focusImage
-	local focusW, focusH = self._qedctrl_focusImageW, self._qedctrl_focusImageH
-	focusImage:setPosition(self._w / 2 - self._checkSize)
-	focusImage:setSize(focusW, focusH)
-end
-
 local oldInit = mui_checkbox.init
 function mui_checkbox:init( screen, def, ... )
 	oldInit(self, screen, def, ...)
 	ctrl_widget.init(self, def)
 
 	local ctrlDef = def.ctrlProperties or {}
-	local focusImageDefs, focusOnButton
+	local focusImageDefs
 	local focusW, focusH
-	if ctrlDef.focusButtonImages then
+	if ctrlDef.focusImages then
 		-- Focus image surrounding the checkbox.
-		focusImageDefs = ctrlDef.focusButtonImages
-		focusOnButton = true
+		focusImageDefs = ctrlDef.focusImages
 		local focusSize = (ctrlDef.focusImageSize
 				or (ctrlDef.focusImagePadding and self._checkSize + ctrlDef.focusImagePadding)
 				or (self._checkSize * 1.2))
 		focusW = ctrlDef.focusImageW or focusSize
 		focusH = ctrlDef.focusImageH or focusSize
-
-	-- elseif ctrlDef.focusImages then
-	-- 	-- Focus image surrounding the entire widget, including label.
-	--  -- (not supported)
-
 	else
 		-- Default focus image.
 		-- Listbox item widgets don't have ctrlProperties, and no native focus behavior,
 		-- so always initialize a focus texture.
 		focusImageDefs = "qedctrl/select-checkbox.png"
-		focusOnButton = true
 		focusW, focusH = self._checkSize, self._checkSize
 	end
 	self._qedctrl_focusImage = mui_texture(screen,
@@ -59,7 +45,7 @@ end
 do
 	local overrides = {}
 	function overrides:onActivate()
-		updateFocusLayout(self)
+		self:_updateControllerFocusLayout()
 	end
 
 	ctrl_widget.defineCtrlMethods(mui_checkbox, nil, overrides)
@@ -69,7 +55,7 @@ local oldHandleEvent = mui_checkbox.handleEvent
 function mui_checkbox:handleEvent( ev, ... )
 
 	if ev.eventType == mui_defs.EVENT_OnResize then
-		updateFocusLayout( self )
+		self:_updateControllerFocusLayout()
 
 	elseif inputmgr.isMouseEnabled() ~= self._qedctrl_lastMouseEnabled then
 		self._qedctrl_lastMouseEnabled = inputmgr.isMouseEnabled()
@@ -80,6 +66,13 @@ function mui_checkbox:handleEvent( ev, ... )
 	end
 
 	return oldHandleEvent(self, ev, ...)
+end
+
+function mui_checkbox:_updateControllerFocusLayout()
+	local focusImage = self._qedctrl_focusImage
+	local focusW, focusH = self._qedctrl_focusImageW, self._qedctrl_focusImageH
+	focusImage:setPosition(self._w / 2 - self._checkSize)
+	focusImage:setSize(focusW, focusH)
 end
 
 function mui_checkbox:_updateControllerFocusState()

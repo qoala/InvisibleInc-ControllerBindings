@@ -30,8 +30,12 @@ function mui_imagebutton:init( screen, def, ... )
 		-- Override the color of the hover state when in controller-mode.
 		self._qedctrl_focusHoverColor = ctrlDef.focusHoverColor or def.images[2].color
 		self._qedctrl_nonfocusHoverColor = def.images[2].color
-		self._qedctrl_focusHoverImage = ctrlDef.focusHoverImage
-		self._qedctrl_nonfocusHoverImage = ctrlDef.focusHoverImage and def.images[2].file
+		assert(self._qedctrl_nonfocusHoverColor, def.name)
+		if ctrlDef.focusHoverImage then
+			self._qedctrl_focusHoverImage = ctrlDef.focusHoverImage
+			self._qedctrl_nonfocusImage = def.images[2].file
+			assert(self._qedctrl_nonfocusImage, def.name)
+		end
 	end
 end
 
@@ -56,13 +60,12 @@ function mui_imagebutton:_updateControllerFocusState( modeChanged )
 		local inFocus = not inputmgr.isMouseEnabled() and (
 				self._button:getState() == mui_button.BUTTON_Hover
 				or self._button:getState() == mui_button.BUTTON_Active)
-		simlog("LOG_QEDCTRL", "button:focusBorder %s", tostring(inFocus))
 		focusImage:setVisible(inFocus)
 	end
 	if modeChanged and self._qedctrl_focusHoverColor then
 		if inputmgr.isMouseEnabled() then
 			if self._qedctrl_focusHoverImage then
-				self._image:setImageAtIndex(self._qedctrl_nonfocusHoverImage, 2)
+				self._image:setImageAtIndex(self._qedctrl_nonfocusImage, 2)
 			end
 			self._image:setColorAtIndex(self._qedctrl_nonfocusHoverColor, 2)
 		else
