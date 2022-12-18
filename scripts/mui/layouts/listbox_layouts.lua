@@ -85,10 +85,27 @@ function listbox_layout:canFocus()
 	end
 end
 
+function listbox_layout:_getVisibleRange( listWidget )
+	local topIndex = listWidget._scrollIndex
+	local botIndex = listWidget._scrollIndex + listWidget:getMaxVisibleItems() - 1
+	return topIndex, botIndex
+end
 function listbox_layout:_doFocus( options, listWidget, item, idx, ... )
-	-- TODO: Scrolling?
-	local ok = item and self._child:onFocus(options, item, idx, ...)
-	if ok or options.force then
+	if idx then
+		local topIndex, botIndex = self:_getVisibleRange( listWidget )
+		if topIndex + 1 > idx then
+			listWidget:scrollItems( idx - 1 )
+		elseif idx > botIndex + 1 then
+			listWidget:scrollItems( topIndex + (idx - botIndex ) - 1 )
+		end
+	end
+
+	if item then
+		ok = self._child:onFocus(options, item, idx, ...)
+	elseif options.force then
+		ok = self._ctrl:setFocus(nil, self._debugName)
+	end
+	if ok then
 		self._focusChild = ok and self._child or nil
 		self._focusIdx = idx
 		return true
@@ -100,6 +117,7 @@ function listbox_layout:onFocus( options, idx, ... )
 	if not listWidget then return end
 	local listOrientation = listWidget._orientation
 	options = options or {}
+	local topIndex, botIndex
 	if idx then
 		local item = listWidget._items[idx]
 		local ok = item and self:_doFocus(options, listWidget, item, idx, ...)
@@ -109,10 +127,14 @@ function listbox_layout:onFocus( options, idx, ... )
 		return ok
 	elseif self._focusIdx and (options.recall or self._def.alwaysRecall or isOrthogonalDir(listOrientation, options.dir)) then
 		-- Consider entry from orthogonal directions as a recall=true move.
-		-- TODO: Maybe fall through if the recalled item is outside the current scroll range?
-		local item = listWidget._items[self._focusIdx]
-		if item and self:_doFocus(options, listWidget, item, self._focusIdx, ...) then
-			return true
+		local focusIdx = self._focusIdx
+		topIndex, botIndex = self:_getVisibleRange( listWidget )
+		-- Ignore recall if the entry has been scrolled off the screen.
+		if focusIdx >= topIndex and focusIdx <= botIndex then
+			local item = listWidget._items[focusIdx]
+			if item and self:_doFocus(options, listWidget, item, focusIdx, ...) then
+				return true
+			end
 		end
 	end
 	local items = listWidget._items
@@ -121,9 +143,15 @@ function listbox_layout:onFocus( options, idx, ... )
 	elseif isNextDir(listOrientation, options.dir) then
 		return self:_doFocus(options, listWidget, self:_getOrNext(items, 1))
 	end
-	-- TODO: Focus the first currently visible item if there's a scrollbar and no specific target.
-	--   Also bounce back, if the only targetable items are earlier in the scroll.
-	return self:_doFocus(options, listWidget, self:_getOrNext(items, 1))
+	-- Focus the first currently visible item, if possible
+	if not topIndex then
+		topIndex, botIndex = self:_getVisibleRange( listWidget )
+	end
+	local item, i = self:_getOrNext(items, topIndex)
+	if not i or i > botIndex then
+		item, i = self:_getOrNext(items, 1)
+	end
+	return self:_doFocus(options, listWidget, item, i)
 end
 
 function listbox_layout:_getOrPrev( items, i0 )
@@ -211,7 +239,6 @@ function item_reference:onFocus( options, item, idx )
 			target = hitbox
 		end
 	end
-	-- TODO: Look at listbox:selectIndex() for how to scroll
 	if target or (options and options.force) then
 		local ok = self._ctrl:setFocus(target, self._debugName..(idx or "?"))
 		if ok then
