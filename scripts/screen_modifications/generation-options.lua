@@ -24,7 +24,19 @@ local function modifySubSubWidget(cid1, cid2, cid3, modification)
 	}
 end
 
+local function modifySkinCtrl(skinIndex, properties)
+	return {
+		"generation-options.lua",
+		{ "skins", skinIndex },
+		{ ctrlProperties = properties },
+	}
+end
+
 local modifications = {
+	modifySkinCtrl(2, { bindListItemTo = "widget" }), -- ComboOption, for genOptsList
+	modifySkinCtrl(3, { bindListItemTo = "widget" }), -- CheckOption, for genOptsList
+	modifySkinCtrl(4, { bindListItemTo = "hideBtn" }), -- SectionHeader, for genOptsList
+
 	-- Left Bar
 	modifyWidget(2, skinButton(ctrlID("difficulty1"))),
 	modifyWidget(3, skinButton(ctrlID("difficulty2"))),
@@ -42,7 +54,7 @@ local modifications = {
 	modifySubWidget(17, 1, ctrlID("numRewinds")), -- TODO: combobox
 	modifyWidget(10, ctrlID("levelRetriesBtn")), -- TODO: checkbox
 	modifyWidget(20, ctrlID("showOptionsBtn")), -- TODO: checkbox
-	modifySubSubWidget(12, 2, 1, ctrlID("genOptsList")), -- TODO: non-hitbox listbox
+	modifySubSubWidget(12, 2, 1, ctrlID("genOptsList")),
 
 	-- Start button, visibly to the right of the Center-Top options, but above the listbox.
 	-- Treat it as to the right of all of those.
@@ -72,6 +84,8 @@ local modifications = {
 						{
 							widgetType = [[listbox]],
 							alwaysRecall = true,
+							-- Sim Constructor has an onItemClicked that's a no-op on PC.
+							ignoreOnItemClicked = true,
 						}
 					),
 				},

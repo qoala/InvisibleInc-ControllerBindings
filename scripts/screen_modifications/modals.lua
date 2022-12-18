@@ -27,6 +27,14 @@ local function modifySubWidget(filename, childIndex, subChildIndex, modification
 	}
 end
 
+local function modifySkinCtrl(filename, skinIndex, properties)
+	return {
+		filename,
+		{ "skins", skinIndex },
+		{ ctrlProperties = properties },
+	}
+end
+
 
 local modifications =
 {
@@ -152,7 +160,8 @@ local modifications =
 		{ shape = [[hlist]], default = "okBtn" }
 	),
 
-	modifyDialog("modal-select-dlc.lua", 9, ctrlID("dlcList")), -- TODO: non-hitbox listbox
+	modifySkinCtrl("modal-select-dlc.lua", 1, { bindListItemTo = "widget" }), -- CheckOption, for dlcList.
+	modifyDialog("modal-select-dlc.lua", 9, ctrlID("dlcList")),
 	modifyDialog("modal-select-dlc.lua", 6, ctrlID("okBtn")),
 	modifyDialog("modal-select-dlc.lua", 7, ctrlID("cancelBtn")),
 	sutil.setSingleLayout("modal-select-dlc.lua",
@@ -160,7 +169,8 @@ local modifications =
 			sutil.widget("dlcList", 1, { widgetType = [[listbox]] }),
 			sutil.widget("okBtn", 2),
 			sutil.widget("cancelBtn", 3),
-		}
+		},
+		{ default = "okBtn" }
 	),
 
 	-- Ignoring the input elements and okBtn.

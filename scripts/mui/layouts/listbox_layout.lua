@@ -47,7 +47,7 @@ function listbox_layout:init( def, ... )
 	assert(self._widgetID, "[QEDCTRL] Listbox layout without widgetID "..self._debugName)
 
 	-- Single child object that is updated to point at a specific index on focus.
-	self._child = listbox_layout.item_reference(self._debugName)
+	self._child = listbox_layout.item_reference(self._def, self._debugName)
 end
 
 function listbox_layout:onActivate( ... )
@@ -72,9 +72,13 @@ end
 
 function listbox_layout:canFocus()
 	local listWidget = self:_getListWidget()
-	-- TODO: Can individual listbox items be unavailable for focus?
-	return (listWidget and listWidget:isVisible() and listWidget._items[1] ~= nil
-			and not listWidget._no_hitbox) -- TODO: Support listboxes without item-level hitboxes.
+	if listWidget and listWidget:isVisible() and listWidget._items[1] ~= nil then
+		for _, item in ipairs(listWidget._items) do
+			if self._child:canFocusItem(item) then
+				return true
+			end
+		end
+	end
 end
 
 function listbox_layout:_doFocus( options, listWidget, item, idx, ... )
@@ -158,9 +162,10 @@ local item_reference = class(base_layout)
 listbox_layout.item_reference = item_reference
 item_reference._SHAPE = "listitem"
 
-function item_reference:init( debugParent, ... )
+function item_reference:init( parentDef, debugParent, ... )
 	self._id = ""
 	item_reference._base.init(self, {}, debugParent, ...)
+	self._parentDef = parentDef
 end
 
 function item_reference:onActivate( parent, ... )
@@ -177,31 +182,53 @@ function item_reference:isEmpty()
 	return not self._idx or self._parent:_getListWidget()[self._idx] == nil
 end
 
+function item_reference:_getTarget( item )
+	local widget = item.widget.getControllerListItem and item.widget:getControllerListItem()
+	return widget, item.hitbox
+end
+
 function item_reference:canFocusItem( item )
 	if not item then return false end
-	if item.hitbox then
-		return item.hitbox:getState() ~= mui_button.BUTTON_Disabled
+	local widget, hitbox = self:_getTarget(item)
+	if widget then
+		return widget.canControllerFocus and widget:canControllerFocus()
+	elseif hitbox then
+		return hitbox:getState() ~= mui_button.BUTTON_Disabled
 	end
-	local target = item.hitbox
-	return target and target.canControllerFocus and target:canControllerFocus()
 end
 
 function item_reference:onFocus( options, item, idx )
-	local ok = false
+	local target
 	if item then
-		local target = item.hitbox
-		ok = target and self._ctrl:setFocus(target, self._debugName..(idx or "?"))
+		local widget, hitbox = self:_getTarget(item)
+		if widget then
+			target = widget.getControllerFocusTarget and widget:getControllerFocusTarget()
+		elseif hitbox then
+			target = hitbox
+		end
 	end
-	if ok or options.force then
-		self._idx = idx
-		return true
+	-- TODO: listbox:selectIndex() for scrolling
+	if target or (options and options.force) then
+		local ok = self._ctrl:setFocus(target, self._debugName..(idx or "?"))
+		if ok then
+			self._idx = idx
+			return true
+		end
 	end
 end
 
 function item_reference:onUpdate()
 	local listWidget = self._parent:_getListWidget()
 	local item = self._idx and listWidget and listWidget._items[self._idx]
-	local target = item and item.hitbox
+	local target
+	if item then
+		local widget, hitbox = self:_getTarget(item)
+		if widget then
+			target = widget.getControllerFocusTarget and widget:getControllerFocusTarget()
+		elseif hitbox then
+			target = hitbox
+		end
+	end
 	return self._ctrl:setFocus(target, self._debugName..(self._idx or "?").."::onUpdate")
 end
 
@@ -210,15 +237,16 @@ function item_reference:onConfirm()
 	local item = self._idx and listWidget and listWidget._items[self._idx]
 	if not item then return end
 
-	if listWidget.onItemClicked then
+	if listWidget.onItemClicked and not self._parentDef.ignoreOnItemClicked then
+		simlog("LOG_QEDCTRL", "ctrl:confirmCallback %s%s", self._debugName, self._idx or "?")
 		util.callDelegate( listWidget.onItemClicked, self._idx, item.user_data )
 		return true
 	end
 
-	local target
-	if target and target.onControllerConfirm then
+	local widget = self:_getTarget(item)
+	if widget and widget.onControllerConfirm then
 		simlog("LOG_QEDCTRL", "ctrl:confirm %s%s", self._debugName, self._idx or "?")
-		target:onControllerConfirm()
+		widget:onControllerConfirm()
 		return true
 	end
 end

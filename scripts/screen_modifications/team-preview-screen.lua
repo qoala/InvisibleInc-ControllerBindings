@@ -47,6 +47,8 @@ local function skinProgram(baseID)
 	}
 end
 
+-- ===
+
 local function modifyWidget(childIndex, modification)
 	return {
 		"team_preview_screen.lua",
@@ -55,9 +57,21 @@ local function modifyWidget(childIndex, modification)
 	}
 end
 
+local function modifySkinCtrl(skinIndex, properties)
+	return {
+		"team_preview_screen.lua",
+		{ "skins", skinIndex },
+		{ ctrlProperties = properties },
+	}
+end
+
+-- ===
+
 local modifications = {
+	modifySkinCtrl(6, { bindListItemTo = "img" }), -- agentSelect, for agentList.
+
 	-- Top row
-	modifyWidget(14, ctrlID("agentList")), -- TODO: non-hitbox listbox
+	modifyWidget(14, ctrlID("agentList")), -- TODO: Highlight focused portrait.
 	-- Middle row
 	modifyWidget(3, skinAgent("agent1")),
 	modifyWidget(4, skinAgent("agent2")),

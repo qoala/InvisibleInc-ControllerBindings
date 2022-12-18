@@ -100,8 +100,13 @@ function grid_layout:canFocus()
 end
 
 function grid_layout:_doFocus(options, child, x, y, ...)
-	local ok = child and child:onFocus(options, ...)
-	if ok or options.force then
+	local ok
+	if child then
+		ok = child:onFocus(options, ...)
+	elseif options.force then
+		ok = self._ctrl:setFocus(nil, self._debugName)
+	end
+	if ok then
 		self._focusChild = ok and child or nil
 		self._focusX = x
 		self._focusY = y

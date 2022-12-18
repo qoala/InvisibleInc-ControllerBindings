@@ -1,6 +1,7 @@
 local function earlyInit(modApi)
 	modApi.requirements =
 	{
+		"Sim Constructor", "UI Tweaks Reloaded"
 	}
 end
 
@@ -22,6 +23,7 @@ local function init(modApi)
 	include(scriptPath.."/input-manager")
 
 	-- Low-level MUI graphical primitives.
+	include(scriptPath.."/mui/mui_group")
 	include(scriptPath.."/mui/mui_imagebutton")
 	include(scriptPath.."/mui/mui_listbox")
 	include(scriptPath.."/mui/mui_screen")
