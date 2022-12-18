@@ -7,6 +7,18 @@ local _M = {}
 -- Re-exports
 _M.extendData = qutil.extendData
 
+-- Shallowly concatenates any number of arrays into the first array
+function _M.concat(ary1, ...)
+	local n = #ary1 + 1
+	for _, other in ipairs({...}) do
+		for _, v in ipairs(other) do
+			ary1[n] = v
+			n = n + 1
+		end
+	end
+	return ary1
+end
+
 
 -- ===
 -- Modification args.
@@ -71,11 +83,25 @@ function _M.widget(widgetID, coord, otherProperties)
 	return t
 end
 
--- Helper for the common case where all of a list layout's children are widget references.
+-- Helper for the common case where all of a list or grid's children are widget references.
 function _M.widgetList(...)
 	local t = {}
 	for i, widgetID in ipairs({...}) do
 		t[i] = _M.widget(widgetID, i)
+	end
+	return t
+end
+function _M.widgetRow(y, ...)
+	local t = {}
+	for x, widgetID in ipairs({...}) do
+		t[x] = _M.widget(widgetID, {x,y})
+	end
+	return t
+end
+function _M.widgetCol(x, ...)
+	local t = {}
+	for y, widgetID in ipairs({...}) do
+		t[y] = _M.widget(widgetID, {x,y})
 	end
 	return t
 end
