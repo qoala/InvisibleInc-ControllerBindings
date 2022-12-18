@@ -45,7 +45,12 @@ end
 
 do
 	local overrides = {}
-	function overrides:onActivate()
+	function overrides:onActivate( screen )
+		-- Store a reference to the controller manager.
+		-- If we're a listbox element, then we didn't have a control ID to store it by default.
+		local ctrl = screen:getControllerControl()
+		if ctrl:canCombobox() then self._qedctrl_ctrl = ctrl end
+
 		self:_updateControllerFocusLayout()
 		self:_updateImageState()
 	end
@@ -166,6 +171,8 @@ end
 function mui_combobox:_destroyDropDown()
 	if self._listbox then
 		self:getScreen():unlockInput( self )
+		if self._qedctrl_ctrl then self._qedctrl_ctrl:finishCombobox() end
+
 		self._listbox:detach( self._cont )
 		self._listbox = nil
 	end
@@ -197,6 +204,11 @@ function mui_combobox:_createDropDown()
 		self._listbox:setTopmost( true )
 		self._listbox:attach( self, self._cont )
 		self._screen:refreshPriority()
+
+		if self._qedctrl_ctrl then
+			-- TODO: Return path
+			self._qedctrl_ctrl:startCombobox(lb, nil, self:getIndex())
+		end
 		self._screen:lockInput( self )
 	end
 end

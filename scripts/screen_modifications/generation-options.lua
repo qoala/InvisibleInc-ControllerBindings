@@ -147,7 +147,8 @@ local modifications = {
 				alwaysRecall = true,
 			},
 		},
-		{ shape = [[hlist]], default = "center", }
+		{ shape = [[hlist]], default = "center", },
+		{ combobox = true, }
 	),
 }
 

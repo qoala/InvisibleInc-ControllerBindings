@@ -15,7 +15,7 @@ do
 		for i, childDef in ipairs(self._def.children) do
 			assert(type(childDef.coord) == "number", "[QEDCTRL] Invalid coord "..tostring(childDef.coord).." for child "..tostring(self._debugName).."/"..(childDef.id or i))
 
-			local child = ctrl_layouts.createLayoutNode(childDef, self._debugName, i, childDef.coord)
+			local child = ctrl_layouts.createLayoutNode(childDef, self._navigatePath, self._debugName, i, childDef.coord)
 			if child then
 				child.parentIdx = childDef.coord
 				table.insert(self._children, child)

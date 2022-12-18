@@ -131,6 +131,9 @@ local NAV_KEY = {
 -- Top-level controller for a mui_screen
 -- =====================================
 
+-- LayoutID for the shared combobox layout.
+local COMBOBOX_L_ID = "_combobox"
+
 local ctrl_screen = class()
 function ctrl_screen:init(def, debugName)
 	self._debugName = debugName or "?"
@@ -140,12 +143,17 @@ function ctrl_screen:init(def, debugName)
 		self._layouts = {}
 		for i, layoutDef in ipairs(self._def.layouts) do
 			assert(layoutDef.id, "[QEDCTRL] Missing ID for root layout "..i.." of "..self._debugName)
-			assert(not self._layouts[layoutDef.id], "[QEDCTRL] Non-unique layout ID " .. tostring(layoutDef.id) .. " in " .. self._debugName)
-			self._layouts[layoutDef.id] = ctrl_layouts.createLayoutNode(layoutDef, self._debugName, i)
+			assert(self._layouts[layoutDef.id] == nil, "[QEDCTRL] Non-unique layout ID " .. tostring(layoutDef.id) .. " in " .. self._debugName)
+			self._layouts[layoutDef.id] = ctrl_layouts.createLayoutNode(layoutDef, {}, self._debugName, i)
 		end
 	else
 		self._soloLayout = ctrl_layouts.solo_layout(self._debugName)
 		self._layouts = { self._soloLayout }
+	end
+	if self._def.combobox then
+		assert(self._layouts[COMBOBOX_L_ID] == nil, "[QEDCTRL] Non-unique layout ID "..COMBOBOX_L_ID.." in " .. self._debugName)
+		self._comboboxLayout = ctrl_layouts.combobox_layout(COMBOBOX_L_ID, self._debugName)
+		self._layouts[COMBOBOX_L_ID] = self._comboboxLayout
 	end
 end
 
@@ -272,6 +280,31 @@ function ctrl_screen:setRoot( layoutID, options )
 	return self:navigateTo(options or {}, layoutID)
 end
 
+function ctrl_screen:canCombobox()
+	return self._comboboxLayout ~= nil
+end
+function ctrl_screen:startCombobox( listboxWidget, returnPath, initialIdx )
+	if not self._comboboxLayout then
+		simlog("[QEDCTRL] Cannot open undeclared combobox on %s", self._debugName)
+		return
+	elseif self._comboboxLayout == self._rootLayout then
+		simlog("[QEDCTRL] Cannot nest combobox invocations on %s", self._debugName)
+		return
+	end
+	self._comboboxLayout:setListWidget(listboxWidget)
+	self._comboboxLayout:setReturnPath(returnPath or { self._rootLayout:getID() })
+
+	self:navigateTo({force=true}, COMBOBOX_L_ID, initialIdx)
+end
+function ctrl_screen:finishCombobox()
+	if not self._comboboxLayout then return end
+	self._comboboxLayout:setListWidget(nil)
+	local returnPath = self._comboboxLayout:setReturnPath(nil)
+
+	if self._comboboxLayout == self._rootLayout then
+		self:navigateTo({force=true, recall=true}, unpack(returnPath))
+	end
+end
 
 function ctrl_screen:hasWidgets()
 	-- Enable controller handling if we either have explicit layout definitions,

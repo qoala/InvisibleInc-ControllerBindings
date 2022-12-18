@@ -1,7 +1,11 @@
--- Layout node for wrapping a list box and its items
+-- Layout nodes for wrapping a list box and its items
+--
+-- listbox_layout: Standard listbox.
+-- combobox_layout: Layout for the listbox when a combobox is open.
 
 local util = include("modules/util")
 local mui_button = include("mui/widgets/mui_button")
+local mui_listbox = include("mui/widgets/mui_listbox")
 
 local ctrl_defs = include(SCRIPT_PATHS.qedctrl.."/ctrl_defs")
 local base_layout = include(SCRIPT_PATHS.qedctrl.."/mui/layouts/base_layout")
@@ -47,7 +51,7 @@ function listbox_layout:init( def, ... )
 	assert(self._widgetID, "[QEDCTRL] Listbox layout without widgetID "..self._debugName)
 
 	-- Single child object that is updated to point at a specific index on focus.
-	self._child = listbox_layout.item_reference(self._def, self._debugName)
+	self._child = listbox_layout.item_reference(self._def, self._navigatePath, self._debugName)
 end
 
 function listbox_layout:onActivate( ... )
@@ -162,9 +166,9 @@ local item_reference = class(base_layout)
 listbox_layout.item_reference = item_reference
 item_reference._SHAPE = "listitem"
 
-function item_reference:init( parentDef, debugParent, ... )
+function item_reference:init( parentDef, parentPath, debugParent, ... )
 	self._id = ""
-	item_reference._base.init(self, {}, debugParent, ...)
+	item_reference._base.init(self, {}, parentPath, debugParent, ...)
 	self._parentDef = parentDef
 end
 
@@ -207,7 +211,7 @@ function item_reference:onFocus( options, item, idx )
 			target = hitbox
 		end
 	end
-	-- TODO: listbox:selectIndex() for scrolling
+	-- TODO: Look at listbox:selectIndex() for how to scroll
 	if target or (options and options.force) then
 		local ok = self._ctrl:setFocus(target, self._debugName..(idx or "?"))
 		if ok then
@@ -237,11 +241,17 @@ function item_reference:onConfirm()
 	local item = self._idx and listWidget and listWidget._items[self._idx]
 	if not item then return end
 
+	local handled
 	if listWidget.onItemClicked and not self._parentDef.ignoreOnItemClicked then
 		simlog("LOG_QEDCTRL", "ctrl:confirmCallback %s%s", self._debugName, self._idx or "?")
 		util.callDelegate( listWidget.onItemClicked, self._idx, item.user_data )
-		return true
+		handled = true
 	end
+	if item.hitbox then
+		listWidget:selectIndex(self._idx)
+		handled = listWidget.onItemSelected ~= nil
+	end
+	if handled then return true end
 
 	local widget = self:_getTarget(item)
 	if widget and widget.onControllerConfirm then
@@ -251,4 +261,40 @@ function item_reference:onConfirm()
 	end
 end
 
-return listbox_layout
+-- ===
+
+local combobox_layout = class(listbox_layout)
+combobox_layout._SHAPE = "combobox"
+
+function combobox_layout:init( id, debugParent )
+	self._id = id
+	base_layout.init(self, nil, {}, debugParent) -- Skip listbox_layout:init.
+
+	self._child = listbox_layout.item_reference(self._def, self._navigatePath, self._debugName)
+end
+
+function combobox_layout:onDeactivate( ... )
+	self._listWidget = nil
+	combobox_layout._base.onDeactivate(self, ...)
+end
+
+function combobox_layout:setListWidget( widget )
+	assert(widget == nil or widget:is_a(mui_listbox))
+	self._listWidget = widget
+end
+function combobox_layout:_getListWidget()
+	return self._listWidget
+end
+
+function combobox_layout:setReturnPath( navigatePath )
+	-- Layout def initializes with a new empty table. Mutation is fine.
+	local oldPath = self._def.cancelTo
+	self._def.cancelTo = navigatePath
+	return oldPath
+end
+
+
+return {
+	listbox_layout = listbox_layout,
+	combobox_layout = combobox_layout,
+}

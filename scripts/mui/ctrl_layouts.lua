@@ -9,7 +9,9 @@ do -- Re-export layout classes.
 	_M.widget_reference = single_layouts.widget_reference
 	_M.solo_layout      = single_layouts.solo_layout
 
-	_M.listbox_layout = include(SCRIPT_PATHS.qedctrl.."/mui/layouts/listbox_layout")
+	local listbox_layouts = include(SCRIPT_PATHS.qedctrl.."/mui/layouts/listbox_layouts")
+	_M.listbox_layout = listbox_layouts.listbox_layout
+	_M.combobox_layout = listbox_layouts.combobox_layout
 
 	local list_layouts = include(SCRIPT_PATHS.qedctrl.."/mui/layouts/list_layouts")
 	_M.list_layout  = list_layouts.list_layout
@@ -32,19 +34,19 @@ _M.WIDGET_NODE_FACTORY = {
 	default = _M.widget_reference,
 	listbox = _M.listbox_layout,
 }
-function _M.createLayoutNode(def, debugParent, debugIdx, debugCoord)
+function _M.createLayoutNode(def, navigatePath, debugParent, debugIdx, debugCoord)
 	if def.widgetID then
-		return _M._createWidgetNode(def, debugParent, debugCoord)
+		return _M._createWidgetNode(def, navigatePath, debugParent, debugCoord)
 	end
 	assert(def.id, "Missing ID for non-widget child "..debugIdx.." of "..debugParent)
 	local layoutType = _M.LAYOUT_FACTORY[def.shape or "vlist"]
 	assert(layoutType, "Unknown layout shape "..tostring(def.shape).." on "..debugParent.."/"..tostring(def.id))
-	return layoutType(def, debugParent, debugCoord)
+	return layoutType(def, navigatePath, debugParent, debugCoord)
 end
-function _M._createWidgetNode(def, debugParent, debugCoord)
+function _M._createWidgetNode(def, navigatePath, debugParent, debugCoord)
 	local refType = _M.WIDGET_NODE_FACTORY[def.widgetType or "default"]
 	assert(refType, "Unknown widget type "..tostring(def.widgetType).." on "..debugParent.."/"..tostring(def.id))
-	return refType(def, debugParent, debugCoord)
+	return refType(def, navigatePath, debugParent, debugCoord)
 end
 
 return _M

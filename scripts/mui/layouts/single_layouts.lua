@@ -73,7 +73,8 @@ do
 	solo_layout._SHAPE = "-"
 	function solo_layout:init( debugParent )
 		self._id = "solo"
-		base_layout.init(self, nil, debugParent) -- Skip widget_reference:init
+		base_layout.init(self, nil, {}, debugParent) -- Skip widget_reference:init
+		self._navigatePath[1] = 1
 	end
 
 	function solo_layout:getWidgetID()

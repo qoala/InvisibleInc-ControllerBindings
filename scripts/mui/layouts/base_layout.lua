@@ -1,14 +1,18 @@
 -- Abstract base class of a layout node.
 
+local array = include("modules/array")
+
 local ctrl_defs = include(SCRIPT_PATHS.qedctrl.."/ctrl_defs")
 
 
 local base_layout = class()
-function base_layout:init( def, debugParent, debugCoord )
+function base_layout:init( def, parentPath, debugParent, debugCoord )
 	self._def = def or {}
 	self._id = self._id or self._def.id -- Allow subclasses to force ID before we build debugName.
 	self._debugName = (debugParent or "?").."/"..tostring(self._id or "[nil]")
 	simlog("LOG_QEDCTRL", "ctrl:init %s:%s%s", tostring(self._debugName), tostring(self._SHAPE), debugCoord and " @"..debugCoord or "")
+	self._navigatePath = array.copy(parentPath)
+	table.insert(self._navigatePath, self._id)
 end
 function base_layout:getID()
 	return self._id

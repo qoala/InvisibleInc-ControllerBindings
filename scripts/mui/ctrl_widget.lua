@@ -51,7 +51,7 @@ function widget.defineCtrlMethods(cls, ctrlAppends, alwaysAppends)
 
 	local oldOnDeactivate = cls.onDeactivate
 	function cls:onDeactivate( screen, ... )
-		if self._qedctrl_ctrl then
+		if self._qedctrl_ctrl and self._qedctrl_id then
 			self._qedctrl_ctrl:detachWidget(self)
 
 			if ctrlAppends and ctrlAppends.onDeactivate then

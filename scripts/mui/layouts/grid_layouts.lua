@@ -52,7 +52,7 @@ function grid_layout:init( def, ... )
 		local x, y = t[1]*scale, t[2]*scale
 		assert(not self:getChild(x, y), "[QEDCTRL] Duplicate coord "..x..","..y.." for grid child "..tostring(self._debugName).."/"..(childDef.id or i))
 
-		local child = ctrl_layouts.createLayoutNode(childDef, self._debugName, i, x..","..y)
+		local child = ctrl_layouts.createLayoutNode(childDef, self._navigatePath, self._debugName, i, x..","..y)
 		if child then
 			child.parentX, child.parentY = x, y
 			local i, j = self:_xy2ij(x, y)
