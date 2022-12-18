@@ -19,7 +19,7 @@ end
 -- optional function widget:onControllerNav( navDir )
 -- optional function widget:onControllerConfirm()
 
-function widget.defineCtrlMethods(cls, appends)
+function widget.defineCtrlMethods(cls, ctrlAppends, alwaysAppends)
 	function cls:getControllerID()
 		return self._qedctrl_id
 	end
@@ -36,9 +36,12 @@ function widget.defineCtrlMethods(cls, appends)
 			self._qedctrl_ctrl = screen:getControllerControl()
 			self._qedctrl_ctrl:attachWidget(self)
 
-			if appends and appends.onActivate then
-				appends.onActivate(self, screen, ...)
+			if ctrlAppends and ctrlAppends.onActivate then
+				ctrlAppends.onActivate(self, screen, ...)
 			end
+		end
+		if alwaysAppends and alwaysAppends.onActivate then
+			alwaysAppends.onActivate(self, screen, ...)
 		end
 	end
 
@@ -47,9 +50,12 @@ function widget.defineCtrlMethods(cls, appends)
 		if self._qedctrl_ctrl then
 			self._qedctrl_ctrl:detachWidget(self)
 
-			if appends and appends.onDeactivate then
-				appends.onDeactivate(self, screen, ...)
+			if ctrlAppends and ctrlAppends.onDeactivate then
+				ctrlAppends.onDeactivate(self, screen, ...)
 			end
+		end
+		if alwaysAppends and alwaysAppends.onDeactivate then
+			alwaysAppends.onDeactivate(self, screen, ...)
 		end
 		self._qedctrl_ctrl = nil
 		oldOnDeactivate(self, screen, ...)
