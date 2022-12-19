@@ -454,6 +454,7 @@ properties =
 				{ widgetID = [[endTurnBtn]], coord = 2 },
 				{ widgetID = [[rewindBtn]],  coord = 3 },
 			},
+			default = [[endTurnBtn]],
 		}},
 	}
 }

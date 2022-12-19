@@ -55,6 +55,8 @@ local modifications = {
 	modifyWidget(10, skinInventoryRow("lowerInv")), -- "inventory"
 
 	-- Shop items. (nanofab only)
+	-- TODO: Add focus indicators. The yellow<->white transition is passable for items,
+	--   but blue-white<->white for programs is not.
 	modifySubSubWidget(11, 3, 1, skinShopItem(ctrlID("shop.aug1"))),
 	modifySubSubWidget(11, 3, 2, skinShopItem(ctrlID("shop.aug2"))),
 	modifySubSubWidget(11, 3, 3, skinShopItem(ctrlID("shop.aug3"))),
@@ -91,6 +93,9 @@ local modifications = {
 					sutil.widgetRow(2, "lowerInv.item1", "lowerInv.item2", "lowerInv.item3", "lowerInv.item4",
 							"lowerInv.item5", "lowerInv.item6", "lowerInv.item7", "lowerInv.item8"),
 				nil),
+				-- upperInv is the current agent items/agency programs.
+				-- lowerInv is the target's inventory. Focus the target inventory first.
+				defaultYReverse = true,
 				recallOrthogonalX = true,
 			},
 			{
