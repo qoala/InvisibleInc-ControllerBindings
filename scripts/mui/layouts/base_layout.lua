@@ -3,6 +3,7 @@
 local array = include("modules/array")
 
 local ctrl_defs = include(SCRIPT_PATHS.qedctrl.."/ctrl_defs")
+local qutil = include(SCRIPT_PATHS.qedctrl.."/qed_util")
 
 
 local base_layout = class()
@@ -74,7 +75,11 @@ function base_layout:onNav(navDir, coord, ...)
 
 	local toPath = self._def[TO_FIELDS[navDir]]
 	if toPath then
-		return self._ctrl:navigateTo({dir=navDir, continue=true}, unpack(toPath))
+		local options, pathStart = {dir=navDir, continue=true}, 1
+		if toPath.options then
+			options = qutil.extendData(toPath.options, options){}
+		end
+		return self._ctrl:navigateTo(options, unpack(toPath, 1, #toPath))
 	end
 end
 

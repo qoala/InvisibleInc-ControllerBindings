@@ -80,8 +80,8 @@ local modifications =
 			sutil.widget("location1", {1,1}), sutil.widget("location2", {2,1}),
 			sutil.widget("location3", {1,2}), sutil.widget("location4", {2,2}),
 		},
-		{ shape = [[rgrid]], w = 2, h = 2 }
-	),
+		{ shape = [[rgrid]], w = 2, h = 2 },
+	nil),
 
 	-- Normal interactions in the lower half of the modal.
 	modifyDialog("modal-grafter.lua", 16, ctrlID("installSocketBtn")),
@@ -145,8 +145,8 @@ local modifications =
 			},
 			sutil.widget("cancelBtn", 3),
 		},
-		{ defaultChain = { "actions", "cancelBtn" } }
-	),
+		{ defaultChain = { "actions", "cancelBtn" } },
+	nil),
 
 	modifyDialog("modal-install-augment.lua", 6, ctrlID("installAugmentBtn")),
 	modifyDialog("modal-install-augment.lua", 5, ctrlID("leaveInInventoryBtn")),
@@ -157,8 +157,8 @@ local modifications =
 	modifyDialog("modal-rewind.lua", 3, skinButton(ctrlID("okBtn"))),
 	sutil.setSingleLayout("modal-rewind.lua",
 		sutil.widgetList("cancelBtn", "okBtn"),
-		{ shape = [[hlist]], default = "okBtn" }
-	),
+		{ shape = [[hlist]], default = "okBtn" },
+	nil),
 
 	modifySkinCtrl("modal-select-dlc.lua", 1, { bindListItemTo = "widget" }), -- CheckOption, for dlcList.
 	modifyDialog("modal-select-dlc.lua", 9, ctrlID("dlcList")),
@@ -166,12 +166,17 @@ local modifications =
 	modifyDialog("modal-select-dlc.lua", 7, ctrlID("cancelBtn")),
 	sutil.setSingleLayout("modal-select-dlc.lua",
 		{
-			sutil.widget("dlcList", 1, { widgetType = [[listbox]] }),
-			sutil.widget("okBtn", 2),
-			sutil.widget("cancelBtn", 3),
+			sutil.widget("dlcList", 1,
+				{
+					widgetType = [[listbox]],
+					rightTo = { "root", "okBtn" },
+				},
+			nil),
+			sutil.widget("okBtn", 2, { leftTo = { "root", "dlcList" }, }),
+			sutil.widget("cancelBtn", 3, { leftTo = { "root", "dlcList" }, }),
 		},
-		{ default = "okBtn" }
-	),
+		{ default = "okBtn", wrap = true, },
+	nil),
 
 	-- Ignoring the input elements and okBtn.
 	modifyDialog("modal-signup.lua", 17, skinButton(ctrlID("cancelBtn"))),
@@ -190,12 +195,7 @@ local modifications =
 				children =
 				{
 					sutil.widget("nameText",  1),
-					sutil.widget("list",      2,
-						{
-							widgetType = [[listbox]],
-							recallOrthogonal = true,
-						}
-					),
+					sutil.widget("list",      2, { widgetType = [[listbox]], }),
 				},
 				recallOrthogonal = true,
 				rightTo = { "root", "bottom", },
@@ -205,8 +205,9 @@ local modifications =
 				children = sutil.widgetList("saveBtn", "loadBtn", "deleteBtn", "cancelBtn"),
 				leftTo = { "root", "top", },
 			},
-		}
-	),
+		},
+		{ wrap = true, },
+	nil),
 
 	modifyDialog("modal-story.lua", 7, ctrlID("skipBtn")),
 	modifyDialog("modal-story.lua", 8, ctrlID("prevBtn")),
@@ -221,8 +222,8 @@ local modifications =
 				default = "nextBtn",
 			},
 		},
-		{ default = "nav" }
-	),
+		{ default = "nav" },
+	nil),
 
 	modifyDialog("modal-update-disclaimer.lua", 5, skinButton(ctrlID("okBtn"))),
 	modifyDialog("modal-update-disclaimer.lua", 4, skinButton(ctrlID("readMoreBtn"))),
@@ -239,8 +240,8 @@ local modifications =
 				children = sutil.widgetList("okBtn", "readMoreBtn"),
 			},
 		},
-		{ shape = [[hlist]], default = "actions" }
-	),
+		{ shape = [[hlist]], default = "actions" },
+	nil),
 }
 
 return modifications
