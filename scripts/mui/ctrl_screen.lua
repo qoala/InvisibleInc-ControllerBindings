@@ -94,6 +94,8 @@
 -- For example, ctrl:navigateTo(options, "a", "b", "c") selects
 -- the root layout "a", "a"'s child layout "b", "b"'s child layout "c", and then whichever target is
 -- the default within "c" and its descendants.
+-- Alternatively, a specific layout node's unique ID as the sole path element will navigate directly
+-- to that node, possibly changing the root layout in order to do so.
 --
 -- Recognized options:
 --   * force = true:
@@ -147,20 +149,20 @@ function ctrl_screen:init(def, debugName)
 	self._deferredNavigate = nil -- Navigation unavailable until after activate.
 	self._def = def or {}
 	if self._def.layouts then
-		self._layouts = {}
+		self._rootLayouts = {}
 		for i, layoutDef in ipairs(self._def.layouts) do
 			assert(layoutDef.id, "[QEDCTRL] Missing ID for root layout "..i.." of "..self._debugName)
-			assert(self._layouts[layoutDef.id] == nil, "[QEDCTRL] Non-unique layout ID " .. tostring(layoutDef.id) .. " in " .. self._debugName)
-			self._layouts[layoutDef.id] = ctrl_layouts.createLayoutNode(layoutDef, {}, self._debugName, i)
+			assert(self._rootLayouts[layoutDef.id] == nil, "[QEDCTRL] Non-unique layout ID " .. tostring(layoutDef.id) .. " in " .. self._debugName)
+			self._rootLayouts[layoutDef.id] = ctrl_layouts.createLayoutNode(layoutDef, {}, self._debugName, i)
 		end
 	else
 		self._soloLayout = ctrl_layouts.solo_layout(self._debugName)
-		self._layouts = { self._soloLayout }
+		self._rootLayouts = { self._soloLayout }
 	end
 	if self._def.combobox then
-		assert(self._layouts[COMBOBOX_L_ID] == nil, "[QEDCTRL] Non-unique layout ID "..COMBOBOX_L_ID.." in " .. self._debugName)
+		assert(self._rootLayouts[COMBOBOX_L_ID] == nil, "[QEDCTRL] Non-unique layout ID "..COMBOBOX_L_ID.." in " .. self._debugName)
 		self._comboboxLayout = ctrl_layouts.combobox_layout(COMBOBOX_L_ID, self._debugName)
-		self._layouts[COMBOBOX_L_ID] = self._comboboxLayout
+		self._rootLayouts[COMBOBOX_L_ID] = self._comboboxLayout
 	end
 end
 
@@ -177,11 +179,11 @@ end
 function ctrl_screen:onActivate(screen)
 	-- simlog("LOG_QEDCTRL", "ctrl:activate %s", self._debugName)
 	self._screen = screen
-	self._widgets = {}  -- Widgets with IDs.
-	self._widgetNodes = {}  -- Layout nodes matching widgets with IDs.
+	self._widgets = {}  -- Widgets with unique IDs, by type.
+	self._layoutNodes = {}  -- Layout nodes with unique IDs.
 	self._listeners = {}
 	self._rootLayout = nil
-	for _, layout in pairs(self._layouts) do
+	for _, layout in pairs(self._rootLayouts) do
 		layout:onActivate(self)
 	end
 end
@@ -210,10 +212,10 @@ function ctrl_screen:onDeactivate()
 	self._screen:removeEventHandler( self )
 	self._deferredNavigate = nil -- Navigation unavailable until next activate.
 
-	for _, layout in pairs(self._layouts) do
+	for _, layout in pairs(self._rootLayouts) do
 		layout:onDeactivate()
 	end
-	self._screen, self._widgets, self._widgetNodes = nil
+	self._screen, self._widgets, self._layoutNodes = nil
 	self._rootLayout, self._listeners = nil
 end
 
@@ -231,14 +233,10 @@ function ctrl_screen:decrementListenerCount( rootID, cmd )
 	end
 end
 
-function ctrl_screen:registerWidgetNode( node, widgetID, widgetType )
-	widgetType = widgetType or 0 -- Untyped widgets @ [0].
-	self._widgetNodes[widgetType] = self._widgetNodes[widgetType] or {}
-	local nodeTbl = self._widgetNodes[widgetType]
-
-	assert(nodeTbl[widgetID] == nil, "[QEDCTRL] Non-unique widget reference "
-			..tostring(widgetID).." in "..tostring(self._debugName))
-	nodeTbl[widgetID] = node
+function ctrl_screen:registerLayoutNode( node, id )
+	assert(self._layoutNodes[id] == nil, "[QEDCTRL] Non-unique layout node "
+			..tostring(id).." in "..tostring(self._debugName))
+	self._layoutNodes[id] = node
 end
 
 function ctrl_screen:getWidget( widgetID, widgetType )
@@ -251,27 +249,32 @@ end
 function ctrl_screen:attachWidget( widget )
 	local id = widget:getControllerID()
 	assert(self._widgets, "[QEDCTRL] Can't activate widget "..tostring(id)..
-		" before screen "..tostring(self._debugName).." is activated.")
+			" before screen "..tostring(self._debugName).." is activated.")
 
 	local widgetType = widget.CONTROLLER_TYPE or 0 -- Untyped widgets @ [0].
 	local node
 	if widget:getControllerDef().soloButton then
 		local soloLayout = self._soloLayout
 		assert(soloLayout, "[QEDCTRL] Can't add soloButton "..tostring(id)..
-			" to non-solo screen "..tostring(self._debugName))
-		assert(not soloLayout:getWidgetID(), "[QEDCTRL] Can't add multiple soloButtons "..tostring(id)..
-			", "..tostring(soloLayout:getWidgetID()).." to screen "..tostring(self._debugName))
+				" to non-solo screen "..tostring(self._debugName))
+		assert(not soloLayout:getWidgetID(), "[QEDCTRL] Can't add multiple soloButtons "
+				..tostring(id)..", "..tostring(soloLayout:getWidgetID())
+				.." to screen "..tostring(self._debugName))
 
 		node = soloLayout
 		soloLayout:setWidget(widget)
 		simlog("LOG_QEDCTRL", "ctrl:attachSoloWidget %s=%s auto=%s", soloLayout._debugName,
 				id, tostring(soloLayout:hasAutoConfirm()))
 	else
-		local nodeTbl = self._widgetNodes[widgetType]
-		node = nodeTbl and nodeTbl[id]
-
+		node = self._layoutNodes[id]
 		if not node then
-			simlog("[QEDCTRL] No layout for widget %s in %s. Ignoring.", tostring(id), tostring(self._debugName))
+			simlog("[QEDCTRL] No layout for widget %s in %s. Ignoring.",
+					tostring(id), tostring(self._debugName))
+			return
+		elseif node.WIDGET_TYPE ~= widgetType then
+			simlog("[QEDCTRL] Wrong layout type for widget %s %s~=%s in %s. Ignoring.",
+					tostring(id), tostring(widgetType),
+					tostring(node.WIDGET_TYPE), tostring(self._debugName))
 			return
 		end
 		simlog("LOG_QEDCTRL", "ctrl:attachWidget %s/%s%s", self._debugName,
@@ -281,7 +284,7 @@ function ctrl_screen:attachWidget( widget )
 	self._widgets[widgetType] = self._widgets[widgetType] or {}
 	local tbl = self._widgets[widgetType]
 	assert(tbl[id] == nil, "[QEDCTRL] Non-unique widget ID "..tostring(id)..
-		" in "..tostring(self._debugName))
+			" in "..tostring(self._debugName))
 
 	tbl[id] = widget
 	widget:setControllerPath(node:getPath())
@@ -307,15 +310,36 @@ function ctrl_screen:navigateTo( options, layoutID, ... )
 		self._deferredNavigate = { options, layoutID, ... }
 		return true
 	end
-	if self._layouts and self._layouts[layoutID] then
-		local layout = self._layouts[layoutID]
-		if layout:onFocus(options or {}, ...) or (options and options.force) then
-			self._rootLayout = layout
+	local rootLayout = self._rootLayouts[layoutID]
+	if rootLayout then
+		local ok = rootLayout:onFocus(options or {}, ...)
+		if ok or (options and options.force) then
+			self._rootLayout = rootLayout
 			return true
 		end
+	elseif self._layoutNodes[layoutID] then
+		-- Navigate directly to a widget instead.
+		local path = self._layoutNodes[layoutID]:getPath()
+		rootLayout = self._rootLayouts[path[1]]
+		assert(rootLayout, "[QEDCTRL] Invalid root "..tostring(path[1]).." for "
+				..tostring(layoutID).." in "..tostring(self._debugName))
+		local ok = rootLayout:onFocus(options or {}, unpack(path, 2, #path))
+		if ok or (options and options.force) then
+			self._rootLayout = rootLayout
+			return true
+		end
+	else
+		simlog("[QEDCTRL] Cannot navigate to %s that does not exist in %s.\n%s",
+			tostring(layoutID), tostring(self._debugName), debug.traceback())
 	end
 end
 function ctrl_screen:setRoot( layoutID, options )
+	if not self._rootLayouts[layoutID] then
+		simlog("[QEDCTRL] Requested root layout %s does not exist in %s.\n%s",
+			tostring(layoutID), tostring(self._debugName), debug.traceback())
+		inputmgr.onControllerError()
+		return
+	end
 	return self:navigateTo(options or {}, layoutID)
 end
 

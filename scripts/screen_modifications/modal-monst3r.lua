@@ -7,14 +7,14 @@ end
 
 local function modifyWidget(childIndex, modification)
 	return {
-		"modal-saveslots.lua",
+		"modal-monst3r.lua",
 		{ "widgets", 2, "children", childIndex },
 		modification,
 	}
 end
 local function modifySubWidget(childIndex1, childIndex2, modification)
 	return {
-		"modal-saveslots.lua",
+		"modal-monst3r.lua",
 		{ "widgets", 2, "children", childIndex1, "children", childIndex2 },
 		modification,
 	}

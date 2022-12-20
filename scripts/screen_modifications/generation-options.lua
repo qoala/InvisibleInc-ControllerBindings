@@ -132,11 +132,7 @@ local modifications = {
 							sutil.widget("showOptionsBtn",  {1,3}),
 							sutil.widget("startBtn",        {2,3},
 								{
-									downTo =
-									{
-										"root", "center", "genOptsList",
-										options = { recall=true, },
-									},
+									downTo = { "genOptsList", options = { recall=true, }, },
 								},
 							nil),
 						},
@@ -149,7 +145,7 @@ local modifications = {
 							widgetType = [[listbox]],
 							-- Sim Constructor has an onItemClicked that's a no-op on PC.
 							ignoreOnItemClicked = true,
-							rightTo = { "root", "center", "top", "startBtn" },
+							rightTo = { "startBtn" },
 						}
 					),
 				},
@@ -160,7 +156,7 @@ local modifications = {
 		{
 			shape = [[hlist]],
 			default = "center",
-			cancelTo = { "root", "leftbar", "cancelBtn" },
+			cancelTo = { "cancelBtn" },
 		},
 		{ combobox = true, }
 	),

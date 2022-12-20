@@ -43,6 +43,7 @@ end
 
 local listbox_layout = class(base_layout)
 listbox_layout._SHAPE = "listbox"
+listbox_layout.WIDGET_TYPE = "listbox"
 function listbox_layout:init( def, ... )
 	self._id = def and def.widgetID
 	listbox_layout._base.init(self, def, ...)
@@ -56,10 +57,6 @@ end
 
 function listbox_layout:onActivate( ctrlScreen, ... )
 	listbox_layout._base.onActivate(self, ctrlScreen, ...)
-
-	if self._widgetID then -- Not set on combobox layout.
-		ctrlScreen:registerWidgetNode(self, self._widgetID, "listbox")
-	end
 	self._focusIdx = nil
 	self._child:onActivate(self, ctrlScreen, ...)
 end
@@ -213,9 +210,10 @@ end
 local item_reference = class(base_layout)
 listbox_layout.item_reference = item_reference
 item_reference._SHAPE = "listitem"
+item_reference._REGISTER_NODE = false
 
 function item_reference:init( parentDef, parentPath, debugParent, ... )
-	self._id = ""
+	self._id = "#"
 	item_reference._base.init(self, {}, parentPath, debugParent, ...)
 	self._parentDef = parentDef
 end

@@ -52,6 +52,9 @@ function base_layout:onActivate( ctrlScreen )
 	-- simlog("LOG_QEDCTRL", "ctrl:activate %s:%s", tostring(self._debugName), tostring(self._SHAPE))
 	self._ctrl = ctrlScreen
 	self._focusChild = nil
+	if self._REGISTER_NODE ~= false then -- Set to false on any node types with non-unique IDs.
+		ctrlScreen:registerLayoutNode(self, self._id)
+	end
 	for k, cmd in pairs(LISTENER_MAPPINGS) do
 		if self._def[k] then
 			ctrlScreen:incrementListenerCount(self._navigatePath[1], cmd)

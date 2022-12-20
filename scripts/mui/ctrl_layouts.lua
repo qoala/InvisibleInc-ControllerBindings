@@ -6,7 +6,6 @@ do -- Re-export layout classes.
 	_M.base_layout = include(SCRIPT_PATHS.qedctrl.."/mui/layouts/base_layout")
 
 	local single_layouts = include(SCRIPT_PATHS.qedctrl.."/mui/layouts/single_layouts")
-	_M.base_widget_reference = single_layouts.base_widget_reference
 	_M.widget_reference = single_layouts.widget_reference
 	_M.solo_layout      = single_layouts.solo_layout
 

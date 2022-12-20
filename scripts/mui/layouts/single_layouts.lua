@@ -61,18 +61,13 @@ end
 local widget_reference = class(base_widget_reference)
 do
 	widget_reference._SHAPE = "widget"
+	widget_reference.WIDGET_TYPE = 0 -- Untyped widgets.
 	function widget_reference:init( def, ... )
 		self._id = def and def.widgetID
 		base_layout.init(self, def, ...)
 
 		self._widgetID = self._def.widgetID
 		assert(self._widgetID, "[QEDCTRL] Widget reference without widgetID "..self._debugName)
-	end
-
-	function widget_reference:onActivate( ctrlScreen, ... )
-		widget_reference._base.onActivate(self, ctrlScreen, ...)
-
-		ctrlScreen:registerWidgetNode(self, self._widgetID)
 	end
 end
 
@@ -81,6 +76,7 @@ end
 local solo_layout = class(base_widget_reference)
 do
 	solo_layout._SHAPE = "-"
+	solo_layout._REGISTER_NODE = false
 	function solo_layout:init( debugParent )
 		self._id = "solo"
 		base_layout.init(self, nil, {}, debugParent)
