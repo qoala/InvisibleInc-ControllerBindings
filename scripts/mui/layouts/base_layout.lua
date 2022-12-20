@@ -18,6 +18,9 @@ end
 function base_layout:getID()
 	return self._id
 end
+function base_layout:getPath()
+	return self._navigatePath
+end
 
 -- === [abstract]
 -- function layout:isEmpty() : bool
@@ -45,13 +48,13 @@ local LISTENER_MAPPINGS =
 	["pnextTo"] = ctrl_defs.PNEXT, 
 }
 
-function base_layout:onActivate(screenCtrl)
+function base_layout:onActivate( ctrlScreen )
 	-- simlog("LOG_QEDCTRL", "ctrl:activate %s:%s", tostring(self._debugName), tostring(self._SHAPE))
-	self._ctrl = screenCtrl
+	self._ctrl = ctrlScreen
 	self._focusChild = nil
 	for k, cmd in pairs(LISTENER_MAPPINGS) do
 		if self._def[k] then
-			screenCtrl:incrementListenerCount(self._navigatePath[1], cmd)
+			ctrlScreen:incrementListenerCount(self._navigatePath[1], cmd)
 		end
 	end
 end

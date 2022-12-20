@@ -177,7 +177,8 @@ end
 function ctrl_screen:onActivate(screen)
 	-- simlog("LOG_QEDCTRL", "ctrl:activate %s", self._debugName)
 	self._screen = screen
-	self._widgets, self._typedWidgets = {}, {}
+	self._widgets = {}  -- Widgets with IDs.
+	self._widgetNodes = {}  -- Layout nodes matching widgets with IDs.
 	self._listeners = {}
 	self._rootLayout = nil
 	for _, layout in pairs(self._layouts) do
@@ -212,7 +213,7 @@ function ctrl_screen:onDeactivate()
 	for _, layout in pairs(self._layouts) do
 		layout:onDeactivate()
 	end
-	self._screen, self._widgets, self._typedWidgets = nil
+	self._screen, self._widgets, self._widgetNodes = nil
 	self._rootLayout, self._listeners = nil
 end
 
@@ -230,13 +231,21 @@ function ctrl_screen:decrementListenerCount( rootID, cmd )
 	end
 end
 
-function ctrl_screen:getWidget( widgetID )
-	return self._widgets and self._widgets[widgetID]
+function ctrl_screen:registerWidgetNode( node, widgetID, widgetType )
+	widgetType = widgetType or 0 -- Untyped widgets @ [0].
+	self._widgetNodes[widgetType] = self._widgetNodes[widgetType] or {}
+	local nodeTbl = self._widgetNodes[widgetType]
+
+	assert(nodeTbl[widgetID] == nil, "[QEDCTRL] Non-unique widget reference "
+			..tostring(widgetID).." in "..tostring(self._debugName))
+	nodeTbl[widgetID] = node
 end
 
-function ctrl_screen:getTypedWidget( widgetType, widgetID )
-	local tbl = self._typedWidgets and self._typedWidgets[widgetType]
-	return tbl and tbl[widgetID]
+function ctrl_screen:getWidget( widgetID, widgetType )
+	if self._widgets then
+		local tbl = self._widgets[widgetType or 0]
+		return tbl and tbl[widgetID]
+	end
 end
 
 function ctrl_screen:attachWidget( widget )
@@ -244,16 +253,8 @@ function ctrl_screen:attachWidget( widget )
 	assert(self._widgets, "[QEDCTRL] Can't activate widget "..tostring(id)..
 		" before screen "..tostring(self._debugName).." is activated.")
 
-	local tbl = self._widgets
-	if widget.CONTROLLER_TYPE then
-		self._typedWidgets[widget.CONTROLLER_TYPE] = self._typedWidgets[widget.CONTROLLER_TYPE] or {}
-		tbl = self._typedWidgets[widget.CONTROLLER_TYPE]
-	end
-	assert(not tbl[id], "[QEDCTRL] Non-unique widget ID "..tostring(id)..
-		" in "..tostring(self._debugName))
-
-	tbl[id] = widget
-
+	local widgetType = widget.CONTROLLER_TYPE or 0 -- Untyped widgets @ [0].
+	local node
 	if widget:getControllerDef().soloButton then
 		local soloLayout = self._soloLayout
 		assert(soloLayout, "[QEDCTRL] Can't add soloButton "..tostring(id)..
@@ -261,19 +262,35 @@ function ctrl_screen:attachWidget( widget )
 		assert(not soloLayout:getWidgetID(), "[QEDCTRL] Can't add multiple soloButtons "..tostring(id)..
 			", "..tostring(soloLayout:getWidgetID()).." to screen "..tostring(self._debugName))
 
+		node = soloLayout
 		soloLayout:setWidget(widget)
-		simlog("LOG_QEDCTRL", "ctrl:attachSoloWidget %s=%s auto=%s", soloLayout._debugName, id, tostring(soloLayout:hasAutoConfirm()))
-	elseif widget.CONTROLLER_TYPE then
-		simlog("LOG_QEDCTRL", "ctrl:attachWidget %s/[%s]/%s", self._debugName, widget.CONTROLLER_TYPE, id)
+		simlog("LOG_QEDCTRL", "ctrl:attachSoloWidget %s=%s auto=%s", soloLayout._debugName,
+				id, tostring(soloLayout:hasAutoConfirm()))
 	else
-		simlog("LOG_QEDCTRL", "ctrl:attachWidget %s/%s", self._debugName, id)
+		local nodeTbl = self._widgetNodes[widgetType]
+		node = nodeTbl and nodeTbl[id]
+
+		if not node then
+			simlog("[QEDCTRL] No layout for widget %s in %s. Ignoring.", tostring(id), tostring(self._debugName))
+			return
+		end
+		simlog("LOG_QEDCTRL", "ctrl:attachWidget %s/%s%s", self._debugName,
+				widgetType == 0 and "" or ("["..widgetType.."]/"), id)
 	end
+
+	self._widgets[widgetType] = self._widgets[widgetType] or {}
+	local tbl = self._widgets[widgetType]
+	assert(tbl[id] == nil, "[QEDCTRL] Non-unique widget ID "..tostring(id)..
+		" in "..tostring(self._debugName))
+
+	tbl[id] = widget
+	widget:setControllerPath(node:getPath())
 end
 
 function ctrl_screen:detachWidget( widget )
 	local id = widget:getControllerID()
-	local tbl = self._widgets
-	if tbl and widget.CONTROLLER_TYPE then tbl = self._typedWidgets[widget.CONTROLLER_TYPE] end
+	local widgetType = widget.CONTROLLER_TYPE or 0 -- Untyped widgets @ [0].
+	local tbl = self._widgets and self._widgets[widgetType]
 	if tbl then
 		tbl[id] = nil
 	end

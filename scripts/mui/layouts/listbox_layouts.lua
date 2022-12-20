@@ -54,10 +54,14 @@ function listbox_layout:init( def, ... )
 	self._child = listbox_layout.item_reference(self._def, self._navigatePath, self._debugName)
 end
 
-function listbox_layout:onActivate( ... )
-	listbox_layout._base.onActivate(self, ...)
+function listbox_layout:onActivate( ctrlScreen, ... )
+	listbox_layout._base.onActivate(self, ctrlScreen, ...)
+
+	if self._widgetID then -- Not set on combobox layout.
+		ctrlScreen:registerWidgetNode(self, self._widgetID, "listbox")
+	end
 	self._focusIdx = nil
-	self._child:onActivate(self, ...)
+	self._child:onActivate(self, ctrlScreen, ...)
 end
 function listbox_layout:onDeactivate( ... )
 	self._child:onDeactivate(...)
@@ -66,7 +70,7 @@ function listbox_layout:onDeactivate( ... )
 end
 
 function listbox_layout:_getListWidget()
-	return self._ctrl:getTypedWidget("listbox", self._widgetID)
+	return self._ctrl:getWidget(self._widgetID, "listbox")
 end
 
 function listbox_layout:isEmpty()
@@ -259,6 +263,7 @@ function item_reference:onFocus( options, item, idx )
 		local ok = self._ctrl:setFocus(target, self._debugName..(idx or "?"))
 		if ok then
 			self._idx = idx
+			self._navigatePath[#self._navigatePath] = idx
 			return true
 		end
 	end

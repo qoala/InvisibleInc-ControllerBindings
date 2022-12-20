@@ -25,6 +25,9 @@ function widget.defineCtrlMethods(cls, ctrlAppends, alwaysAppends)
 	function cls:getControllerDef()
 		return self._qedctrl_def
 	end
+	function cls:setControllerPath( navigatePath )
+		self._qedctrl_path = navigatePath
+	end
 
 	-- If the top-level of a listbox item skin is a supported interactive element, target it.
 	function cls:getControllerListItem()

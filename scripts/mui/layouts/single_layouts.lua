@@ -6,30 +6,22 @@
 local base_layout = include(SCRIPT_PATHS.qedctrl.."/mui/layouts/base_layout")
 
 
-local widget_reference = class(base_layout)
+local base_widget_reference = class(base_layout)
 do
-	widget_reference._SHAPE = "widget"
-	function widget_reference:init( def, ... )
-		self._id = def and def.widgetID
-		widget_reference._base.init(self, def, ...)
-
-		self._widgetID = self._def.widgetID
-	end
-
-	function widget_reference:_getWidget()
+	function base_widget_reference:_getWidget()
 		return self._widgetID and self._ctrl:getWidget(self._widgetID)
 	end
 
-	function widget_reference:isEmpty()
+	function base_widget_reference:isEmpty()
 		return not self:_getWidget()
 	end
 
-	function widget_reference:canFocus()
+	function base_widget_reference:canFocus()
 		local widget = self:_getWidget()
 		return widget and widget:canControllerFocus()
 	end
 
-	function widget_reference:onFocus( options, ... )
+	function base_widget_reference:onFocus( options, ... )
 		local widget = self:_getWidget()
 		if widget and widget.onControllerFocus then
 			widget._qedctrl_debugName = self._debugName
@@ -40,7 +32,7 @@ do
 		end
 	end
 
-	function widget_reference:onUpdate()
+	function base_widget_reference:onUpdate()
 		local widget = self:_getWidget()
 		if widget and widget.onControllerUpdate then
 			return widget:onControllerUpdate()
@@ -49,14 +41,14 @@ do
 		return self._ctrl:setFocus(target, self._debugName.."::onUpdate")
 	end
 
-	function widget_reference:_onInternalNav( navDir )
+	function base_widget_reference:_onInternalNav( navDir )
 		local widget = self:_getWidget()
 		if widget and widget.onControllerNav then
 			return widget:onControllerNav(navDir)
 		end
 	end
 
-	function widget_reference:_onConfirm()
+	function base_widget_reference:_onConfirm()
 		local widget = self:_getWidget()
 		if widget and widget.onControllerConfirm then
 			simlog("LOG_QEDCTRL", "ctrl:confirm %s", self._debugName)
@@ -66,15 +58,33 @@ do
 	end
 end
 
+local widget_reference = class(base_widget_reference)
+do
+	widget_reference._SHAPE = "widget"
+	function widget_reference:init( def, ... )
+		self._id = def and def.widgetID
+		base_layout.init(self, def, ...)
+
+		self._widgetID = self._def.widgetID
+		assert(self._widgetID, "[QEDCTRL] Widget reference without widgetID "..self._debugName)
+	end
+
+	function widget_reference:onActivate( ctrlScreen, ... )
+		widget_reference._base.onActivate(self, ctrlScreen, ...)
+
+		ctrlScreen:registerWidgetNode(self, self._widgetID)
+	end
+end
+
 -- A solo top-level widget.
 -- Only constructed in the absence of a layout.
-local solo_layout = class(widget_reference)
+local solo_layout = class(base_widget_reference)
 do
 	solo_layout._SHAPE = "-"
 	function solo_layout:init( debugParent )
 		self._id = "solo"
-		base_layout.init(self, nil, {}, debugParent) -- Skip widget_reference:init
-		self._navigatePath[1] = 1
+		base_layout.init(self, nil, {}, debugParent)
+		self._navigatePath[1] = 1 -- Installed at [1] in the screen.
 	end
 
 	function solo_layout:getWidgetID()
@@ -92,6 +102,7 @@ do
 end
 
 return {
+	base_widget_reference = base_widget_reference,
 	widget_reference = widget_reference,
 	solo_layout = solo_layout,
 }
