@@ -406,28 +406,43 @@ local function maybeAutoClick(self)
 	return true
 end
 
+local function hasListeners(listeners, rootLayout, cmd)
+	local listeners = rootLayout and listeners[rootLayout:getID()]
+	local listenerCount = listeners and listeners[cmd]
+	return listenerCount and listenerCount > 0
+end
 function ctrl_screen:handleEvent( ev )
 	-- simlog("LOG_QEDCTRL", "ctrl:handleEvent %s (%s,%s) root=%s", self._debugName, tostring(ev.eventType), tostring(ev.key), tostring(self._rootLayout and self._rootLayout:getID()))
 	if not (ev.eventType == mui_defs.EVENT_KeyDown and self:hasWidgets()) then return end
 
 	local navDir = NAV_KEY[ev.key]
-	local isConfirmBinding
+	local isConfirmBinding, isCancelBinding
 	if navDir then
 		-- continue
 	elseif util.isKeyBindingEvent("QEDCTRL_CONFIRM", ev) then
+		-- Confirm is only ever used here, so always triggers controller mode.
 		isConfirmBinding = true
+	elseif (hasListeners(self._listeners, self._rootLayout, ctrl_defs.CANCEL)
+			and util.isKeyBindingEvent("QEDCTRL_CANCEL", ev)) then
+		-- Buttons with an explicit CANCEL hotkey prior to activation are checked first.
+		-- Next, Cancel is used here if there's a listener, and falls back to Esc otherwise.
+		isCancelBinding = true
 	elseif self._rootLayout and not inputmgr.isMouseEnabled() then
 		-- Remaining commands are only intercepted in controller mode
 		-- and cannot be used to enter controller mode.
 
-		local listeners = self._listeners[self._rootLayout:getID()] or {}
-		for _, cmdkey in ipairs(CMD_KEYS) do
-			if ((listeners[cmdkey.cmd] or 0) > 0
-				and util.isKeyBindingEvent(cmdkey.binding, ev))
-			then
-				return self._rootLayout:onCommand(cmdkey.cmd, {})
+		local listeners = self._listeners[self._rootLayout:getID()]
+		if listeners then
+			for _, cmdkey in ipairs(CMD_KEYS) do
+				if ((listeners[cmdkey.cmd] or 0) > 0
+					and util.isKeyBindingEvent(cmdkey.binding, ev))
+				then
+					return self._rootLayout:onCommand(cmdkey.cmd, {})
+				end
 			end
 		end
+		return
+	else
 		return
 	end
 
@@ -453,6 +468,8 @@ function ctrl_screen:handleEvent( ev )
 			simlog("LOG_QEDCTRL", "ctrl:emptyConfirm %s", self._debugName)
 		end
 		return true
+	elseif isCancelBinding then
+		return self._rootLayout:onCommand(ctrl_defs.CANCEL, {})
 	end
 end
 
