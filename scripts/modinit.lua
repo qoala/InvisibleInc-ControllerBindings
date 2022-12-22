@@ -25,7 +25,7 @@ local function init(modApi)
 	include(scriptPath.."/client_defs")
 	include(scriptPath.."/input-manager")
 
-	-- Low-level MUI graphical primitives.
+	-- Append low-level MUI graphical primitives.
 	include(scriptPath.."/mui/mui_checkbox")
 	include(scriptPath.."/mui/mui_combobox")
 	include(scriptPath.."/mui/mui_group")
@@ -33,9 +33,12 @@ local function init(modApi)
 	include(scriptPath.."/mui/mui_listbox")
 	include(scriptPath.."/mui/mui_screen")
 
-	-- High-level UI controllers. (client/hud, client/gameplay, client/fe, etc)
-	include(scriptPath.."/controllers/camhandler")
-	include(scriptPath.."/controllers/hud")
+	-- Append high-level controllers of HUD elements (client/gameplay, client/hud, ...)
+	include(scriptPath.."/hud/camhandler")
+	include(scriptPath.."/hud/hud")
+	include(scriptPath.."/hud/selection")
+
+	-- Append screen controllers. (client/fe, ...)
 	include(scriptPath.."/controllers/moviescreen")
 	include(scriptPath.."/controllers/saveslots-dialog")
 end

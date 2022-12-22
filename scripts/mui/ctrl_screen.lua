@@ -131,8 +131,8 @@ local NAV_KEY = {
 local CMD_KEYS = {
 	-- { binding = "QEDCTRL_CONFIRM", cmd = ctrl_defs.CONFIRM }, -- Handled directly.
 	{ binding = "QEDCTRL_CANCEL",  cmd = ctrl_defs.CANCEL },
-	{ binding = "cameraRotateL",   cmd = ctrl_defs.PPREV },
-	{ binding = "cameraRotateR",   cmd = ctrl_defs.PNEXT },
+	{ binding = "QEDCTRL_SELECTPREV",   cmd = ctrl_defs.PPREV },
+	{ binding = "QEDCTRL_SELECTNEXT",   cmd = ctrl_defs.PNEXT },
 	{ binding = "cycleSelection",  cmd = ctrl_defs.PNEXT },
 }
 

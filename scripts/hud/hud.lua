@@ -7,17 +7,34 @@ local end_turn_dialog = include(SCRIPT_PATHS.qedctrl.."/controllers/end_turn_dia
 
 --
 
-function onClickEndTurnMenu( hud )
-	if hud._state ~= hud.STATE_NULL then
-		hud:transitionNull()
+function onClickEndTurnMenu( self )
+	if self._state ~= self.STATE_NULL then
+		self:transitionNull()
 	else
-		local result = hud._qedctrl_endTurnDialog:show()
+		local result = self._qedctrl_endTurnDialog:show()
 		if result == end_turn_dialog.END_TURN then
-			local button = hud._endTurnButton._button
+			local button = self._endTurnButton._button
 			button:dispatchEvent({eventType = mui_defs.EVENT_ButtonClick, widget=button, ie = {}})
 		elseif result == end_turn_dialog.REWIND then
-			local button = hud._screen.binder.rewindBtn._button
+			local button = self._screen.binder.rewindBtn._button
 			button:dispatchEvent({eventType = mui_defs.EVENT_ButtonClick, widget=button, ie = {}})
+		end
+	end
+end
+
+function onInputEvent( self, ev )
+	if self.hide_interface then return end
+
+	if self._state == self.STATE_NULL then
+		local sim = self._game.simCore
+		if ev.eventType == mui_defs.EVENT_KeyDown then
+			if util.isKeyBindingEvent("QEDCTRL_SELECTNEXT", ev) then
+                self._selection:selectNextUnit()
+				return true
+			elseif util.isKeyBindingEvent("QEDCTRL_SELECTPREV", ev) then
+                self._selection:selectPreviousUnit()
+				return true
+			end
 		end
 	end
 end
@@ -45,6 +62,13 @@ hud.createHud = function( ... )
 		end
 
 		oldDestroyHud(self)
+	end
+
+	local oldOnInputEvent = hudObject.onInputEvent
+	function hudObject:onInputEvent( event, ... )
+		if onInputEvent(self, event) then return true end
+
+		return oldOnInputEvent(self, event, ...)
 	end
 
 	return hudObject
