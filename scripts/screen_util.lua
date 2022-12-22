@@ -44,30 +44,40 @@ function _M.modify(filename, ...)
 end
 _M.insert = _M.modify
 
+-- Modification arg that applies a given modification arg to the named widget
+-- within a skin or other group.
+function _M.named(widgetName, modification)
+	return { inheritDef = { [widgetName] = modification } }
+end
+
+-- Modification arg that applies a given modification arg to the [[btn]] widget within a skin.
+-- The shared screen_button skin or any number of screen-specific skins with a single btn child.
+function _M.skinButton(buttonModification)
+	return { inheritDef = { ["btn"] = buttonModification } }
+end
+
 
 -- Modification arg that applies arbitrary ctrlProperties
-function _M.ctrl(properties, otherProperties)
+function _M.ctrl(properties, otherWidgetProperties)
 	local modification = { ctrlProperties = properties }
-	if otherProperties then
-		modification = qutil.extendData(otherProperties)(modification)
+	if otherWidgetProperties then
+		modification = qutil.extendData(otherWidgetProperties)(modification)
 	end
 	return modification
 end
 
 -- Modification arg that applies a ctrl ID to a widget.
-function _M.ctrlID(id, otherProperties)
+function _M.ctrlID(id, otherCtrlProperties, otherWidgetProperties)
 	assert(type(id) == "string" or type(id) == "number", "[QEDCTRL] Illegal ID "..tostring(id))
 	local ctrlProperties = { id = id }
-	if otherProperties then
-		ctrlProperties = qutil.extendData(otherProperties)(ctrlProperties)
+	if otherCtrlProperties then
+		ctrlProperties = qutil.extendData(otherCtrlProperties)(ctrlProperties)
 	end
-	return { ctrlProperties = ctrlProperties }
-end
-
--- Modification arg that applies a given modification arg to the [[btn]] widget within a skin.
--- The shared screen_button skin is common, though some use screens have their own skin with the same btn child.
-function _M.skinButton(buttonModification)
-	return { inheritDef = { ["btn"] = buttonModification } }
+	local modification = { ctrlProperties = ctrlProperties }
+	if otherWidgetProperties then
+		modification = qutil.extendData(otherWidgetProperties)(modification)
+	end
+	return modification
 end
 
 

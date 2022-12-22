@@ -58,6 +58,7 @@ local function unload( modApi )
 
 	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/generation-options"))
 	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/main-menu"))
+	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/mission-recap-screen"))
 	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/modal-monst3r"))
 	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/modal-saveslots"))
 	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/modals"))
@@ -65,6 +66,7 @@ local function unload( modApi )
 	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/screen-loadout-selector"))
 	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/shop-dialog"))
 	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/team-preview-screen"))
+	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/upgrade-screen"))
 	-- TODO: modal-logs: listbox, nonlinear button arrangement.
 	-- TODO: modal-tutorials: buttons for internal pages all start visible, but all but the first are occluded.
 end

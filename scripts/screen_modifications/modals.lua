@@ -8,6 +8,10 @@ local function soloButton()
 	return ctrlID("btn", { soloButton = true, autoConfirm = true })
 end
 
+local function skinArrowBtn(modification)
+	return { inheritDef = { ["Group"] = sutil.skinButton(modification), }, }
+end
+
 -- Most dialogs have widgets[2] as the main dialog panel, with all buttons among its children.
 local function modifyDialog(filename, childIndex, modification)
 	return { filename, { "widgets", 2, "children", childIndex }, modification }
@@ -177,6 +181,7 @@ local modifications =
 	modifyDialog("modal-signup.lua", 17, skinButton(ctrlID("cancelBtn"))),
 	sutil.setSingleLayout("modal-signup.lua", sutil.widgetList("cancelBtn")),
 
+	-- Mod Preset Saver mod
 	modifyDialog("modal-select-preset", 5, ctrlID("nameText")), -- TODO: editbox support.
 	modifyDialog("modal-select-preset", 12, ctrlID("list")),
 	modifyDialog("modal-select-preset",  8, ctrlID("saveBtn")),
@@ -236,6 +241,25 @@ local modifications =
 			},
 		},
 		{ shape = [[hlist]], default = "actions" },
+	nil),
+
+	-- Character Stats dialog.
+	modifyDialog("upgrade-dialog.lua", 15, skinArrowBtn(ctrlID("arrowRight",
+			nil, { hotkey = "QEDCTRL_SELECTNEXT" }))),
+	modifyDialog("upgrade-dialog.lua", 16, skinArrowBtn(ctrlID("arrowLeft",
+			nil, { hotkey = "QEDCTRL_SELECTPREV" }))),
+	modifyDialog("upgrade-dialog.lua", 36, ctrlID("closeBtn")),
+	sutil.setSingleLayout("upgrade-dialog.lua",
+		{
+			{
+				id = "cycleBtns", coord = 1,
+				shape = [[hlist]],
+				children = sutil.widgetList("arrowLeft", "arrowRight"),
+				defaultReverse = true,
+			},
+			sutil.widget("closeBtn", 2),
+		},
+		{ default = "cycleBtns", },
 	nil),
 }
 

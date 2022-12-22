@@ -13,8 +13,8 @@ end
 
 -- TODO: Focusable widget for the whole box.
 --   Confirming on that ctrl-only widget would move into the box's root layout.
--- TODO: Focusable selectors for the prev/next element combos.
---   Left/Right on the selector would cycle the selector.
+-- TODO: pseudo-spinners for prev/next: agents, lore pages, and loadouts.
+-- TODO: Add vanilla loadout buttons to layout.
 local function skinAgent(baseID)
 	return {
 		inheritDef =
