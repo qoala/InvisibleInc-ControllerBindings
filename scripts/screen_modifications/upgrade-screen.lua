@@ -176,7 +176,7 @@ local modifications = {
 		},
 		{
 			default = "main",
-			cancelTo = { "acceptBtn" },
+			cancelTo = "acceptBtn",
 		},
 	nil),
 }

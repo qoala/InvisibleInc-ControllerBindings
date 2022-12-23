@@ -74,19 +74,25 @@ function base_layout:onUpdate()
 	end
 end
 
+local function handleToPath(self, toPath, defaultOptions)
+	if type(toPath) == "string" then
+		return self._ctrl:navigateTo(defaultOptions, toPath)
+	elseif type(toPath) == "table" then
+		local options = defaultOptions
+		if toPath.options then
+			options = qutil.extendData(toPath.options, options){}
+		end
+		return self._ctrl:navigateTo(options, unpack(toPath, 1, #toPath))
+	end
+end
+
 function base_layout:onNav(navDir, coord, ...)
 	if not coord and self._focusChild and self._focusChild:onNav(navDir) then return true end
 
 	if self._onInternalNav and self:_onInternalNav(navDir, coord, ...) then return true end
 
 	local toPath = self._def[TO_FIELDS[navDir]]
-	if toPath then
-		local options, pathStart = {dir=navDir, continue=true}, 1
-		if toPath.options then
-			options = qutil.extendData(toPath.options, options){}
-		end
-		return self._ctrl:navigateTo(options, unpack(toPath, 1, #toPath))
-	end
+	return handleToPath(self, toPath, {dir=navDir, continue=true})
 end
 
 function base_layout:onCommand( command, dat )
@@ -101,14 +107,13 @@ function base_layout:onCommand( command, dat )
 	if dat.interrupted then return end
 
 	local toPath = self._def[TO_FIELDS[command]]
-	if toPath then
-		-- These tend are forced, unlike directional "to" paths.
-		return self._ctrl:navigateTo({force=true}, unpack(toPath))
-	elseif toPath ~= nil then
+	if toPath == false then
 		-- simlog("LOG_QEDCTRL", "ctrl:command %s interrupted %s", ctrl_defs.CMD_DBG[command], self._debugName)
 		dat.interrupted = true
 		return
 	end
+	-- These tend to be forced, unlike directional "to" paths, hence the options default.
+	return handleToPath(self, toPath, {force=true})
 end
 
 return base_layout

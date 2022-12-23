@@ -66,6 +66,21 @@ local modifications =
 	modifyDialog("modal-unlock-agents.lua", 5, skinButton(soloButton())),
 	modifySubWidget("modal-posttutorial.lua", 3, 3, soloButton()),
 
+	modifySubWidget("mission_preview_dialog.lua", 5, 1, skinButton(ctrlID("acceptBtn"))),
+	modifySubWidget("mission_preview_dialog.lua", 5, 2, skinButton(ctrlID("cancelBtn"))),
+	modifySubWidget("mission_preview_dialog.lua", 5, 3, skinButton(ctrlID("moreInfoBtn"))),
+	sutil.setSingleLayout("mission_preview_dialog.lua",
+		{
+			sutil.widget("moreInfoBtn", {1,1}),
+			sutil.widget("acceptBtn",   {2,1}),
+			sutil.widget("cancelBtn",   {2,2}),
+		},
+		{
+			shape = [[cgrid]], w = 2, h = 2,
+			defaultXReverse = true, -- Prefer accept/cancel before moreInfo.
+		},
+	nil),
+
 	modifyDialog("modal-dialog.lua", 5, ctrlID("okBtn")),
 	modifyDialog("modal-dialog.lua", 6, ctrlID("cancelBtn")),
 	modifyDialog("modal-dialog.lua", 8, ctrlID("auxBtn")),
@@ -170,9 +185,9 @@ local modifications =
 	modifyDialog("modal-select-dlc.lua", 7, ctrlID("cancelBtn")),
 	sutil.setSingleLayout("modal-select-dlc.lua",
 		{
-			sutil.widget("dlcList", 1, { widgetType = [[listbox]], rightTo = { "okBtn" }, }),
-			sutil.widget("okBtn", 2, { leftTo = { "dlcList" }, }),
-			sutil.widget("cancelBtn", 3, { leftTo = { "dlcList" }, }),
+			sutil.widget("dlcList", 1, { widgetType = [[listbox]], rightTo = "okBtn", }),
+			sutil.widget("okBtn", 2, { leftTo = "dlcList", }),
+			sutil.widget("cancelBtn", 3, { leftTo = "dlcList", }),
 		},
 		{ default = "okBtn", wrap = true, },
 	nil),
@@ -198,12 +213,12 @@ local modifications =
 					sutil.widget("list",      2, { widgetType = [[listbox]], }),
 				},
 				recallOrthogonal = true,
-				rightTo = { "bottom", },
+				rightTo = "bottom",
 			},
 			{
 				id = "bottom", coord = 2,
 				children = sutil.widgetList("saveBtn", "loadBtn", "deleteBtn", "cancelBtn"),
-				leftTo = { "top", },
+				leftTo = "top",
 			},
 		},
 		{ wrap = true, },

@@ -145,7 +145,7 @@ local modifications = {
 							widgetType = [[listbox]],
 							-- Sim Constructor has an onItemClicked that's a no-op on PC.
 							ignoreOnItemClicked = true,
-							rightTo = { "startBtn" },
+							rightTo = "startBtn",
 						}
 					),
 				},
@@ -156,7 +156,7 @@ local modifications = {
 		{
 			shape = [[hlist]],
 			default = "center",
-			cancelTo = { "cancelBtn" },
+			cancelTo = "cancelBtn",
 		},
 		{ combobox = true, }
 	),

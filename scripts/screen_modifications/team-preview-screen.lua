@@ -157,7 +157,7 @@ local modifications = {
 				},
 				default = "agent1",
 				defaultXReverse = true,
-				cancelTo = { "cancelBtn" },
+				cancelTo = "cancelBtn",
 			},
 			{
 				id = "agent1.box",
