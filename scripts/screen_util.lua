@@ -1,11 +1,16 @@
 -- Helpers for screen modifications.
 
 local qutil = include(SCRIPT_PATHS.qedctrl.."/qed_util")
+local ctrl_defs = include(SCRIPT_PATHS.qedctrl.."/ctrl_defs")
 
 local _M = {}
 
 -- Re-exports
 _M.extendData = qutil.extendData
+_M.UP = ctrl_defs.UP
+_M.DOWN = ctrl_defs.DOWN
+_M.LEFT = ctrl_defs.LEFT
+_M.RIGHT = ctrl_defs.RIGHT
 
 -- Shallowly concatenates any number of arrays into the first array
 function _M.concat(ary1, ...)
