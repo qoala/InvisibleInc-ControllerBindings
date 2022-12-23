@@ -21,6 +21,7 @@ function list_layout:init( def, ... )
 		end
 	end
 	table.sort(self._children, function(a, b) return a.parentIdx < b.parentIdx end)
+	self._bindings = {}
 end
 
 function list_layout:isEmpty()
@@ -43,8 +44,12 @@ function list_layout:onDeactivate( ... )
 end
 
 function list_layout:_findChild( childID )
+	local foundBinding = self._bindings[childID]
+	if foundBinding then return foundBinding[1], foundBinding[2] end
+
 	for i, child in ipairs(self._children) do
 		if child:getID() == childID then
+			self._bindings[childID] = {child, i}
 			return child, i
 		end
 	end

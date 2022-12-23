@@ -61,6 +61,7 @@ function grid_layout:init( def, ... )
 			self._isEmpty = false
 		end
 	end
+	self._bindings = {}
 end
 
 function grid_layout:isEmpty()
@@ -86,9 +87,14 @@ function grid_layout:getChild(x, y)
 	return self._children:get(self:_xy2ij(x, y))
 end
 function grid_layout:_findChild( childID )
+	local foundBinding = self._bindings[childID]
+	if foundBinding then return foundBinding[1], foundBinding[2], foundBinding[3] end
+
 	for i,j,child in self._children:iter() do
 		if child:getID() == childID then
-			return child, child.parentX, child.parentY
+			local x, y = child.parentX, child.parentY
+			self._bindings[childID] = {child, x, y}
+			return child, x, y
 		end
 	end
 end
