@@ -14,10 +14,23 @@ local CTRL_MAP =
 	[mui_defs.K_P] = "x",
 	[mui_defs.K_LBRACKET] = "lb",
 	[mui_defs.K_RBRACKET] = "rb",
+	[mui_defs.K_TAB] = "rb",
+	rightClick = "lt",
+	leftClick = "rt",
+	[mui_defs.K_ESCAPE] = "start",
+	[mui_defs.K_SPACE] = "sel",
 	[mui_defs.K_ALT] = "l4",
-	[mui_defs.K_SPACE] = "l5",
 	[mui_defs.K_SHIFT] = "r4",
 }
+local REVERSE_KEY_NAMES = {}
+do
+	for k,v in pairs(CTRL_MAP) do
+		local name = mui_util.getKeyName(k)
+		if name then
+			REVERSE_KEY_NAMES[name] = k
+		end
+	end
+end
 
 function util.getControllerBindingImage( binding )
 	local key
@@ -25,12 +38,22 @@ function util.getControllerBindingImage( binding )
 		key = binding
 	elseif type(binding) == "table" and #binding == 1 then
 		key = binding[1]
-	else
-		simlog("LOG_QEDCTRL", "tooltip %s - skip %s #%s", mui_util.getBindingName(binding), type(binding), type(binding) == "table" and #binding or "")
+	elseif type(binding) == "string" then
+		local key = REVERSE_KEY_NAMES[binding]
+		if key then
+			-- continue
+		elseif binding == STRINGS.UI.HUD_LEFT_CLICK then
+			key = "leftClick"
+		elseif binding == STRINGS.UI.HUD_RIGHT_CLICK then
+			key = "rightClick"
+		end
+	end
+	if not key then
+		-- simlog("LOG_QEDCTRL", "tooltip %s - skip %s #%s", mui_util.getBindingName(binding), type(binding), type(binding) == "table" and #binding or "")
 		return
 	end
 	local controller = cdefs.CONTROLLER_INPUTS["deck"] -- TODO: Configurable.
 	local control = controller and controller[CTRL_MAP[key]]
-	simlog("LOG_QEDCTRL", "tooltip %s - %s::%s=%s", mui_util.getBindingName(binding), tostring(key), tostring(CTRL_MAP[key]), tostring(control and control.image))
+	-- simlog("LOG_QEDCTRL", "tooltip %s - %s::%s=%s", mui_util.getBindingName(binding), tostring(key), tostring(CTRL_MAP[key]), tostring(control and control.image))
 	return control and control.image
 end

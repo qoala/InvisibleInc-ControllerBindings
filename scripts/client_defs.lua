@@ -20,6 +20,8 @@ cdefs.CONTROLLER_INPUTS =
 		rb = { image = "qedctrl/button-R1.png", },
 		lt = { image = "qedctrl/button-L2.png", }, -- Triggers
 		rt = { image = "qedctrl/button-R2.png", },
+		start = { image = "qedctrl/button-xb-start.png", }, -- "hamburger"
+		sel = { image = "qedctrl/button-xb-select.png", },  -- "view"
 		l4 = { image = "qedctrl/button-L4.png", }, -- Paddles
 		l5 = { image = "qedctrl/button-L5.png", },
 		r4 = { image = "qedctrl/button-R4.png", },
@@ -35,6 +37,8 @@ cdefs.CONTROLLER_INPUTS =
 		rb = { image = "qedctrl/button-R1.png", },
 		lt = { image = "qedctrl/button-L2.png", },
 		rt = { image = "qedctrl/button-R2.png", },
+		start = { image = "qedctrl/button-ps-options.png", },
+		sel = { image = "qedctrl/button-ps-share.png", },
 		l4 = { image = "qedctrl/button-L4.png", }, -- Usually unavailable.
 		l5 = { image = "qedctrl/button-L5.png", },
 		r4 = { image = "qedctrl/button-R4.png", },
@@ -50,6 +54,8 @@ cdefs.CONTROLLER_INPUTS =
 		rb = { image = "qedctrl/button-RB.png", },
 		lt = { image = "qedctrl/button-LT.png", },
 		rt = { image = "qedctrl/button-RT.png", },
+		start = { image = "qedctrl/button-xb-start.png", },
+		sel = { image = "qedctrl/button-xb-select.png", },
 		l4 = { image = "qedctrl/button-L4.png", }, -- Usually unavailable.
 		l5 = { image = "qedctrl/button-L5.png", }, -- Technically labeled P1-4 on Elite controller, but whatever.
 		r4 = { image = "qedctrl/button-R4.png", },
@@ -65,6 +71,8 @@ cdefs.CONTROLLER_INPUTS =
 		rb = { image = "qedctrl/button-RB.png", }, -- R
 		lt = { image = "qedctrl/button-ZL.png", }, -- ZL
 		rt = { image = "qedctrl/button-ZR.png", }, -- ZR
+		start = { image = "qedctrl/button-nin-plus.png", },
+		sel = { image = "qedctrl/button-nin-minus.png", },
 		l4 = { image = "qedctrl/button-L4.png", }, -- Usually unavailable.
 		l5 = { image = "qedctrl/button-L5.png", },
 		r4 = { image = "qedctrl/button-R4.png", },
