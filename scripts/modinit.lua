@@ -22,8 +22,9 @@ local function init(modApi)
 	local dataPath = modApi:getDataPath()
 	KLEIResourceMgr.MountPackage( dataPath .. "/gui.kwad", "data" )
 
-	include(scriptPath.."/client_defs")
 	include(scriptPath.."/input-manager")
+	include(scriptPath.."/client_defs")
+	include(scriptPath.."/client_util")
 
 	-- Append low-level MUI graphical primitives.
 	include(scriptPath.."/mui/mui_checkbox")

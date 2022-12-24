@@ -1,6 +1,7 @@
 dependents =
 {
 	"skins.lua",
+	"uitr_skins.lua",
 }
 text_styles =
 {
