@@ -39,7 +39,7 @@ function util.getControllerBindingImage( binding )
 	elseif type(binding) == "table" and #binding == 1 then
 		key = binding[1]
 	elseif type(binding) == "string" then
-		local key = REVERSE_KEY_NAMES[binding]
+		key = REVERSE_KEY_NAMES[binding]
 		if key then
 			-- continue
 		elseif binding == STRINGS.UI.HUD_LEFT_CLICK then
@@ -49,11 +49,12 @@ function util.getControllerBindingImage( binding )
 		end
 	end
 	if not key then
-		-- simlog("LOG_QEDCTRL", "tooltip %s - skip %s #%s", mui_util.getBindingName(binding), type(binding), type(binding) == "table" and #binding or "")
+		-- simlog("LOG_QEDCTRL", "tooltip %s - skip %s #%s",
+		-- 		mui_util.getBindingName(binding), type(binding), type(binding) == "table" and #binding or tostring(binding))
 		return
 	end
 	local controller = cdefs.CONTROLLER_INPUTS["deck"] -- TODO: Configurable.
 	local control = controller and controller[CTRL_MAP[key]]
-	-- simlog("LOG_QEDCTRL", "tooltip %s - %s::%s=%s", mui_util.getBindingName(binding), tostring(key), tostring(CTRL_MAP[key]), tostring(control and control.image))
+	simlog("LOG_QEDCTRL", "tooltip %s - %s::%s=%s", mui_util.getBindingName(binding), tostring(key), tostring(CTRL_MAP[key]), tostring(control and control.image))
 	return control and control.image
 end
