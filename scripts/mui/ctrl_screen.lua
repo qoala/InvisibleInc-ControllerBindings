@@ -9,7 +9,6 @@
 -- * autoConfirm = true:
 --     With both soloButton and autoConfirm, pressing confirm will automatically trigger this
 --     widget, even from mouse mode. On its own, autoConfirm has no effect.
-
 -- == Screen-level properties
 -- Screens can specify { properties = { ctrlProperties = {...} } }:
 -- * layouts = { rootLayoutDef, rootLayoutDef, ... }:
@@ -88,7 +87,6 @@
 --   * defaultYReverse = true
 --       If set, then when y is unspecified, the grid starts from the bottom and seeks up.
 --
-
 -- == ctrl:navigateTo({options}, navigatePath...)
 -- Navigates focus to a specific point in the layout, as specified by the ID path in the varargs.
 -- For example, ctrl:navigateTo(options, "a", "b", "c") selects
@@ -114,26 +112,24 @@
 --       will attempt to continue onwards in that direction, as if focus was starting from the
 --       specified path.
 --       Normally an overspecified path would be a no-op when called without force=true.
-
 local mui_defs = include("mui/mui_defs")
-local util = require( "client_util" )
+local util = require("client_util")
 
-local ctrl_defs = include(SCRIPT_PATHS.qedctrl.."/ctrl_defs")
-local ctrl_layouts = include(SCRIPT_PATHS.qedctrl.."/mui/ctrl_layouts")
-
+local ctrl_defs = include(SCRIPT_PATHS.qedctrl .. "/ctrl_defs")
+local ctrl_layouts = include(SCRIPT_PATHS.qedctrl .. "/mui/ctrl_layouts")
 
 local NAV_KEY = {
-	[mui_defs.K_UPARROW] = ctrl_defs.UP,
-	[mui_defs.K_DOWNARROW] = ctrl_defs.DOWN,
-	[mui_defs.K_LEFTARROW] = ctrl_defs.LEFT,
-	[mui_defs.K_RIGHTARROW] = ctrl_defs.RIGHT,
+    [mui_defs.K_UPARROW] = ctrl_defs.UP,
+    [mui_defs.K_DOWNARROW] = ctrl_defs.DOWN,
+    [mui_defs.K_LEFTARROW] = ctrl_defs.LEFT,
+    [mui_defs.K_RIGHTARROW] = ctrl_defs.RIGHT,
 }
 local CMD_KEYS = {
-	-- { binding = "QEDCTRL_CONFIRM", cmd = ctrl_defs.CONFIRM }, -- Handled directly.
-	{ binding = "QEDCTRL_CANCEL",  cmd = ctrl_defs.CANCEL },
-	{ binding = "QEDCTRL_SELECTPREV",   cmd = ctrl_defs.PPREV },
-	{ binding = "QEDCTRL_SELECTNEXT",   cmd = ctrl_defs.PNEXT },
-	{ binding = "cycleSelection",  cmd = ctrl_defs.PNEXT },
+    -- { binding = "QEDCTRL_CONFIRM", cmd = ctrl_defs.CONFIRM }, -- Handled directly.
+    {binding = "QEDCTRL_CANCEL", cmd = ctrl_defs.CANCEL},
+    {binding = "QEDCTRL_SELECTPREV", cmd = ctrl_defs.PPREV},
+    {binding = "QEDCTRL_SELECTNEXT", cmd = ctrl_defs.PNEXT},
+    {binding = "cycleSelection", cmd = ctrl_defs.PNEXT},
 }
 
 -- =====================================
@@ -145,333 +141,370 @@ local COMBOBOX_L_ID = "_combobox"
 
 local ctrl_screen = class()
 function ctrl_screen:init(def, debugName)
-	self._debugName = debugName or "?"
-	self._deferredNavigate = nil -- Navigation unavailable until after activate.
-	self._def = def or {}
-	if self._def.layouts then
-		self._rootLayouts = {}
-		for i, layoutDef in ipairs(self._def.layouts) do
-			assert(layoutDef.id, "[QEDCTRL] Missing ID for root layout "..i.." of "..self._debugName)
-			assert(self._rootLayouts[layoutDef.id] == nil, "[QEDCTRL] Non-unique layout ID " .. tostring(layoutDef.id) .. " in " .. self._debugName)
-			self._rootLayouts[layoutDef.id] = ctrl_layouts.createLayoutNode(layoutDef, {}, self._debugName, i)
-		end
-	else
-		self._soloLayout = ctrl_layouts.solo_layout(self._debugName)
-		self._rootLayouts = { self._soloLayout }
-	end
-	if self._def.combobox then
-		assert(self._rootLayouts[COMBOBOX_L_ID] == nil, "[QEDCTRL] Non-unique layout ID "..COMBOBOX_L_ID.." in " .. self._debugName)
-		self._comboboxLayout = ctrl_layouts.combobox_layout(COMBOBOX_L_ID, self._debugName)
-		self._rootLayouts[COMBOBOX_L_ID] = self._comboboxLayout
-	end
+    self._debugName = debugName or "?"
+    self._deferredNavigate = nil -- Navigation unavailable until after activate.
+    self._def = def or {}
+    if self._def.layouts then
+        self._rootLayouts = {}
+        for i, layoutDef in ipairs(self._def.layouts) do
+            assert(
+                    layoutDef.id,
+                    "[QEDCTRL] Missing ID for root layout " .. i .. " of " .. self._debugName)
+            assert(
+                    self._rootLayouts[layoutDef.id] == nil, "[QEDCTRL] Non-unique layout ID " ..
+                            tostring(layoutDef.id) .. " in " .. self._debugName)
+            self._rootLayouts[layoutDef.id] = ctrl_layouts.createLayoutNode(
+                    layoutDef, {}, self._debugName, i)
+        end
+    else
+        self._soloLayout = ctrl_layouts.solo_layout(self._debugName)
+        self._rootLayouts = {self._soloLayout}
+    end
+    if self._def.combobox then
+        assert(
+                self._rootLayouts[COMBOBOX_L_ID] == nil,
+                "[QEDCTRL] Non-unique layout ID " .. COMBOBOX_L_ID .. " in " .. self._debugName)
+        self._comboboxLayout = ctrl_layouts.combobox_layout(COMBOBOX_L_ID, self._debugName)
+        self._rootLayouts[COMBOBOX_L_ID] = self._comboboxLayout
+    end
 end
 
 function ctrl_screen:_initFocus()
-	local initialRoot = self._def.initialRoot
-	if initialRoot then
-		return self:setRoot(initialRoot, {force=true})
-	end
+    local initialRoot = self._def.initialRoot
+    if initialRoot then
+        return self:setRoot(initialRoot, {force = true})
+    end
 
-	local firstLayoutID = self._soloLayout and 1 or self._def.layouts[1].id
-	return self:setRoot(firstLayoutID, {force=true})
+    local firstLayoutID = self._soloLayout and 1 or self._def.layouts[1].id
+    return self:setRoot(firstLayoutID, {force = true})
 end
 
 function ctrl_screen:onActivate(screen)
-	-- simlog("LOG_QEDCTRL", "ctrl:activate %s", self._debugName)
-	self._screen = screen
-	self._widgets = {}  -- Widgets with unique IDs, by type.
-	self._layoutNodes = {}  -- Layout nodes with unique IDs.
-	self._listeners = {}
-	self._rootLayout = nil
-	for _, layout in pairs(self._rootLayouts) do
-		layout:onActivate(self)
-	end
+    -- simlog("LOG_QEDCTRL", "ctrl:activate %s", self._debugName)
+    self._screen = screen
+    self._widgets = {} -- Widgets with unique IDs, by type.
+    self._layoutNodes = {} -- Layout nodes with unique IDs.
+    self._listeners = {}
+    self._rootLayout = nil
+    for _, layout in pairs(self._rootLayouts) do
+        layout:onActivate(self)
+    end
 end
 function ctrl_screen:afterActivate()
-	if not self:hasWidgets() then return end
+    if not self:hasWidgets() then
+        return
+    end
 
-	if self._def.forceController then
-		inputmgr.setMouseEnabled(false)
-	end
-	if self._deferredNavigate then
-		local navArgs = self._deferredNavigate
-		self._deferredNavigate = false -- Navigation available.
-		self:navigateTo(unpack(navArgs))
-	elseif not inputmgr.isMouseEnabled() then
-		self._deferredNavigate = false
-		self:_initFocus()
-	else
-		self._deferredNavigate = false
-	end
+    if self._def.forceController then
+        inputmgr.setMouseEnabled(false)
+    end
+    if self._deferredNavigate then
+        local navArgs = self._deferredNavigate
+        self._deferredNavigate = false -- Navigation available.
+        self:navigateTo(unpack(navArgs))
+    elseif not inputmgr.isMouseEnabled() then
+        self._deferredNavigate = false
+        self:_initFocus()
+    else
+        self._deferredNavigate = false
+    end
 
-	self._screen:addEventHandler( self, mui_defs.EVENT_KeyDown )
+    self._screen:addEventHandler(self, mui_defs.EVENT_KeyDown)
 end
 
 function ctrl_screen:onDeactivate()
-	-- simlog("LOG_QEDCTRL", "ctrl:deactivate %s", self._debugName)
-	self._screen:removeEventHandler( self )
-	self._deferredNavigate = nil -- Navigation unavailable until next activate.
+    -- simlog("LOG_QEDCTRL", "ctrl:deactivate %s", self._debugName)
+    self._screen:removeEventHandler(self)
+    self._deferredNavigate = nil -- Navigation unavailable until next activate.
 
-	for _, layout in pairs(self._rootLayouts) do
-		layout:onDeactivate()
-	end
-	self._screen, self._widgets, self._layoutNodes = nil
-	self._rootLayout, self._listeners = nil
+    for _, layout in pairs(self._rootLayouts) do
+        layout:onDeactivate()
+    end
+    self._screen, self._widgets, self._layoutNodes = nil
+    self._rootLayout, self._listeners = nil
 end
 
 -- These events are sent through the layout hierarchy, so we don't track the listener objects here.
 -- We just want to know if there's a point to reporting the command.
-function ctrl_screen:incrementListenerCount( rootID, cmd )
-	local listeners = self._listeners[rootID] or {}
-	self._listeners[rootID] = listeners
-	listeners[cmd] = (listeners[cmd] or 0) + 1
+function ctrl_screen:incrementListenerCount(rootID, cmd)
+    local listeners = self._listeners[rootID] or {}
+    self._listeners[rootID] = listeners
+    listeners[cmd] = (listeners[cmd] or 0) + 1
 end
-function ctrl_screen:decrementListenerCount( rootID, cmd )
-	local listeners = self._listeners[rootID]
-	if listeners and listeners[cmd] then
-		listeners[cmd] = math.max(listeners[cmd] - 1, 0)
-	end
-end
-
-function ctrl_screen:registerLayoutNode( node, id )
-	assert(self._layoutNodes[id] == nil, "[QEDCTRL] Non-unique layout node "
-			..tostring(id).." in "..tostring(self._debugName))
-	self._layoutNodes[id] = node
+function ctrl_screen:decrementListenerCount(rootID, cmd)
+    local listeners = self._listeners[rootID]
+    if listeners and listeners[cmd] then
+        listeners[cmd] = math.max(listeners[cmd] - 1, 0)
+    end
 end
 
-function ctrl_screen:getWidget( widgetID, widgetType )
-	if self._widgets then
-		local tbl = self._widgets[widgetType or 0]
-		return tbl and tbl[widgetID]
-	end
+function ctrl_screen:registerLayoutNode(node, id)
+    assert(
+            self._layoutNodes[id] == nil, "[QEDCTRL] Non-unique layout node " .. tostring(id) ..
+                    " in " .. tostring(self._debugName))
+    self._layoutNodes[id] = node
 end
 
-function ctrl_screen:attachWidget( widget )
-	local id = widget:getControllerID()
-	assert(self._widgets, "[QEDCTRL] Can't activate widget "..tostring(id)..
-			" before screen "..tostring(self._debugName).." is activated.")
-
-	local widgetType = widget.CONTROLLER_TYPE or 0 -- Untyped widgets @ [0].
-	local node
-	if widget:getControllerDef().soloButton then
-		local soloLayout = self._soloLayout
-		assert(soloLayout, "[QEDCTRL] Can't add soloButton "..tostring(id)..
-				" to non-solo screen "..tostring(self._debugName))
-		assert(not soloLayout:getWidgetID(), "[QEDCTRL] Can't add multiple soloButtons "
-				..tostring(id)..", "..tostring(soloLayout:getWidgetID())
-				.." to screen "..tostring(self._debugName))
-
-		node = soloLayout
-		soloLayout:setWidget(widget)
-		simlog("LOG_QEDCTRL", "ctrl:attachSoloWidget %s=%s auto=%s", soloLayout._debugName,
-				id, tostring(soloLayout:hasAutoConfirm()))
-	else
-		node = self._layoutNodes[id]
-		if not node then
-			simlog("[QEDCTRL] No layout for widget %s in %s. Ignoring.",
-					tostring(id), tostring(self._debugName))
-			return
-		elseif node.WIDGET_TYPE ~= widgetType then
-			simlog("[QEDCTRL] Wrong layout type for widget %s %s~=%s in %s. Ignoring.",
-					tostring(id), tostring(widgetType),
-					tostring(node.WIDGET_TYPE), tostring(self._debugName))
-			return
-		end
-		simlog("LOG_QEDCTRL", "ctrl:attachWidget %s/%s%s", self._debugName,
-				widgetType == 0 and "" or ("["..widgetType.."]/"), id)
-	end
-
-	self._widgets[widgetType] = self._widgets[widgetType] or {}
-	local tbl = self._widgets[widgetType]
-	assert(tbl[id] == nil, "[QEDCTRL] Non-unique widget ID "..tostring(id)..
-			" in "..tostring(self._debugName))
-
-	tbl[id] = widget
-	widget:setControllerPath(node:getPath())
+function ctrl_screen:getWidget(widgetID, widgetType)
+    if self._widgets then
+        local tbl = self._widgets[widgetType or 0]
+        return tbl and tbl[widgetID]
+    end
 end
 
-function ctrl_screen:detachWidget( widget )
-	local id = widget:getControllerID()
-	local widgetType = widget.CONTROLLER_TYPE or 0 -- Untyped widgets @ [0].
-	local tbl = self._widgets and self._widgets[widgetType]
-	if tbl then
-		tbl[id] = nil
-	end
+function ctrl_screen:attachWidget(widget)
+    local id = widget:getControllerID()
+    assert(
+            self._widgets,
+            "[QEDCTRL] Can't activate widget " .. tostring(id) .. " before screen " ..
+                    tostring(self._debugName) .. " is activated.")
 
-	-- Deactivate solo buttons, as needed.
-	local soloLayout = self._soloLayout
-	if soloLayout and soloLayout:getWidgetID() == id then
-		soloLayout:setWidget(nil)
-	end
+    local widgetType = widget.CONTROLLER_TYPE or 0 -- Untyped widgets @ [0].
+    local node
+    if widget:getControllerDef().soloButton then
+        local soloLayout = self._soloLayout
+        assert(
+                soloLayout,
+                "[QEDCTRL] Can't add soloButton " .. tostring(id) .. " to non-solo screen " ..
+                        tostring(self._debugName))
+        assert(
+                not soloLayout:getWidgetID(),
+                "[QEDCTRL] Can't add multiple soloButtons " .. tostring(id) .. ", " ..
+                        tostring(soloLayout:getWidgetID()) .. " to screen " ..
+                        tostring(self._debugName))
+
+        node = soloLayout
+        soloLayout:setWidget(widget)
+        simlog(
+                "LOG_QEDCTRL", "ctrl:attachSoloWidget %s=%s auto=%s", soloLayout._debugName, id,
+                tostring(soloLayout:hasAutoConfirm()))
+    else
+        node = self._layoutNodes[id]
+        if not node then
+            simlog(
+                    "[QEDCTRL] No layout for widget %s in %s. Ignoring.", tostring(id),
+                    tostring(self._debugName))
+            return
+        elseif node.WIDGET_TYPE ~= widgetType then
+            simlog(
+                    "[QEDCTRL] Wrong layout type for widget %s %s~=%s in %s. Ignoring.",
+                    tostring(id), tostring(widgetType), tostring(node.WIDGET_TYPE),
+                    tostring(self._debugName))
+            return
+        end
+        simlog(
+                "LOG_QEDCTRL", "ctrl:attachWidget %s/%s%s", self._debugName,
+                widgetType == 0 and "" or ("[" .. widgetType .. "]/"), id)
+    end
+
+    self._widgets[widgetType] = self._widgets[widgetType] or {}
+    local tbl = self._widgets[widgetType]
+    assert(
+            tbl[id] == nil, "[QEDCTRL] Non-unique widget ID " .. tostring(id) .. " in " ..
+                    tostring(self._debugName))
+
+    tbl[id] = widget
+    widget:setControllerPath(node:getPath())
 end
 
-function ctrl_screen:navigateTo( options, layoutID, ... )
-	if self._deferredNavigate ~= false then
-		self._deferredNavigate = { options, layoutID, ... }
-		return true
-	end
-	local rootLayout = self._rootLayouts[layoutID]
-	if rootLayout then
-		local ok = rootLayout:onFocus(options or {}, ...)
-		if ok or (options and options.force) then
-			self._rootLayout = rootLayout
-			return true
-		end
-	elseif self._layoutNodes[layoutID] then
-		-- Navigate directly to a widget instead.
-		local path = self._layoutNodes[layoutID]:getPath()
-		rootLayout = self._rootLayouts[path[1]]
-		assert(rootLayout, "[QEDCTRL] Invalid root "..tostring(path[1]).." for "
-				..tostring(layoutID).." in "..tostring(self._debugName))
-		local ok = rootLayout:onFocus(options or {}, unpack(path, 2, #path))
-		if ok or (options and options.force) then
-			self._rootLayout = rootLayout
-			return true
-		end
-	else
-		simlog("[QEDCTRL] Cannot navigate to %s that does not exist in %s.\n%s",
-			tostring(layoutID), tostring(self._debugName), debug.traceback())
-	end
+function ctrl_screen:detachWidget(widget)
+    local id = widget:getControllerID()
+    local widgetType = widget.CONTROLLER_TYPE or 0 -- Untyped widgets @ [0].
+    local tbl = self._widgets and self._widgets[widgetType]
+    if tbl then
+        tbl[id] = nil
+    end
+
+    -- Deactivate solo buttons, as needed.
+    local soloLayout = self._soloLayout
+    if soloLayout and soloLayout:getWidgetID() == id then
+        soloLayout:setWidget(nil)
+    end
 end
-function ctrl_screen:setRoot( layoutID, options )
-	if not self._rootLayouts[layoutID] then
-		simlog("[QEDCTRL] Requested root layout %s does not exist in %s.\n%s",
-			tostring(layoutID), tostring(self._debugName), debug.traceback())
-		inputmgr.onControllerError()
-		return
-	end
-	return self:navigateTo(options or {}, layoutID)
+
+function ctrl_screen:navigateTo(options, layoutID, ...)
+    if self._deferredNavigate ~= false then
+        self._deferredNavigate = {options, layoutID, ...}
+        return true
+    end
+    local rootLayout = self._rootLayouts[layoutID]
+    if rootLayout then
+        local ok = rootLayout:onFocus(options or {}, ...)
+        if ok or (options and options.force) then
+            self._rootLayout = rootLayout
+            return true
+        end
+    elseif self._layoutNodes[layoutID] then
+        -- Navigate directly to a widget instead.
+        local path = self._layoutNodes[layoutID]:getPath()
+        rootLayout = self._rootLayouts[path[1]]
+        assert(
+                rootLayout,
+                "[QEDCTRL] Invalid root " .. tostring(path[1]) .. " for " .. tostring(layoutID) ..
+                        " in " .. tostring(self._debugName))
+        local ok = rootLayout:onFocus(options or {}, unpack(path, 2, #path))
+        if ok or (options and options.force) then
+            self._rootLayout = rootLayout
+            return true
+        end
+    else
+        simlog(
+                "[QEDCTRL] Cannot navigate to %s that does not exist in %s.\n%s",
+                tostring(layoutID), tostring(self._debugName), debug.traceback())
+    end
+end
+function ctrl_screen:setRoot(layoutID, options)
+    if not self._rootLayouts[layoutID] then
+        simlog(
+                "[QEDCTRL] Requested root layout %s does not exist in %s.\n%s", tostring(layoutID),
+                tostring(self._debugName), debug.traceback())
+        inputmgr.onControllerError()
+        return
+    end
+    return self:navigateTo(options or {}, layoutID)
 end
 
 function ctrl_screen:canCombobox()
-	return self._comboboxLayout ~= nil
+    return self._comboboxLayout ~= nil
 end
-function ctrl_screen:startCombobox( listboxWidget, returnPath, initialIdx )
-	if not self._comboboxLayout then
-		simlog("[QEDCTRL] Cannot open undeclared combobox on %s", self._debugName)
-		return
-	elseif self._comboboxLayout == self._rootLayout then
-		simlog("[QEDCTRL] Cannot nest combobox invocations on %s", self._debugName)
-		return
-	end
-	self._comboboxLayout:setListWidget(listboxWidget)
-	self._comboboxLayout:setReturnPath(returnPath or { self._rootLayout:getID() })
-	self:incrementListenerCount(COMBOBOX_L_ID, ctrl_defs.CANCEL)
+function ctrl_screen:startCombobox(listboxWidget, returnPath, initialIdx)
+    if not self._comboboxLayout then
+        simlog("[QEDCTRL] Cannot open undeclared combobox on %s", self._debugName)
+        return
+    elseif self._comboboxLayout == self._rootLayout then
+        simlog("[QEDCTRL] Cannot nest combobox invocations on %s", self._debugName)
+        return
+    end
+    self._comboboxLayout:setListWidget(listboxWidget)
+    self._comboboxLayout:setReturnPath(returnPath or {self._rootLayout:getID()})
+    self:incrementListenerCount(COMBOBOX_L_ID, ctrl_defs.CANCEL)
 
-	self:navigateTo({force=true}, COMBOBOX_L_ID, initialIdx)
+    self:navigateTo({force = true}, COMBOBOX_L_ID, initialIdx)
 end
 function ctrl_screen:finishCombobox()
-	if not self._comboboxLayout then return end
-	self._comboboxLayout:setListWidget(nil)
-	local returnPath = self._comboboxLayout:setReturnPath(nil)
-	if returnPath then
-		self:decrementListenerCount(COMBOBOX_L_ID, ctrl_defs.CANCEL)
-	end
+    if not self._comboboxLayout then
+        return
+    end
+    self._comboboxLayout:setListWidget(nil)
+    local returnPath = self._comboboxLayout:setReturnPath(nil)
+    if returnPath then
+        self:decrementListenerCount(COMBOBOX_L_ID, ctrl_defs.CANCEL)
+    end
 
-	if self._comboboxLayout == self._rootLayout then
-		self:navigateTo({force=true, recall=true}, unpack(returnPath))
-	end
+    if self._comboboxLayout == self._rootLayout then
+        self:navigateTo({force = true, recall = true}, unpack(returnPath))
+    end
 end
 
 function ctrl_screen:hasWidgets()
-	-- Enable controller handling if we either have explicit layout definitions,
-	-- or the default solo layout was filled.
-	return not self._soloLayout or not self._soloLayout:isEmpty()
+    -- Enable controller handling if we either have explicit layout definitions,
+    -- or the default solo layout was filled.
+    return not self._soloLayout or not self._soloLayout:isEmpty()
 end
 
-function ctrl_screen:setFocus( focusWidget, debugName )
-	if not inputmgr.isMouseEnabled() and focusWidget ~= self._screen._focusWidget then
-		simlog("LOG_QEDCTRL", "ctrl:%s %s", focusWidget == nil and "unfocus" or "focus", tostring(debugName))
-		self._screen:dispatchEvent({eventType = mui_defs.EVENT_FocusChanged, newFocus = focusWidget, oldFocus = self._screen._focusWidget })
-		self._screen._focusWidget = focusWidget
-	end
-	return true
+function ctrl_screen:setFocus(focusWidget, debugName)
+    if not inputmgr.isMouseEnabled() and focusWidget ~= self._screen._focusWidget then
+        simlog(
+                "LOG_QEDCTRL", "ctrl:%s %s", focusWidget == nil and "unfocus" or "focus",
+                tostring(debugName))
+        self._screen:dispatchEvent(
+                {
+                    eventType = mui_defs.EVENT_FocusChanged,
+                    newFocus = focusWidget,
+                    oldFocus = self._screen._focusWidget,
+                })
+        self._screen._focusWidget = focusWidget
+    end
+    return true
 end
 
 function ctrl_screen:onUpdate()
-	if self._rootLayout then
-		if not self._rootLayout:onUpdate() then
-			self:setFocus(nil, "onUpdate")
-		end
-	end
-	return true
+    if self._rootLayout then
+        if not self._rootLayout:onUpdate() then
+            self:setFocus(nil, "onUpdate")
+        end
+    end
+    return true
 end
 
 local function maybeAutoClick(self)
-	-- Confirm button can click immediately if there's a solo widget in the screen.
-	if self._soloLayout and self._soloLayout:hasAutoConfirm() then
-		simlog("LOG_QEDCTRL", "ctrl:autoConfirm %s", self._debugName)
-		return self._soloLayout:onCommand(ctrl_defs.CONFIRM, {})
-	end
-	return true
+    -- Confirm button can click immediately if there's a solo widget in the screen.
+    if self._soloLayout and self._soloLayout:hasAutoConfirm() then
+        simlog("LOG_QEDCTRL", "ctrl:autoConfirm %s", self._debugName)
+        return self._soloLayout:onCommand(ctrl_defs.CONFIRM, {})
+    end
+    return true
 end
 
 local function hasListeners(listeners, rootLayout, cmd)
-	local listeners = rootLayout and listeners[rootLayout:getID()]
-	local listenerCount = listeners and listeners[cmd]
-	return listenerCount and listenerCount > 0
+    local listeners = rootLayout and listeners[rootLayout:getID()]
+    local listenerCount = listeners and listeners[cmd]
+    return listenerCount and listenerCount > 0
 end
-function ctrl_screen:handleEvent( ev )
-	-- simlog("LOG_QEDCTRL", "ctrl:handleEvent %s (%s,%s) root=%s", self._debugName, tostring(ev.eventType), tostring(ev.key), tostring(self._rootLayout and self._rootLayout:getID()))
-	if not (ev.eventType == mui_defs.EVENT_KeyDown and self:hasWidgets()) then return end
+function ctrl_screen:handleEvent(ev)
+    -- simlog("LOG_QEDCTRL", "ctrl:handleEvent %s (%s,%s) root=%s", self._debugName, tostring(ev.eventType), tostring(ev.key), tostring(self._rootLayout and self._rootLayout:getID()))
+    if not (ev.eventType == mui_defs.EVENT_KeyDown and self:hasWidgets()) then
+        return
+    end
 
-	local navDir = NAV_KEY[ev.key]
-	local isConfirmBinding, isCancelBinding
-	if navDir then
-		-- continue
-	elseif util.isKeyBindingEvent("QEDCTRL_CONFIRM", ev) then
-		-- Confirm is only ever used here, so always triggers controller mode.
-		isConfirmBinding = true
-	elseif (hasListeners(self._listeners, self._rootLayout, ctrl_defs.CANCEL)
-			and util.isKeyBindingEvent("QEDCTRL_CANCEL", ev)) then
-		-- Buttons with an explicit CANCEL hotkey prior to activation are checked first.
-		-- Next, Cancel is used here if there's a listener, and falls back to Esc otherwise.
-		isCancelBinding = true
-	elseif self._rootLayout and not inputmgr.isMouseEnabled() then
-		-- Remaining commands are only intercepted in controller mode
-		-- and cannot be used to enter controller mode.
+    local navDir = NAV_KEY[ev.key]
+    local isConfirmBinding, isCancelBinding
+    if navDir then
+        -- continue
+    elseif util.isKeyBindingEvent("QEDCTRL_CONFIRM", ev) then
+        -- Confirm is only ever used here, so always triggers controller mode.
+        isConfirmBinding = true
+    elseif (hasListeners(self._listeners, self._rootLayout, ctrl_defs.CANCEL) and
+            util.isKeyBindingEvent("QEDCTRL_CANCEL", ev)) then
+        -- Buttons with an explicit CANCEL hotkey prior to activation are checked first.
+        -- Next, Cancel is used here if there's a listener, and falls back to Esc otherwise.
+        isCancelBinding = true
+    elseif self._rootLayout and not inputmgr.isMouseEnabled() then
+        -- Remaining commands are only intercepted in controller mode
+        -- and cannot be used to enter controller mode.
 
-		local listeners = self._listeners[self._rootLayout:getID()]
-		if listeners then
-			for _, cmdkey in ipairs(CMD_KEYS) do
-				if ((listeners[cmdkey.cmd] or 0) > 0
-					and util.isKeyBindingEvent(cmdkey.binding, ev))
-				then
-					return self._rootLayout:onCommand(cmdkey.cmd, {})
-				end
-			end
-		end
-		return
-	else
-		return
-	end
+        local listeners = self._listeners[self._rootLayout:getID()]
+        if listeners then
+            for _, cmdkey in ipairs(CMD_KEYS) do
+                if ((listeners[cmdkey.cmd] or 0) > 0 and util.isKeyBindingEvent(cmdkey.binding, ev)) then
+                    return self._rootLayout:onCommand(cmdkey.cmd, {})
+                end
+            end
+        end
+        return
+    else
+        return
+    end
 
-	if not self._rootLayout then
-		-- Focus the default widget.
-		inputmgr.setMouseEnabled(false)
-		self:_initFocus()
+    if not self._rootLayout then
+        -- Focus the default widget.
+        inputmgr.setMouseEnabled(false)
+        self:_initFocus()
 
-		if isConfirmBinding then maybeAutoClick(self) end
-		return true
-	elseif inputmgr.isMouseEnabled() then
-		-- Refocus the most recent controller focus.
-		inputmgr.setMouseEnabled(false)
-		self:onUpdate()
+        if isConfirmBinding then
+            maybeAutoClick(self)
+        end
+        return true
+    elseif inputmgr.isMouseEnabled() then
+        -- Refocus the most recent controller focus.
+        inputmgr.setMouseEnabled(false)
+        self:onUpdate()
 
-		if isConfirmBinding then maybeAutoClick(self) end
-		return true
-	elseif navDir then
-		self._rootLayout:onNav(navDir)
-		return true
-	elseif isConfirmBinding then
-		if not self._rootLayout:onCommand(ctrl_defs.CONFIRM, {}) then
-			simlog("LOG_QEDCTRL", "ctrl:emptyConfirm %s", self._debugName)
-		end
-		return true
-	elseif isCancelBinding then
-		return self._rootLayout:onCommand(ctrl_defs.CANCEL, {})
-	end
+        if isConfirmBinding then
+            maybeAutoClick(self)
+        end
+        return true
+    elseif navDir then
+        self._rootLayout:onNav(navDir)
+        return true
+    elseif isConfirmBinding then
+        if not self._rootLayout:onCommand(ctrl_defs.CONFIRM, {}) then
+            simlog("LOG_QEDCTRL", "ctrl:emptyConfirm %s", self._debugName)
+        end
+        return true
+    elseif isCancelBinding then
+        return self._rootLayout:onCommand(ctrl_defs.CANCEL, {})
+    end
 end
-
 
 return ctrl_screen

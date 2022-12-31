@@ -1,89 +1,90 @@
 local function earlyInit(modApi)
-	modApi.requirements =
-	{
-		"Sim Constructor", "UI Tweaks Reloaded"
-	}
+    modApi.requirements = { --
+        "Sim Constructor",
+        "UI Tweaks Reloaded",
+    }
 end
 
 local function initStrings(modApi)
-	local dataPath = modApi:getDataPath()
-	local scriptPath = modApi:getScriptPath()
+    local dataPath = modApi:getDataPath()
+    local scriptPath = modApi:getScriptPath()
 
-	local MOD_STRINGS = include( scriptPath .. "/strings" )
-	modApi:addStrings( dataPath, "QEDCTRL", MOD_STRINGS)
+    local MOD_STRINGS = include(scriptPath .. "/strings")
+    modApi:addStrings(dataPath, "QEDCTRL", MOD_STRINGS)
 end
 
 local function init(modApi)
-	local scriptPath = modApi:getScriptPath()
-	-- Store script path for cross-file includes
-	rawset(_G,"SCRIPT_PATHS",rawget(_G,"SCRIPT_PATHS") or {})
-	SCRIPT_PATHS.qedctrl = scriptPath
+    local scriptPath = modApi:getScriptPath()
+    -- Store script path for cross-file includes
+    rawset(_G, "SCRIPT_PATHS", rawget(_G, "SCRIPT_PATHS") or {})
+    SCRIPT_PATHS.qedctrl = scriptPath
 
-	local dataPath = modApi:getDataPath()
-	KLEIResourceMgr.MountPackage( dataPath .. "/gui.kwad", "data" )
+    local dataPath = modApi:getDataPath()
+    KLEIResourceMgr.MountPackage(dataPath .. "/gui.kwad", "data")
 
-	include(scriptPath.."/input-manager")
-	include(scriptPath.."/client_defs")
-	include(scriptPath.."/client_util")
+    include(scriptPath .. "/input-manager")
+    include(scriptPath .. "/client_defs")
+    include(scriptPath .. "/client_util")
 
-	-- Append low-level MUI graphical primitives.
-	include(scriptPath.."/mui/mui_checkbox")
-	include(scriptPath.."/mui/mui_combobox")
-	include(scriptPath.."/mui/mui_group")
-	include(scriptPath.."/mui/mui_imagebutton")
-	include(scriptPath.."/mui/mui_listbox")
-	include(scriptPath.."/mui/mui_screen")
+    -- Append low-level MUI graphical primitives.
+    include(scriptPath .. "/mui/mui_checkbox")
+    include(scriptPath .. "/mui/mui_combobox")
+    include(scriptPath .. "/mui/mui_group")
+    include(scriptPath .. "/mui/mui_imagebutton")
+    include(scriptPath .. "/mui/mui_listbox")
+    include(scriptPath .. "/mui/mui_screen")
 
-	-- Append high-level controllers of HUD elements (client/gameplay, client/hud, ...)
-	include(scriptPath.."/hud/camhandler")
-	include(scriptPath.."/hud/hud")
-	include(scriptPath.."/hud/selection")
+    -- Append high-level controllers of HUD elements (client/gameplay, client/hud, ...)
+    include(scriptPath .. "/hud/camhandler")
+    include(scriptPath .. "/hud/hud")
+    include(scriptPath .. "/hud/selection")
 
-	-- Append screen controllers. (client/fe, ...)
-	include(scriptPath.."/controllers/agent-logs")
-	include(scriptPath.."/controllers/moviescreen")
-	include(scriptPath.."/controllers/saveslots-dialog")
+    -- Append screen controllers. (client/fe, ...)
+    include(scriptPath .. "/controllers/agent-logs")
+    include(scriptPath .. "/controllers/moviescreen")
+    include(scriptPath .. "/controllers/saveslots-dialog")
 end
 
 local function earlyUnload(modApi)
 end
 
 local function earlyLoad(modApi, options, params)
-	earlyUnload(modApi)
+    earlyUnload(modApi)
 end
 
-local function unload( modApi )
-	local scriptPath = modApi:getScriptPath()
+local function unload(modApi)
+    local scriptPath = modApi:getScriptPath()
 
-	modApi:addNewUIScreen("qedctrl-end-turn-dialog.lua", scriptPath.."/screens/qedctrl-end-turn-dialog")
-	modApi:insertUIElements(include(scriptPath.."/screen_inserts/hud"))
+    modApi:addNewUIScreen(
+            "qedctrl-end-turn-dialog.lua", scriptPath .. "/screens/qedctrl-end-turn-dialog")
+    modApi:insertUIElements(include(scriptPath .. "/screen_inserts/hud"))
 
-	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/generation-options"))
-	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/main-menu"))
-	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/map-screen"))
-	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/mission-recap-screen"))
-	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/modal-logs"))
-	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/modal-monst3r"))
-	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/modal-saveslots"))
-	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/modals"))
-	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/pause-dialog"))
-	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/screen-loadout-selector"))
-	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/shop-dialog"))
-	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/team-preview-screen"))
-	modApi:modifyUIElements(include(scriptPath.."/screen_modifications/upgrade-screen"))
-	-- TODO: modal-tutorials: buttons for internal pages all start visible, but all but the first are occluded.
+    modApi:modifyUIElements(include(scriptPath .. "/screen_modifications/generation-options"))
+    modApi:modifyUIElements(include(scriptPath .. "/screen_modifications/main-menu"))
+    modApi:modifyUIElements(include(scriptPath .. "/screen_modifications/map-screen"))
+    modApi:modifyUIElements(include(scriptPath .. "/screen_modifications/mission-recap-screen"))
+    modApi:modifyUIElements(include(scriptPath .. "/screen_modifications/modal-logs"))
+    modApi:modifyUIElements(include(scriptPath .. "/screen_modifications/modal-monst3r"))
+    modApi:modifyUIElements(include(scriptPath .. "/screen_modifications/modal-saveslots"))
+    modApi:modifyUIElements(include(scriptPath .. "/screen_modifications/modals"))
+    modApi:modifyUIElements(include(scriptPath .. "/screen_modifications/pause-dialog"))
+    modApi:modifyUIElements(include(scriptPath .. "/screen_modifications/screen-loadout-selector"))
+    modApi:modifyUIElements(include(scriptPath .. "/screen_modifications/shop-dialog"))
+    modApi:modifyUIElements(include(scriptPath .. "/screen_modifications/team-preview-screen"))
+    modApi:modifyUIElements(include(scriptPath .. "/screen_modifications/upgrade-screen"))
+    -- TODO: modal-tutorials: buttons for internal pages all start visible, but all but the first are occluded.
 end
 
 local function load(modApi, options, params)
-	unload( modApi )
+    unload(modApi)
 end
 
 return {
-	earlyInit = earlyInit,
-	earlyLoad = earlyLoad,
-	earlyUnload = earlyUnload,
-	load = load,
-	unload = unload,
-	init = init,
-	initStrings = initStrings,
+    earlyInit = earlyInit,
+    earlyLoad = earlyLoad,
+    earlyUnload = earlyUnload,
+    load = load,
+    unload = unload,
+    init = init,
+    initStrings = initStrings,
 }
