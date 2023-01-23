@@ -53,8 +53,8 @@ function util.getControllerBindingImage(binding)
     end
     local controller = cdefs.CONTROLLER_INPUTS["deck"] -- TODO: Configurable.
     local control = controller and controller[CTRL_MAP[key]]
-    simlog(
-            "LOG_QEDCTRL", "tooltip %s - %s::%s=%s", mui_util.getBindingName(binding),
-            tostring(key), tostring(CTRL_MAP[key]), tostring(control and control.image))
+    -- simlog(
+    --         "LOG_QEDCTRL", "tooltip %s - %s::%s=%s", mui_util.getBindingName(binding),
+    --         tostring(key), tostring(CTRL_MAP[key]), tostring(control and control.image))
     return control and control.image
 end
