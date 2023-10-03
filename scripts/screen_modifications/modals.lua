@@ -135,8 +135,8 @@ local modifications = {
                     w = 4,
                     h = 2,
                     children = {
-						sutil.widgetRow(1, "drillAug1", "drillAug2", "drillAug3", "drillAug4"),
-						sutil.widgetRow(2, "drillAug5", "drillAug6"),
+                        sutil.widgetRow(1, "drillAug1", "drillAug2", "drillAug3", "drillAug4"),
+                        sutil.widgetRow(2, "drillAug5", "drillAug6"),
                     },
                 },
                 {
