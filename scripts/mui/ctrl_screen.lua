@@ -275,9 +275,7 @@ function ctrl_screen:attachWidget(widget)
 
         node = soloLayout
         soloLayout:setWidget(widget)
-        simlog(
-                "LOG_QEDCTRL", "ctrl:attachSoloWidget %s=%s auto=%s", soloLayout._debugName, id,
-                tostring(soloLayout:hasAutoConfirm()))
+        -- simlog("LOG_QEDCTRL", "ctrl:attachSoloWidget %s=%s auto=%s", soloLayout._debugName, id, tostring(soloLayout:hasAutoConfirm()))
     else
         node = self._layoutNodes[id]
         if not node then
@@ -292,9 +290,7 @@ function ctrl_screen:attachWidget(widget)
                     tostring(self._debugName))
             return
         end
-        simlog(
-                "LOG_QEDCTRL", "ctrl:attachWidget %s/%s%s", self._debugName,
-                widgetType == 0 and "" or ("[" .. widgetType .. "]/"), id)
+        -- simlog("LOG_QEDCTRL", "ctrl:attachWidget %s/%s%s", self._debugName, widgetType == 0 and "" or ("[" .. widgetType .. "]/"), id)
     end
 
     self._widgets[widgetType] = self._widgets[widgetType] or {}
