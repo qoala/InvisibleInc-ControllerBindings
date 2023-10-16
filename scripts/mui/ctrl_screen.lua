@@ -145,6 +145,9 @@ function ctrl_screen:init(def, debugName)
     self._deferredNavigate = nil -- Navigation unavailable until after activate.
     self._def = def or {}
     if self._def.layouts then
+        -- if debugName == "[].lua" then
+        --     simlog(util.stringize(self._def, 10))
+        -- end
         self._rootLayouts = {}
         for i, layoutDef in ipairs(self._def.layouts) do
             assert(

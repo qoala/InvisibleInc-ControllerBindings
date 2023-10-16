@@ -134,10 +134,10 @@ local modifications = {
                     shape = [[rgrid]],
                     w = 4,
                     h = 2,
-                    children = {
-                        sutil.widgetRow(1, "drillAug1", "drillAug2", "drillAug3", "drillAug4"),
-                        sutil.widgetRow(2, "drillAug5", "drillAug6"),
-                    },
+                    children = sutil.concat(
+                            sutil.widgetRow(
+                                    1, "drillAug1", "drillAug2", "drillAug3", "drillAug4"),
+                            sutil.widgetRow(2, "drillAug5", "drillAug6")),
                 },
                 {
                     id = "actions",
