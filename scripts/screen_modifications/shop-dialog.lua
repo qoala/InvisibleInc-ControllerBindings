@@ -39,8 +39,14 @@ local function modifySubSubWidget(widgetIndex, cid1, cid2, modification)
         modification,
     }
 end
+local function modifySkinWidget(skinIndex, childIndex, modification)
+    return {"shop-dialog.lua", {"skins", skinIndex, "children", childIndex}, modification}
+end
 
 local modifications = {
+    -- Item > btn
+    modifySkinWidget(3, 3, sutil.ctrl({focusImages = sutil.SELECT_BORDER_64})),
+
     -- Inventory rows.
     modifyWidget(9, skinInventoryRow("upperInv")), -- "sell"
     modifyWidget(10, skinInventoryRow("lowerInv")), -- "inventory"

@@ -15,8 +15,13 @@ local function modifySubWidget(childIndex1, childIndex2, modification)
         modification,
     }
 end
+local function modifySkinWidget(skinIndex, childIndex, modification)
+    return {"modal-monst3r.lua", {"skins", skinIndex, "children", childIndex}, modification}
+end
 
 local modifications = {
+    modifySkinWidget(1, 2, sutil.ctrl({focusImages = sutil.SELECT_BORDER_64})),
+
     modifyWidget(13, ctrlID("taswellInfoBtn")),
     modifyWidget(7, skinAgentItem(ctrlID("monst3rSellItem"))),
     modifySubWidget(5, 9, ctrlID("cycleStashLeftBtn")),

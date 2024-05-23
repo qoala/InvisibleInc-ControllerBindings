@@ -28,12 +28,20 @@ local function modifySubSubWidget(cid1, cid2, cid3, modification)
         modification,
     }
 end
+local function modifySkinWidget(skinIndex, childIndex, modification)
+    return {"upgrade_screen.lua", {"skins", skinIndex, "children", childIndex}, modification}
+end
 
 -- ===
 
 local modifications = {
     -- TODO: non-interactive focusable with hover.
     -- modifySkinCtrl(6, { bindListItemTo = "???" }),
+
+    -- agentbutton > btn
+    modifySkinWidget(5, 1, sutil.ctrl({focusImages = sutil.SELECT_BORDER_64})),
+    -- inventory > btn
+    modifySkinWidget(6, 3, sutil.ctrl({focusImages = sutil.SELECT_BORDER_64})),
 
     -- 4 : panel
     -- 4 > 2 : agentPnl

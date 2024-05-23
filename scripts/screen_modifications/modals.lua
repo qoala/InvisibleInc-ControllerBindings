@@ -30,6 +30,10 @@ local function modifySubWidget(filename, childIndex, subChildIndex, modification
     }
 end
 
+local function modifySkinWidget(filename, skinIndex, childIndex, modification)
+    return {filename, {"skins", skinIndex, "children", childIndex}, modification}
+end
+
 local function modifySkinCtrl(filename, skinIndex, properties)
     return {filename, {"skins", skinIndex}, {ctrlProperties = properties}}
 end
@@ -103,6 +107,8 @@ local modifications = {
     -- Per-augment drill targets. Layout:
     -- 1 2 3 4
     -- 5 6
+    -- Group 2 (drill augs) > btn
+    modifySkinWidget("modal-grafter.lua", 3, 2, sutil.ctrl({focusImages = sutil.SELECT_BORDER_64})),
     modifySubWidget("modal-grafter.lua", 20, 2, skinButton(ctrlID("drillAug1"))),
     modifySubWidget("modal-grafter.lua", 20, 3, skinButton(ctrlID("drillAug2"))),
     modifySubWidget("modal-grafter.lua", 20, 6, skinButton(ctrlID("drillAug3"))),
