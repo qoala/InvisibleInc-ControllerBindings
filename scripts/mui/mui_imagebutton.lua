@@ -50,21 +50,24 @@ local oldHandleEvent = mui_imagebutton.handleEvent
 function mui_imagebutton:handleEvent(ev, ...)
     if inputmgr.isMouseEnabled() ~= self._qedctrl_lastMouseEnabled then
         self._qedctrl_lastMouseEnabled = inputmgr.isMouseEnabled()
-        self:_updateControllerFocusState(true)
+
+        local evPass = nil
+        if ev.widget == self._button then
+            evPass = ev
+        end
+        self:_updateControllerFocusState(evPass, true)
 
     elseif ev.widget == self._button then
-        self:_updateControllerFocusState()
+        self:_updateControllerFocusState(ev)
     end
 
     return oldHandleEvent(self, ev, ...)
 end
 
-function mui_imagebutton:_updateControllerFocusState(modeChanged)
+function mui_imagebutton:_updateControllerFocusState(ev, modeChanged)
     local focusImage = self._qedctrl_focusImage
     if focusImage then
-        local inFocus = not inputmgr.isMouseEnabled() and
-                                (self._button:getState() == mui_button.BUTTON_Hover or
-                                        self._button:getState() == mui_button.BUTTON_Active)
+        local inFocus = not inputmgr.isMouseEnabled() and ev and ev.eventType ~= mui_defs.EVENT_ButtonLeave
         focusImage:setVisible(inFocus)
     end
     if modeChanged and self._qedctrl_focusHoverColor then
@@ -85,7 +88,7 @@ end
 -- ===
 
 function mui_imagebutton:canControllerFocus()
-    return self:isVisible() and self._button:getState() ~= mui_button.BUTTON_Disabled
+    return self:isVisible() and (self._button:getState() ~= mui_button.BUTTON_Disabled or self._qedctrl_focusImage)
 end
 
 function mui_imagebutton:getControllerFocusTarget()
