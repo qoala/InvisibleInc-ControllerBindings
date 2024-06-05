@@ -25,7 +25,7 @@ function base_widget_reference:onFocus(options, ...)
         return widget:onControllerFocus(options, ...)
     elseif widget or (options and options.force) then
         local target = widget and widget:getControllerFocusTarget()
-        return self._ctrl:setFocus(target, self._debugName)
+        return self._ctrl:setFocus(target, self._debugName, {noTooltip = self._def.noTooltip})
     end
 end
 
@@ -35,7 +35,8 @@ function base_widget_reference:onUpdate()
         return widget:onControllerUpdate()
     end
     local target = widget and widget:getControllerFocusTarget()
-    return self._ctrl:setFocus(target, self._debugName .. "::onUpdate")
+    return self._ctrl:setFocus(
+            target, self._debugName .. "::onUpdate", {noTooltip = self._def.noTooltip})
 end
 
 function base_widget_reference:_onInternalNav(navDir)

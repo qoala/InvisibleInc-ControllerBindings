@@ -21,7 +21,7 @@ local modifications = {
     -- TODO: select the current loadout on activate.
     sutil.setSingleLayout(
             "screen-loadout-selector.lua", {
-                sutil.widget("loadoutList", 1, {widgetType = "listbox"}),
+                sutil.widget("loadoutList", 1, {widgetType = "listbox", noTooltip = true}),
                 sutil.widget("closeBtn", 2),
             }, {wrap = true}),
 }

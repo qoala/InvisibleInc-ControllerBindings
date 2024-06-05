@@ -49,6 +49,12 @@ function mui_screen:handleInputEvent(ev, ...)
     if ev.eventType == 'ControllerUpdate' then
         local result = self._qedctrl_ctrl:onUpdate()
 
+        if self._qedctrl_noTooltip then
+            inputmgr.setControllerXY(0, 0)
+            self:setTooltip(nil)
+            return result
+        end
+
         local x, y = 0, 0
         if self._focusWidget then
             local widget = self._focusWidget

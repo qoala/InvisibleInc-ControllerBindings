@@ -401,7 +401,7 @@ function ctrl_screen:hasWidgets()
     return not self._soloLayout or not self._soloLayout:isEmpty()
 end
 
-function ctrl_screen:setFocus(focusWidget, debugName)
+function ctrl_screen:setFocus(focusWidget, debugName, opts)
     if not inputmgr.isMouseEnabled() and focusWidget ~= self._screen._focusWidget then
         simlog(
                 "LOG_QEDCTRL", "ctrl:%s %s", focusWidget == nil and "unfocus" or "focus",
@@ -414,6 +414,7 @@ function ctrl_screen:setFocus(focusWidget, debugName)
                 })
         self._screen._focusWidget = focusWidget
     end
+    self._screen._qedctrl_noTooltip = opts and opts.noTooltip
     return true
 end
 

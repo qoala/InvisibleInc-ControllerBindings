@@ -263,7 +263,8 @@ function item_reference:onFocus(options, item, idx)
         end
     end
     if target or (options and options.force) then
-        local ok = self._ctrl:setFocus(target, self._debugName .. (idx or "?"))
+        local ok = self._ctrl:setFocus(
+                target, self._debugName .. (idx or "?"), {noTooltip = self._parentDef.noTooltip})
         if ok then
             self._idx = idx
             self._navigatePath[#self._navigatePath] = idx
@@ -284,7 +285,9 @@ function item_reference:onUpdate()
             target = hitbox
         end
     end
-    return self._ctrl:setFocus(target, self._debugName .. (self._idx or "?") .. "::onUpdate")
+    return self._ctrl:setFocus(
+            target, self._debugName .. (self._idx or "?") .. "::onUpdate",
+            {noTooltip = self._parentDef.noTooltip})
 end
 
 function item_reference:_onConfirm()
