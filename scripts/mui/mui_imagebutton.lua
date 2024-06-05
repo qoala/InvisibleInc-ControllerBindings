@@ -91,7 +91,7 @@ end
 function mui_imagebutton:canControllerFocus()
     return self:isVisible() and
                    (self._button:getState() ~= mui_button.BUTTON_Disabled or
-                           self._qedctrl_focusImage)
+                           self._qedctrl_def.canFocusDisabled)
 end
 
 function mui_imagebutton:getControllerFocusTarget()

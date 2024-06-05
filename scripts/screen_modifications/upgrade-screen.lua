@@ -63,14 +63,14 @@ local modifications = {
     modifySubWidget(2, 14, skinButton(ctrlID("inv6"))),
     modifySubWidget(2, 15, skinButton(ctrlID("inv7"))),
     modifySubWidget(2, 16, skinButton(ctrlID("inv8"))),
-    modifySubWidget(2, 19, skinButton(ctrlID("aug1"))),
-    modifySubWidget(2, 20, skinButton(ctrlID("aug2"))),
-    modifySubWidget(2, 21, skinButton(ctrlID("aug3"))),
-    modifySubWidget(2, 22, skinButton(ctrlID("aug4"))),
-    modifySubWidget(2, 23, skinButton(ctrlID("aug5"))),
-    modifySubWidget(2, 24, skinButton(ctrlID("aug6"))),
-    modifySubWidget(2, 25, skinButton(ctrlID("aug7"))),
-    modifySubWidget(2, 26, skinButton(ctrlID("aug8"))),
+    modifySubWidget(2, 19, skinButton(ctrlID("aug1", {canFocusDisabled = true}))),
+    modifySubWidget(2, 20, skinButton(ctrlID("aug2", {canFocusDisabled = true}))),
+    modifySubWidget(2, 21, skinButton(ctrlID("aug3", {canFocusDisabled = true}))),
+    modifySubWidget(2, 22, skinButton(ctrlID("aug4", {canFocusDisabled = true}))),
+    modifySubWidget(2, 23, skinButton(ctrlID("aug5", {canFocusDisabled = true}))),
+    modifySubWidget(2, 24, skinButton(ctrlID("aug6", {canFocusDisabled = true}))),
+    modifySubWidget(2, 25, skinButton(ctrlID("aug7", {canFocusDisabled = true}))),
+    modifySubWidget(2, 26, skinButton(ctrlID("aug8", {canFocusDisabled = true}))),
 
     -- 4 : panel
     -- Agent/Incognita tab selector. 
