@@ -22,7 +22,7 @@ local oldOnMouseRight = _M._onMouseRight or extractUpvalue(inputmgr.init, "onMou
 
 do
     local originalFn = extractUpvalue(inputmgr.init, "onMouseMove")
-    _M._createInputEvent = _M._notifyListeners or extractUpvalue(originalFn, "createInputEvent")
+    _M._createInputEvent = _M._createInputEvent or extractUpvalue(originalFn, "createInputEvent")
     _M._notifyListeners = _M._notifyListeners or extractUpvalue(originalFn, "notifyListeners")
 end
 _M._qedctrl_mouseEnabled = true
@@ -41,16 +41,22 @@ function inputmgr.setMouseEnabled(enabled)
     -- simlog("LOG_QEDCTRL", "inputmgr %s", enabled and "enableMouse" or "disableMouse")
     _M._qedctrl_mouseEnabled = enabled
 end
+function inputmgr.setControllerXY(x, y)
+    _M._mouseX, _M._mouseY = x, y
+end
 function inputmgr.onControllerError() -- Call if we soft-fail in a method that could be called on update events to pause controller handling.
     inputmgr.setMouseEnabled(true)
 end
 
 function _M._onMouseMove(x, y, ...)
     if _M._qedctrl_mouseEnabled then
+        _M._qedctrl_trueMouseX, _M._qedctrl_trueMouseY = x, y
         oldOnMouseMove(x, y, ...)
-    elseif (math.abs(x - _M._mouseX) > 10) or (math.abs(y - _M._mouseY) > 10) then
+    elseif (math.abs(x - _M._qedctrl_trueMouseX) > 10) or
+            (math.abs(y - _M._qedctrl_trueMouseY) > 10) then
         -- simlog("LOG_QEDCTRL", "inputmgr autoEnableMouse")
         _M._qedctrl_mouseEnabled = true
+        _M._qedctrl_trueMouseX, _M._qedctrl_trueMouseY = x, y
         oldOnMouseMove(x, y, ...)
     else
         -- The normal UI relies on continuously emitted MouseMove events to keep focus updated.

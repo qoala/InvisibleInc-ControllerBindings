@@ -67,7 +67,8 @@ end
 function mui_imagebutton:_updateControllerFocusState(ev, modeChanged)
     local focusImage = self._qedctrl_focusImage
     if focusImage then
-        local inFocus = not inputmgr.isMouseEnabled() and ev and ev.eventType ~= mui_defs.EVENT_ButtonLeave
+        local inFocus = not inputmgr.isMouseEnabled() and ev and ev.eventType ~=
+                                mui_defs.EVENT_ButtonLeave
         focusImage:setVisible(inFocus)
     end
     if modeChanged and self._qedctrl_focusHoverColor then
@@ -88,7 +89,9 @@ end
 -- ===
 
 function mui_imagebutton:canControllerFocus()
-    return self:isVisible() and (self._button:getState() ~= mui_button.BUTTON_Disabled or self._qedctrl_focusImage)
+    return self:isVisible() and
+                   (self._button:getState() ~= mui_button.BUTTON_Disabled or
+                           self._qedctrl_focusImage)
 end
 
 function mui_imagebutton:getControllerFocusTarget()

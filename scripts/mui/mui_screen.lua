@@ -47,7 +47,44 @@ end
 local oldHandleInputEvent = mui_screen.handleInputEvent
 function mui_screen:handleInputEvent(ev, ...)
     if ev.eventType == 'ControllerUpdate' then
-        return self._qedctrl_ctrl:onUpdate()
+        local result = self._qedctrl_ctrl:onUpdate()
+
+        local x, y = 0, 0
+        if self._focusWidget then
+            local widget = self._focusWidget
+            if widget._cont then
+                widget = widget._cont
+            end
+            if widget._prop then
+                x, y = widget._prop:modelToWorld(0, 0)
+                local wx, wy = self:uiToWnd(x, y)
+                inputmgr.setControllerXY(wx, wy)
+            end
+        end
+
+        -- Vanilla tooltip handling from handleInputEvent, but with our x,y coordinates.
+        local props = self._layer:propListForPoint(x, y, 0, MOAILayer.SORT_PRIORITY_DESCENDING)
+        local tooltip = nil
+        if props then
+            for i, prop in ipairs(props) do
+                if prop:shouldDraw() and self._propToWidget[prop] then
+                    local tooltipWidget = self._propToWidget[prop]._widget
+                    tooltip = tooltipWidget:handleTooltip(x, y)
+                    if tooltip ~= nil then
+                        if type(tooltip) == "boolean" then
+                            tooltip = nil
+                        end
+                        break
+                    end
+                end
+            end
+        end
+        if tooltip == nil and self.onTooltip and self:handlesInput() then
+            tooltip = util.callDelegate(self.onTooltip, self, x, y)
+        end
+        self:setTooltip(tooltip)
+
+        return result
     end
 
     local handled = oldHandleInputEvent(self, ev, ...)
