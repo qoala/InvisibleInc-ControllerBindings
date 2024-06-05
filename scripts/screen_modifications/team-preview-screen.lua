@@ -2,8 +2,8 @@ local sutil = include(SCRIPT_PATHS.qedctrl .. "/screen_util")
 local ctrlID = sutil.ctrlID
 local skinButton = sutil.skinButton
 
-local function skinAgentLoadoutBtn(id)
-    return {inheritDef = {["loadoutBtn1"] = skinButton(ctrlID(id))}}
+local function skinAgentLoadoutBtn(id, ctrlProperties)
+    return {inheritDef = {["loadoutBtn1"] = skinButton(ctrlID(id, ctrlProperties))}}
 end
 
 -- TODO: Focusable widget for the whole box.
@@ -17,15 +17,21 @@ local function skinAgent(baseID)
             ["arrowLeft"] = skinButton(ctrlID(baseID .. ".selectPrev")),
             ["arrowRight"] = skinButton(ctrlID(baseID .. ".selectNext")),
             -- Cycle lore
-            ["prevBtn"] = ctrlID(baseID .. ".lorePrev"),
-            ["nextBtn"] = ctrlID(baseID .. ".loreNext"),
+            ["prevBtn"] = ctrlID(
+                    baseID .. ".lorePrev", {focusImages = sutil.SELECT_BORDER_64, focusImageW = 60}),
+            ["nextBtn"] = ctrlID(
+                    baseID .. ".loreNext", {focusImages = sutil.SELECT_BORDER_64, focusImageW = 60}),
             -- Sim Constructor loadout selection
             ["loadoutArrowLeft"] = skinButton(ctrlID(baseID .. ".loadoutSimConPrev")),
             ["loadoutSharedBtn"] = skinAgentLoadoutBtn(baseID .. ".loadoutSimConOpen"),
             ["loadoutArrowRight"] = skinButton(ctrlID(baseID .. ".loadoutSimConNext")),
             -- Vanilla loadout selection
-            ["loadoutBtn1"] = skinAgentLoadoutBtn(baseID .. ".loadout1Btn"),
-            ["loadoutBtn2"] = skinAgentLoadoutBtn(baseID .. ".loadout2Btn"),
+            ["loadoutBtn1"] = skinAgentLoadoutBtn(
+                    baseID .. ".loadout1Btn",
+                    {focusImages = sutil.SELECT_BORDER_64, focusImagePadding = 6}),
+            ["loadoutBtn2"] = skinAgentLoadoutBtn(
+                    baseID .. ".loadout2Btn",
+                    {focusImages = sutil.SELECT_BORDER_64, focusImagePadding = 6}),
         },
     }
 end
