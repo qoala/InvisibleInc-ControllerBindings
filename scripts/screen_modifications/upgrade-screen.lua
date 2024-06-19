@@ -59,7 +59,7 @@ local modifications = {
     modifySubWidget(2, 10, skinButton(ctrlID("inv2"))),
     modifySubWidget(2, 11, skinButton(ctrlID("inv3"))),
     modifySubWidget(2, 12, skinButton(ctrlID("inv4"))),
-    modifySubWidget(2, 13, skinButton(ctrlID("inv5"))),
+    modifySubWidget(2, 13, skinButton(ctrlID("inv5", {canFocusDisabled = true}))),
     modifySubWidget(2, 14, skinButton(ctrlID("inv6"))),
     modifySubWidget(2, 15, skinButton(ctrlID("inv7"))),
     modifySubWidget(2, 16, skinButton(ctrlID("inv8"))),
