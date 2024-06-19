@@ -39,10 +39,11 @@ local function init(modApi)
     include(scriptPath .. "/hud/hud")
     include(scriptPath .. "/hud/selection")
 
-    -- Append screen controllers. (client/fe, ...)
+    -- Append screen controllers. (client/fe, client/states, ...)
     include(scriptPath .. "/controllers/agent-logs")
     include(scriptPath .. "/controllers/moviescreen")
     include(scriptPath .. "/controllers/saveslots-dialog")
+    include(scriptPath .. "/controllers/state-upgrade-screen")
 end
 
 local function earlyUnload(modApi)
