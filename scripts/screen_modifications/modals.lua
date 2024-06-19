@@ -63,6 +63,13 @@ local modifications = {
     modifyDialog("modal-unlock-agents.lua", 5, skinButton(soloButton())),
     modifySubWidget("modal-posttutorial.lua", 3, 3, soloButton()),
 
+    modifyDialog("death-dialog.lua", 14, ctrlID("retryLevel")),
+    modifyDialog("death-dialog.lua", 15, ctrlID("retryDay")),
+    modifyDialog("death-dialog.lua", 16, ctrlID("newCampaign")),
+    sutil.setSingleLayout(
+            "death-dialog.lua", sutil.widgetList("retryLevel", "retryDay", "newCampaign"),
+            {default = "newCampaign"}),
+
     modifySubWidget("mission_preview_dialog.lua", 5, 1, skinButton(ctrlID("acceptBtn"))),
     modifySubWidget("mission_preview_dialog.lua", 5, 2, skinButton(ctrlID("cancelBtn"))),
     modifySubWidget("mission_preview_dialog.lua", 5, 3, skinButton(ctrlID("moreInfoBtn"))),
