@@ -99,6 +99,8 @@ function mui_imagebutton:getControllerFocusTarget()
 end
 
 function mui_imagebutton:onControllerConfirm()
-    self._button:dispatchEvent(
-            {eventType = mui_defs.EVENT_ButtonClick, widget = self._button, ie = {}})
+    if self:isVisible() and self._button:getState() ~= mui_button.BUTTON_Disabled then
+        self._button:dispatchEvent(
+                {eventType = mui_defs.EVENT_ButtonClick, widget = self._button, ie = {}})
+    end
 end

@@ -141,6 +141,7 @@ local modifications = {
                                             children = sutil.widgetList(
                                                     "stashCyclePrev", "stash1", "stash2", "stash3",
                                                     "stash4", "stashCycleNext"),
+                                            default = "stash1",
                                         },
                                     }, --
                                     sutil.widgetRow(
