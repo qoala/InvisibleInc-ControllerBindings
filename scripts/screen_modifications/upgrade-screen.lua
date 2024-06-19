@@ -55,7 +55,7 @@ local modifications = {
 
     -- 4 > 2 : agentPnl
     -- Agent items/augments.
-    modifySubWidget(2, 9, skinButton(ctrlID("inv1"))),
+    modifySubWidget(2, 9, skinButton(ctrlID("inv1", {canFocusDisabled = true}))),
     modifySubWidget(2, 10, skinButton(ctrlID("inv2"))),
     modifySubWidget(2, 11, skinButton(ctrlID("inv3"))),
     modifySubWidget(2, 12, skinButton(ctrlID("inv4"))),
@@ -73,7 +73,7 @@ local modifications = {
     modifySubWidget(2, 26, skinButton(ctrlID("aug8", {canFocusDisabled = true}))),
 
     -- 4 : panel
-    -- Agent/Incognita tab selector. 
+    -- Agent/Incognita tab selector.
     -- TODO: Better highlights for these 5.
     -- TODO: LB/RB hotkeys to change tabs.
     modifyWidget(8, skinButton(ctrlID("agent1"))),
@@ -87,7 +87,7 @@ local modifications = {
     modifyNamedWidget("assignBtn", skinButton(ctrlID("agentAssign"))),
 
     -- Stash inventory. ("agency_inv") -- TODO: pseudo-listbox.
-    modifyWidget(13, skinButton(ctrlID("stash1"))),
+    modifyWidget(13, skinButton(ctrlID("stash1", {canFocusDisabled = true}))),
     modifyWidget(14, skinButton(ctrlID("stash2"))),
     modifyWidget(15, skinButton(ctrlID("stash3"))),
     modifyWidget(16, skinButton(ctrlID("stash4"))),
