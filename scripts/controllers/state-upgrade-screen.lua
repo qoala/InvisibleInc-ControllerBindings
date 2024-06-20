@@ -12,16 +12,13 @@ end
 
 function upgradeScreen:onInputEvent(ev)
     if ev.eventType == mui_defs.EVENT_KeyDown then
-        simlog("QDBG - upgradeScreen:onKeyDown")
         if util.isKeyBindingEvent("QEDCTRL_SELECTNEXT", ev) or
                 util.isKeyBindingEvent("cycleSelection", ev) then
             local index = (self._selectedIndex + 1) % (#self._agency.unitDefs + 1)
-            simlog("QDBG - upgradeScreen:onNext")
             self:selectSlot(index)
             return true
         elseif util.isKeyBindingEvent("QEDCTRL_SELECTPREV", ev) then
             local index = (self._selectedIndex - 1) % (#self._agency.unitDefs + 1)
-            simlog("QDBG - upgradeScreen:onPrev")
             self:selectSlot(index)
             return true
         end
@@ -37,12 +34,10 @@ end
 local oldOnLoad = upgradeScreen.onLoad
 function upgradeScreen:onLoad(...)
     oldOnLoad(self, ...)
-    simlog("QDBG - upgradeScreen:onLoad")
     inputmgr.addListener(self, 1)
 end
 local oldOnUnload = upgradeScreen.onUnload
 function upgradeScreen:onUnload(...)
-    simlog("QDBG - upgradeScreen:onUnload")
     inputmgr.removeListener(self)
     oldOnUnload(self, ...)
 end
